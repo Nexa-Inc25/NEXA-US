@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "NEXA Foreman",
+    "slug": "nexa-mobile",
+    "scheme": "nexaapp",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {},
+    "web": {
+      "bundler": "metro"
+    },
+    "extra": {
+      "AUTH0_DOMAIN": "your-tenant.us.auth0.com",
+      "AUTH0_CLIENT_ID": "YOUR_MOBILE_CLIENT_ID",
+      "AUTH0_AUDIENCE": "https://api.nexa.local",
+      "API_BASE_URL": "http://localhost:4000",
+      "REDIRECT_SCHEME": "nexaapp"
+    },
+    "plugins": [
+      "expo-secure-store"
+    ]
+  }
+}

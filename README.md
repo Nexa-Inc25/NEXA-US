@@ -38,6 +38,30 @@ npm start
 
 The API will listen on `http://localhost:4000`.
 
+## Running the Expo mobile app
+
+1. Navigate to `mobile/`
+2. Install dependencies:
+
+```bash
+npm install
+npx expo install expo-auth-session expo-secure-store expo-sqlite expo-network expo-constants
+```
+
+3. Start Expo (Metro bundler):
+
+```bash
+npm start
+```
+
+4. In the app:
+- Use "Dev Login (Bypass)" to try flows during development without Auth0.
+- Press "Sync" on the Today screen to pull data from the API and populate the local SQLite cache.
+
+Configuration comes from `mobile/app.json` under `expo.extra`:
+- `API_BASE_URL` should point to the API, defaults to `http://localhost:4000`.
+- Auth0 values (`AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_AUDIENCE`) can be set later to enable PKCE login.
+
 ## Key Documents
 
 - `webpage-app-flow.txt` — product and build plan (screens, APIs, security, acceptance)
