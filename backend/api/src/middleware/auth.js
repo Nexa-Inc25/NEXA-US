@@ -16,8 +16,13 @@ function authMiddleware() {
   const issuer = process.env.AUTH0_ISSUER_URL || (process.env.AUTH0_DOMAIN ? `https://${process.env.AUTH0_DOMAIN}/` : undefined);
   const audience = process.env.AUTH0_AUDIENCE;
   const jwksUri = process.env.AUTH0_JWKS_URI || (issuer ? `${issuer}.well-known/jwks.json` : undefined);
-  const orgClaim = process.env.ORG_ID_CLAIM || 'org_id';
-  const rolesClaim = process.env.ROLES_CLAIM || 'roles';
+  const orgClaimEnv = process.env.ORG_ID_CLAIM || 'org_id';
+  const rolesClaimEnv = process.env.ROLES_CLAIM || 'roles';
+  const orgClaimKeys = orgClaimEnv.split(',').map(s => s.trim()).filter(Boolean);
+  const rolesClaimKeys = rolesClaimEnv.split(',').map(s => s.trim()).filter(Boolean);
+  // Add common namespaced fallbacks if not explicitly provided
+  if (!orgClaimKeys.some(k => k.startsWith('http'))) orgClaimKeys.push('https://nexa.app/org_id');
+  if (!rolesClaimKeys.some(k => k.startsWith('http'))) rolesClaimKeys.push('https://nexa.app/roles');
 
   if (!issuer || !audience || !jwksUri) {
     throw new Error('Auth0 config is missing (AUTH0_ISSUER_URL/AUTH0_DOMAIN, AUTH0_AUDIENCE, AUTH0_JWKS_URI)');
@@ -39,8 +44,14 @@ function authMiddleware() {
     checkJwt(req, res, (err) => {
       if (err) return next(err);
       const payload = req.auth || req.user || {};
-      const orgId = payload[orgClaim];
-      const roles = payload[rolesClaim] || [];
+      let orgId = undefined;
+      for (const key of orgClaimKeys) {
+        if (payload[key] != null) { orgId = payload[key]; break; }
+      }
+      let roles = [];
+      for (const key of rolesClaimKeys) {
+        if (payload[key] != null) { roles = payload[key]; break; }
+      }
       if (!orgId) {
         const e = new Error('Missing org_id claim');
         e.status = 401;
