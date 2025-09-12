@@ -7,7 +7,9 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "dev": "nodemon src/server.js",
+    "migrate": "node scripts/migrate.js",
+    "seed": "node scripts/seed.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -15,6 +17,7 @@
     "express": "^4.19.2",
     "express-jwt": "^8.4.1",
     "helmet": "^7.1.0",
+    "pg": "^8.12.0",
     "jwks-rsa": "^3.1.0",
     "morgan": "^1.10.0",
     "uuid": "^9.0.1"
