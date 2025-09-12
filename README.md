@@ -42,6 +42,25 @@ The API will listen on `http://localhost:4000`.
 
 - `webpage-app-flow.txt` — product and build plan (screens, APIs, security, acceptance)
 
+## Local services (Docker Compose)
+
+Bring up Postgres and Redis for local development:
+
+```bash
+docker compose up -d
+docker compose ps
+```
+
+Defaults (from `docker-compose.yml`):
+
+- Postgres on `localhost:5432` with user `nexa`, password `nexa`, db `nexa_mvp`
+- Redis on `localhost:6379`
+
+API env variables (already set in `backend/api/.env.example`):
+
+- `DATABASE_URL=postgres://nexa:nexa@localhost:5432/nexa_mvp`
+- `REDIS_URL=redis://localhost:6379`
+
 ## Next steps
 
 - Flesh out API endpoints and connect Postgres
