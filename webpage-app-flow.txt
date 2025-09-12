@@ -1,0 +1,118 @@
+awesome—here’s a tight, build-ready **Foreman App MVP** you can hand to engineering today. it’s scoped for 6–8 weeks, offline-first, and locked to your NEXA security architecture.
+
+# MVP goals (what “done” means)
+
+* A foreman can run their whole day **offline**: see jobs, navigate, share materials & pins, capture photos with guided QA, submit a 1-minute timesheet, and approve a **utility-ready closeout PDF**.
+* AI Operator does the heavy lifting (suggestions, autofill, formatting), pausing only for quick approvals.
+* All data is multi-tenant isolated (Postgres RLS), uploads are presigned/KMS-encrypted, and every action is audited.
+
+# Screens & flows (only what we ship first)
+
+1. **Login → Today (auto-start)**
+
+   * FaceID → lands on *Today*: Pre-trip → Job 1 → Job 2 → Closeout.
+   * Each step is a big card with one primary action. Profit chip: green/red/gray.
+
+2. **Job Detail**
+
+   * Big tiles: **Materials**, **GPS & Pins**, **Photos/QA**, **Timesheet**, **Closeout**.
+   * Sticky “Ask NEXA” microbar for one-liners (“text crew with pins”).
+
+3. **Materials**
+
+   * Auto-compiled sheet. Primary: **Share to Crew** (SMS/iMessage link). Secondary: Report shortage (AI drafts note).
+
+4. **GPS & Pins**
+
+   * Shows staging/work/switch pins. **Send All Pins** to crew, or open Maps.
+
+5. **Photos / QA**
+
+   * Camera with checklist prompts (e.g., “include pole tag & insulator”).
+   * On-device checks (framing/blur/tag detection ≈ lite model).
+   * Offline queue; background upload when online; AI cloud QA adds spec refs.
+
+6. **Timesheet (1 minute)**
+
+   * Crew toggles + hours + equipment. AI suggests tasks from photos & GPS dwell. Submit → server normalizes to utility format.
+
+7. **Closeout**
+
+   * AI summary (quantities, photos, exceptions). 1-tap approve → NEXA generates PDF; if online, sends to HQ; if offline, queues.
+
+# Offline-first contract
+
+* **Local DB**: SQLite (encrypted).
+* **Delta sync**: pull by `updated_at` cursor; push uses idempotency keys.
+* **Conflict policy**: server-authoritative for costs/permits; last-writer-wins for simple fields; CRDT/merge for notes.
+* **Queues**: `upload_queue` for photos & PDFs with retry/backoff.
+
+
+
+
+```
+
+
+
+# Core APIs (server)
+
+* `POST /auth/token` – Auth0 OIDC → org-scoped JWT (validated by API GW authorizer).
+* `GET /today` – sequenced run-of-show for the user.
+* `GET /sync?since=...` – delta pull.
+* `POST /sync` – batched upserts (with `idempotency_key`).
+* `POST /presign/photo` – returns S3 PUT URL w/ constraints (content-type, size, checksum).
+* `POST /photo/qa` – cloud QA → spec refs + fix steps.
+* `POST /timesheet/normalize` – to utility format.
+* `POST /closeout/generate` – returns PDF S3 key (and share link if approved).
+* `POST /notify/crew` – templated SMS/iMessage via SES/SNS gateway (server-side only).
+
+# AI assist (MVP set)
+
+* **Morning Brief**: “2 jobs today; 24 min to Job 1; shortage: (2× #4 clamps); Permit P-183 pending.”
+* **Photo prompts** (checklist JSON, stored per utility):
+
+  ```json
+  [{"id":"pole_tag","prompt":"Capture pole tag & insulator in frame","required":true},
+   {"id":"guy_anchor","prompt":"Show anchor angle + tag","required":true}]
+  ```
+* **On-device nudges**: blur/low-light/frame warnings; pole-tag heuristic.
+* **Auto-timesheet**: suggest tasks/quantities from photo tags + GPS dwell.
+* **Closeout writer**: draft, show diff; foreman taps Approve.
+
+# Security alignment (field)
+
+* Auth0 PKCE; tokens in **Keychain**; auto-lock + FaceID; remote wipe on logout.
+* Every request carries org-scoped JWT → **API GW authorizer** validates `iss/aud/kid`.
+* **Postgres RLS** on all rows; `current_org_id()` enforced server-side.
+* Per-tenant S3 prefixes + **per-tenant KMS keys**; presigned PUT with strict constraints.
+* EXIF scrub on device; optional face/license plate blur; AV scan on upload.
+* **Audit**: `agent_runs` + `audit_log` entries for every action; immutable retention.
+* Terraform state encrypted (SSE-KMS); least-privilege IAM w/ GitHub OIDC for CI.
+
+# Acceptance criteria (bulletproof & demo-ready)
+
+* **Offline**: Start app in airplane mode → Today/Jobs visible; take 10 photos; submit timesheet; queue shows pending; reconnect → all sync & closeout PDF appears.
+* **Photo QA**: At least 3 checklist items; fails show “Retake”; pass produces green check.
+* **Timesheet**: ≤60 seconds from open to submit with AI suggestions; server export matches Utility X CSV/PDF template.
+* **Closeout**: 1-tap approval → PDF generated with photos, quantities, map pin, exceptions.
+* **Security**: No data visible after logout; re-login requires FaceID; audit shows all actions.
+* **Perf**: Screen interactions <100 ms; sync ops observable with progress.
+
+# Build order (6–8 weeks)
+
+**W1** – App shell (Expo), Auth0 PKCE, Keychain, encrypted SQLite, basic Today view, sync cursors.
+**W2** – Jobs & Job Detail, Materials share, Pins & Maps deep links, upload queue.
+**W3** – Camera + on-device checks, presign + S3 PUT, offline retry.
+**W4** – Timesheet + AI suggestions; normalize API; approvals drawer.
+**W5** – Closeout generation + share; audit events; notifications (crew messages).
+**W6** – Hardening: chaos offline tests, Sentry/telemetry, WAF/ratelimits, PII masking, demo data. *(Stretch: Apple TestFlight build)*
+
+
+---
+
+## what I can generate next (pick one and I’ll drop it in full):
+
+1. **SQLite schema + RN storage/sync utilities** (ready to paste),
+2. **Checklist JSON + on-device QA scaffolding** (camera prompts + validators),
+3. **Closeout PDF template + compose API** (fields, example output),
+4. **Terraform/API Gateway authorizer + presign Lambda** (aligned to NEXA security).

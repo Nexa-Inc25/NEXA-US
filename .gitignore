@@ -1,0 +1,57 @@
+# Node / JS
+node_modules/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist/
+build/
+coverage/
+
+# Expo / React Native
+.expo/
+.expo-shared/
+*.apk
+*.aab
+*.app
+# Native build outputs (if ejected)
+android/app/build/
+ios/build/
+ios/Pods/
+
+# Logs
+logs/
+*.log
+logs/**/*.log
+
+# Env files
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+.venv*/
+venv/
+venv*/
+__pycache__/
+*.pyc
+
+# Databases
+*.sqlite
+*.db
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+
+# Docker
+*.local
+.env.docker
+
+# IDE/OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
