@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { withOrg } = require('../db');
+const { logAudit } = require('../db/audit');
+const crypto = require('crypto');
 
 // GET /sync?since=ISO8601 — delta pull
 router.get('/sync', async (req, res, next) => {
@@ -33,7 +35,20 @@ router.get('/sync', async (req, res, next) => {
         checklist: checklist.rows,
       };
     });
-
+    // Audit: sync pull
+    try {
+      await logAudit(orgId, req.user?.sub, 'sync.pull', {
+        since,
+        counts: {
+          jobs: data.jobs.length,
+          materials: data.materials.length,
+          pins: data.pins.length,
+          checklist: data.checklist.length,
+        },
+      });
+    } catch (_e) {
+      // best-effort audit
+    }
     res.json(data);
   } catch (err) {
     next(err);
@@ -47,6 +62,17 @@ router.post('/sync', async (req, res, next) => {
 
   try {
     const result = await withOrg(orgId, async (client) => {
+      // Idempotency check
+      if (idempotency_key) {
+        const existing = await client.query(
+          `SELECT response FROM public.idempotency_keys WHERE id = $1 AND endpoint = 'POST /sync'`,
+          [idempotency_key]
+        );
+        if (existing.rows.length) {
+          return { reused: true, ...(existing.rows[0].response || {}) };
+        }
+      }
+
       const counts = { jobs: 0, materials: 0, pins: 0, checklist: 0 };
 
       if (upserts && Array.isArray(upserts.jobs)) {
@@ -97,7 +123,33 @@ router.post('/sync', async (req, res, next) => {
         }
       }
 
-      return { counts };
+      const response = { counts };
+
+      // Store idempotency record
+      if (idempotency_key) {
+        const hash = crypto
+          .createHash('sha256')
+          .update(JSON.stringify(upserts || {}))
+          .digest('hex');
+        await client.query(
+          `INSERT INTO public.idempotency_keys (id, org_id, endpoint, request_hash, response, status)
+           VALUES ($1,$2,'POST /sync',$3,$4,'succeeded')
+           ON CONFLICT (id) DO UPDATE SET response = EXCLUDED.response, updated_at = now()`,
+          [idempotency_key, orgId, hash, response]
+        );
+      }
+
+      // Audit: sync push
+      try {
+        await logAudit(orgId, req.user?.sub, 'sync.push', {
+          idempotency_key: idempotency_key || null,
+          counts,
+        });
+      } catch (_e) {
+        // best-effort
+      }
+
+      return response;
     });
 
     res.status(202).json({ idempotency_key: idempotency_key || null, accepted: true, ...result });
