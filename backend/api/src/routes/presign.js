@@ -1,26 +1,81 @@
 const express = require('express');
 const crypto = require('crypto');
+const { createPresignedPost } = require('@aws-sdk/s3-presigned-post');
+const { createS3Client } = require('../services/s3');
 const router = express.Router();
 
-// POST /presign/photo — returns S3 PUT URL w/ constraints (stubbed for local dev)
-router.post('/presign/photo', (req, res) => {
-  const { contentType = 'image/jpeg', size = 0, checksum } = req.body || {};
-  const key = `org/${(req.user && req.user.orgId) || 'dev-org'}/photos/${Date.now()}-${crypto.randomUUID()}.jpg`;
-  const url = `https://example-s3.local/${key}`;
+// POST /presign/photo — returns S3 presigned POST with constraints
+router.post('/presign/photo', async (req, res, next) => {
+  const orgId = (req.user && req.user.orgId) || 'dev-org';
+  const { contentType = 'image/jpeg', size = 0 } = req.body || {};
 
-  res.json({
-    key,
-    url,
-    method: 'PUT',
-    headers: {
-      'Content-Type': contentType,
-      'Content-MD5': checksum || 'dev-checksum'
-    },
-    constraints: {
-      maxSize: 25 * 1024 * 1024,
-      allowedContentTypes: ['image/jpeg', 'image/png']
+  try {
+    const allowed = (process.env.PRESIGN_ALLOWED_TYPES || 'image/jpeg,image/png')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (!allowed.includes(contentType)) {
+      return res.status(400).json({ error: 'Unsupported content type', allowed });
     }
-  });
+
+    const maxMb = parseInt(process.env.PRESIGN_MAX_MB || '25', 10);
+    const maxBytes = maxMb * 1024 * 1024;
+    if (size && Number(size) > maxBytes) {
+      return res.status(400).json({ error: 'File too large', maxBytes });
+    }
+
+    const bucket = process.env.S3_BUCKET;
+    if (!bucket) {
+      return res.status(500).json({ error: 'S3_BUCKET is not configured' });
+    }
+
+    const ext = contentType === 'image/png' ? 'png' : 'jpg';
+    const key = `org/${orgId}/photos/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+
+    // If AWS creds are not present, return a dev stub to unblock local testing
+    if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
+      const stubUrl = `${process.env.AWS_S3_ENDPOINT || 'https://example-s3.local'}/${bucket}/${key}`;
+      return res.json({
+        dev_stub: true,
+        key,
+        url: stubUrl,
+        method: 'PUT',
+        headers: { 'Content-Type': contentType },
+        constraints: { maxSize: maxBytes, allowedContentTypes: allowed },
+      });
+    }
+
+    const s3 = createS3Client();
+    const fields = { 'Content-Type': contentType }; // enforce exact content-type
+    // Optional server-side encryption
+    if (process.env.S3_KMS_KEY_ID) {
+      fields['x-amz-server-side-encryption'] = 'aws:kms';
+      fields['x-amz-server-side-encryption-aws-kms-key-id'] = process.env.S3_KMS_KEY_ID;
+    }
+
+    const conditions = [
+      ['content-length-range', 1, maxBytes],
+      { 'Content-Type': contentType },
+    ];
+
+    const { url, fields: postFields } = await createPresignedPost(s3, {
+      Bucket: bucket,
+      Key: key,
+      Conditions: conditions,
+      Fields: fields,
+      Expires: 60, // seconds
+    });
+
+    res.json({
+      key,
+      url,
+      method: 'POST',
+      fields: postFields,
+      constraints: { maxSize: maxBytes, allowedContentTypes: allowed },
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 
 module.exports = router;
