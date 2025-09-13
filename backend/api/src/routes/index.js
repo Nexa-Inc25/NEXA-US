@@ -9,6 +9,7 @@ const photoQaRoutes = require('./photoQa');
 const timesheetRoutes = require('./timesheet');
 const closeoutRoutes = require('./closeout');
 const notifyRoutes = require('./notify');
+const adminRoutes = require('./admin');
 
 router.use(authRoutes);
 router.use(todayRoutes);
@@ -18,5 +19,6 @@ router.use(photoQaRoutes);
 router.use(timesheetRoutes);
 router.use(closeoutRoutes);
 router.use(notifyRoutes);
+router.use(adminRoutes);
 
 module.exports = router;
