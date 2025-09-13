@@ -17,7 +17,15 @@ export function AuthProvider({ children }) {
   const scheme = extra.REDIRECT_SCHEME || 'nexaapp';
 
   const discovery = AuthSession.useAutoDiscovery(`https://${domain}`);
-  const redirectUri = AuthSession.makeRedirectUri({ scheme });
+  // Use Expo AuthSession proxy in dev to simplify callbacks
+  const useProxy = true;
+  const redirectUri = AuthSession.makeRedirectUri({ scheme, useProxy });
+  // Debug: confirm the redirect URI and core auth config at runtime
+  if (__DEV__) {
+    // clientId is not a secret; safe to log in dev
+    console.log('[Auth] domain:', domain, 'audience:', audience, 'clientId:', clientId);
+    console.log('[Auth] redirectUri:', redirectUri, 'useProxy:', useProxy);
+  }
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [accessToken, setAccessToken] = useState(null);
@@ -47,7 +55,10 @@ export function AuthProvider({ children }) {
         usePKCE: true,
       });
       await request.makeAuthUrlAsync(discovery);
-      const result = await request.promptAsync(discovery);
+      if (__DEV__) {
+        console.log('[Auth] authorize URL (masked):', request.url?.replace(clientId, '***')); // avoid over-logging
+      }
+      const result = await request.promptAsync(discovery, { useProxy });
       if (result.type === 'success') {
         const tokenResponse = await AuthSession.exchangeCodeAsync(
           {
@@ -75,6 +86,10 @@ export function AuthProvider({ children }) {
       }
     } catch (err) {
       console.error('Auth error:', err);
+      if (__DEV__) {
+        // Common cause: redirectUri mismatch → ensure https://auth.expo.io/@<username>/nexa-mobile
+        console.log('[Auth] Hint: verify Allowed Callback URL matches redirectUri exactly.');
+      }
     }
   };
 

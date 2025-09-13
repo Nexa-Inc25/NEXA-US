@@ -14,9 +14,9 @@
     },
     "extra": {
       "AUTH0_DOMAIN": "dev-4klipkgroc7grk1q.us.auth0.com",
-      "AUTH0_CLIENT_ID": "68c4e59c7569f032205c6b38",
+      "AUTH0_CLIENT_ID": "Hvh8vpuouK1Ooeslc10ZZg8bNAnU5VJs",
       "AUTH0_AUDIENCE": "https://api.nexa.local",
-      "API_BASE_URL": "http://192.168.1.176:4001",
+      "API_BASE_URL": "http://192.168.1.176:4000",
       "REDIRECT_SCHEME": "nexaapp"
     },
     "plugins": [
