@@ -1,9 +1,22 @@
 const express = require('express');
 const router = express.Router();
 const { withOrg } = require('../db');
+const rateLimit = require('express-rate-limit');
+const { z } = require('zod');
+const { validateBody } = require('../middleware/validate');
+
+// Per-route limiter (fallbacks to global envs if specific not provided)
+const windowMs = parseInt(process.env.RATE_LIMIT_WINDOW_MS_CLOSEOUT || process.env.RATE_LIMIT_WINDOW_MS || '60000', 10);
+const max = parseInt(process.env.RATE_LIMIT_MAX_CLOSEOUT || '30', 10);
+const closeoutLimiter = rateLimit({ windowMs, max, standardHeaders: true, legacyHeaders: false });
+
+const CloseoutSchema = z.object({
+  jobId: z.string().min(1).nullable().optional(),
+  approve: z.boolean().optional().default(false),
+});
 
 // POST /closeout/generate — returns PDF S3 key and persists closeout record
-router.post('/closeout/generate', async (req, res, next) => {
+router.post('/closeout/generate', closeoutLimiter, validateBody(CloseoutSchema), async (req, res, next) => {
   const orgId = (req.user && req.user.orgId) || 'dev-org';
   const { jobId = null, approve = false } = req.body || {};
   const pdfKey = `org/${orgId}/closeouts/${jobId || 'job'}/${Date.now()}.pdf`;

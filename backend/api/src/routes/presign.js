@@ -2,10 +2,24 @@ const express = require('express');
 const crypto = require('crypto');
 const { createPresignedPost } = require('@aws-sdk/s3-presigned-post');
 const { createS3Client } = require('../services/s3');
+const rateLimit = require('express-rate-limit');
+const { z } = require('zod');
+const { validateBody } = require('../middleware/validate');
 const router = express.Router();
 
+// Per-route rate limit (stricter for presign)
+const presignWindowMs = parseInt(process.env.RATE_LIMIT_WINDOW_MS_PRESIGN || process.env.RATE_LIMIT_WINDOW_MS || '60000', 10);
+const presignMax = parseInt(process.env.RATE_LIMIT_MAX_PRESIGN || '30', 10);
+const presignLimiter = rateLimit({ windowMs: presignWindowMs, max: presignMax, standardHeaders: true, legacyHeaders: false });
+
+// Validation schema for request body
+const PhotoSchema = z.object({
+  contentType: z.enum(['image/jpeg', 'image/png']).default('image/jpeg'),
+  size: z.number().int().nonnegative().optional(),
+});
+
 // POST /presign/photo — returns S3 presigned POST with constraints
-router.post('/presign/photo', async (req, res, next) => {
+router.post('/presign/photo', presignLimiter, validateBody(PhotoSchema), async (req, res, next) => {
   const orgId = (req.user && req.user.orgId) || 'dev-org';
   const { contentType = 'image/jpeg', size = 0 } = req.body || {};
 

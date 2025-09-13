@@ -1,9 +1,25 @@
 const express = require('express');
 const router = express.Router();
 const { withOrg } = require('../db');
+const rateLimit = require('express-rate-limit');
+const { z } = require('zod');
+const { validateBody } = require('../middleware/validate');
+
+// Per-route limiter for timesheet
+const windowMs = parseInt(process.env.RATE_LIMIT_WINDOW_MS_TIMESHEET || process.env.RATE_LIMIT_WINDOW_MS || '60000', 10);
+const max = parseInt(process.env.RATE_LIMIT_MAX_TIMESHEET || '60', 10);
+const timesheetLimiter = rateLimit({ windowMs, max, standardHeaders: true, legacyHeaders: false });
+
+const TimesheetSchema = z.object({
+  crew: z.array(z.string().min(1)).default([]),
+  hours: z.record(z.string(), z.number().nonnegative()).default({}),
+  equipment: z.array(z.string()).default([]),
+  tasks: z.array(z.string()).default([]),
+  jobId: z.string().min(1).nullable().optional(),
+});
 
 // POST /timesheet/normalize — to utility format (stub)
-router.post('/timesheet/normalize', async (req, res, next) => {
+router.post('/timesheet/normalize', timesheetLimiter, validateBody(TimesheetSchema), async (req, res, next) => {
   const orgId = (req.user && req.user.orgId) || 'dev-org';
   const { crew = [], hours = {}, equipment = [], tasks = [], jobId = null } = req.body || {};
 

@@ -6,18 +6,19 @@ The API enforces `org_id` via Postgres RLS. Tokens MUST contain `org_id` and `ro
 
 ## 1) Create an Auth0 Application
 
-- Type: Regular Web Application (works for native PKCE flows too)
-- Domain: your-tenant.us.auth0.com
-- Client ID: copy for later
+- Type: Native
+- Domain: dev-4klipkgroc7grk1q.us.auth0.com
+- Client ID (mobile): Hvh8vpuouK1Ooeslc10ZZg8bNAnU5VJs
+- API Identifier (Audience): https://api.nexa.local
 
 ## 2) Allowed URLs and origins
 
 Using Expo AuthSession proxy in development:
 
 - Allowed Callback URLs:
-  - https://auth.expo.io/@YOUR_EXPO_USERNAME/nexa-mobile
+  - https://auth.expo.io/@nexa-inc/nexa-mobile
 - Allowed Logout URLs:
-  - https://auth.expo.io/@YOUR_EXPO_USERNAME/nexa-mobile
+  - https://auth.expo.io/@nexa-inc/nexa-mobile
 - Allowed Web Origins:
   - https://auth.expo.io
 
@@ -66,10 +67,10 @@ Edit `mobile/app.json` under `expo.extra`:
 {
   "expo": {
     "extra": {
-      "AUTH0_DOMAIN": "your-tenant.us.auth0.com",
-      "AUTH0_CLIENT_ID": "YOUR_MOBILE_CLIENT_ID",
+      "AUTH0_DOMAIN": "dev-4klipkgroc7grk1q.us.auth0.com",
+      "AUTH0_CLIENT_ID": "Hvh8vpuouK1Ooeslc10ZZg8bNAnU5VJs",
       "AUTH0_AUDIENCE": "https://api.nexa.local",
-      "API_BASE_URL": "http://localhost:4000",
+      "API_BASE_URL": "http://192.168.1.176:4000",
       "REDIRECT_SCHEME": "nexaapp"
     }
   }
@@ -85,9 +86,9 @@ Edit `backend/api/.env` (copy from `.env.example`):
 
 ```
 AUTH_DISABLED=0
-AUTH0_DOMAIN=your-tenant.us.auth0.com
+AUTH0_DOMAIN=dev-4klipkgroc7grk1q.us.auth0.com
 AUTH0_AUDIENCE=https://api.nexa.local
-AUTH0_ISSUER_URL=https://your-tenant.us.auth0.com/
+AUTH0_ISSUER_URL=https://dev-4klipkgroc7grk1q.us.auth0.com/
 # Multiple keys supported (comma-separated). Namespaced fallbacks included.
 ORG_ID_CLAIM=org_id,https://nexa.app/org_id
 ROLES_CLAIM=roles,https://nexa.app/roles

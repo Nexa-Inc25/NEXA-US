@@ -58,9 +58,30 @@ npm start
 - Use "Dev Login (Bypass)" to try flows during development without Auth0.
 - Press "Sync" on the Today screen to pull data from the API and populate the local SQLite cache.
 
-Configuration comes from `mobile/app.json` under `expo.extra`:
-- `API_BASE_URL` should point to the API, defaults to `http://localhost:4000`.
-- Auth0 values (`AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_AUDIENCE`) can be set later to enable PKCE login.
+  Configuration comes from `mobile/app.json` under `expo.extra`:
+  - `API_BASE_URL` should point to the API, defaults to `http://localhost:4000`.
+  - Auth0 values (`AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_AUDIENCE`) can be set later to enable PKCE login.
+
+  ### Configure Auth0 (when ready)
+
+  1. Create an Auth0 Regular Web App (used for native PKCE too).
+  2. Add Callback URLs:
+     - Using Expo proxy (recommended in dev): `https://auth.expo.io/@YOUR_EXPO_USERNAME/nexa-mobile`
+     - Native scheme (for production builds): `nexaapp://redirect`
+  3. Add Allowed Logout URLs:
+     - `https://auth.expo.io/@YOUR_EXPO_USERNAME/nexa-mobile`
+     - `nexaapp://`
+  4. Add Allowed Web Origins:
+     - `https://auth.expo.io`
+  5. In `mobile/app.json` → `expo.extra`, set:
+     - `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_AUDIENCE` (must match API audience)
+  6. In API `backend/api/.env`, set Auth0 vars and disable bypass:
+     - `AUTH_DISABLED=0`
+     - `AUTH0_DOMAIN=your-tenant.us.auth0.com`
+     - `AUTH0_AUDIENCE=https://api.nexa.local`
+     - `AUTH0_ISSUER_URL=https://your-tenant.us.auth0.com/`
+     - (optional) `ORG_ID_CLAIM` and `ROLES_CLAIM` support comma-separated keys; namespaced fallbacks are included.
+  7. Restart API and the Expo app. Use normal Login with Auth0.
 
 ## Key Documents
 

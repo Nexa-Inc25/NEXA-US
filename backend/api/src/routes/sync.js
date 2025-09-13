@@ -3,9 +3,29 @@ const router = express.Router();
 const { withOrg } = require('../db');
 const { logAudit } = require('../db/audit');
 const crypto = require('crypto');
+const rateLimit = require('express-rate-limit');
+const { z } = require('zod');
+const { validateBody, validateQuery } = require('../middleware/validate');
+
+// Per-route limiter for /sync
+const syncWindowMs = parseInt(process.env.RATE_LIMIT_WINDOW_MS_SYNC || process.env.RATE_LIMIT_WINDOW_MS || '60000', 10);
+const syncMax = parseInt(process.env.RATE_LIMIT_MAX_SYNC || '120', 10);
+const syncLimiter = rateLimit({ windowMs: syncWindowMs, max: syncMax, standardHeaders: true, legacyHeaders: false });
+
+// Validation schemas
+const SyncGetQuery = z.object({
+  since: z.string().datetime().optional(),
+});
+
+const Job = z.object({ id: z.string().min(1), name: z.string().min(1), profit_chip: z.string().optional(), updated_at: z.string().optional() });
+const Material = z.object({ id: z.string().min(1), job_id: z.string().min(1), sku: z.string().min(1), qty: z.number().int(), updated_at: z.string().optional() });
+const Pin = z.object({ id: z.string().min(1), job_id: z.string().min(1), kind: z.string().min(1), lat: z.number(), lng: z.number(), updated_at: z.string().optional() });
+const Check = z.object({ id: z.string().min(1), prompt: z.string().min(1), required: z.boolean().default(true), updated_at: z.string().optional() });
+const Upserts = z.object({ jobs: z.array(Job).optional(), materials: z.array(Material).optional(), pins: z.array(Pin).optional(), checklist: z.array(Check).optional() });
+const SyncPostBody = z.object({ idempotency_key: z.string().min(1).max(128).optional(), upserts: Upserts.default({}) });
 
 // GET /sync?since=ISO8601 — delta pull
-router.get('/sync', async (req, res, next) => {
+router.get('/sync', syncLimiter, validateQuery(SyncGetQuery), async (req, res, next) => {
   const since = req.query.since || null;
   const now = new Date().toISOString();
   const orgId = (req.user && req.user.orgId) || 'dev-org';
@@ -56,7 +76,7 @@ router.get('/sync', async (req, res, next) => {
 });
 
 // POST /sync — batched upserts
-router.post('/sync', async (req, res, next) => {
+router.post('/sync', syncLimiter, validateBody(SyncPostBody), async (req, res, next) => {
   const { idempotency_key, upserts } = req.body || {};
   const orgId = (req.user && req.user.orgId) || 'dev-org';
 
