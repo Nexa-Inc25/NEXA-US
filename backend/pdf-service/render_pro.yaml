@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: nexa-pdf-analyzer-pro
+    runtime: python
+    plan: pro  # $30/month - 2 CPU, 4GB RAM
+    buildCommand: pip install -r requirements_complete.txt
+    startCommand: streamlit run app_complete.py --server.port $PORT --server.address 0.0.0.0
+    healthCheckPath: /health
+    disk:
+      name: nexa-storage
+      mountPath: /data
+      sizeGB: 10
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: AUTH_ENABLED
+        value: "false"  # Set to true for production
+      - key: USE_POSTGRES
+        value: "true"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: nexa-db
+          property: connectionString
+      - key: API_URL
+        value: https://nexa-pdf-analyzer-pro.onrender.com
+      - key: STREAMLIT_SERVER_PORT
+        generateValue: true
+      - key: STREAMLIT_SERVER_ENABLE_CORS
+        value: "true"
+      - key: STREAMLIT_SERVER_HEADLESS
+        value: "true"
+
+databases:
+  - name: nexa-db
+    databaseName: nexa
+    user: nexa
+    plan: pro  # Pro database for better performance
+    ipAllowList: []  # Allow connections from anywhere
