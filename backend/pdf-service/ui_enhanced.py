@@ -16,7 +16,11 @@ from datetime import datetime
 import json
 import numpy as np
 
-nltk.download('punkt', quiet=True)
+# Download NLTK data (skip if already exists)
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    nltk.download('punkt', quiet=True)
 
 # Use lightweight model; check for GPU
 device = 'cuda' if torch.cuda.is_available() else 'cpu'

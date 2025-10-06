@@ -17,6 +17,10 @@ COPY backend/pdf-service/requirements.txt ./backend/pdf-service/
 # Install Python dependencies
 RUN pip install --no-cache-dir -r backend/pdf-service/requirements.txt
 
+# Pre-download NLTK data to avoid runtime errors
+RUN python -c "import nltk; nltk.download('punkt', quiet=True)"
+ENV NLTK_DATA=/app/nltk_data
+
 # Copy application code
 COPY backend/pdf-service ./backend/pdf-service
 
