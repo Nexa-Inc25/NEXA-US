@@ -70,65 +70,53 @@ async def encode_texts_async(texts: List[str], batch_size: int = 32):
 # Database connection with validation
 DB_URL = os.getenv("DATABASE_URL")
 
-# Fix DATABASE_URL if it's missing port (common Render issue)
-def fix_database_url(url):
-    """Fix DATABASE_URL by adding port 5432 if missing"""
-    if not url:
-        return None
-    
-    # Parse the URL to check for port
-    parsed = urlparse(url)
-    
-    # If no port specified, add default PostgreSQL port 5432
-    if not parsed.port:
-        # Render internal databases use port 5432
-        # Format: postgresql://user:pass@host/db -> postgresql://user:pass@host:5432/db
-        if parsed.hostname:
-            # Reconstruct URL with port
-            netloc = f"{parsed.username}:{parsed.password}@{parsed.hostname}:5432" if parsed.username else f"{parsed.hostname}:5432"
-            fixed_url = urlunparse((
-                parsed.scheme,
-                netloc,
-                parsed.path,
-                parsed.params,
-                parsed.query,
-                parsed.fragment
-            ))
-            logger.info(f"Fixed DATABASE_URL by adding port 5432")
-            return fixed_url
-    
-    return url
-
-# Validate DATABASE_URL format
-def validate_database_url(url):
-    """Validate that DATABASE_URL follows PostgreSQL connection string format"""
+# Check if DATABASE_URL is a placeholder
+def is_placeholder_url(url):
+    """Check if DATABASE_URL is a placeholder value"""
     if not url:
         return False
-    
-    # Check for common invalid patterns that might indicate placeholder text
-    invalid_patterns = ['[', ']', '{', '}', '<', '>', 'your-', 'YOUR_', 'example', 'EXAMPLE', ':port']
-    for pattern in invalid_patterns:
-        if pattern in url:
-            logger.warning(f"DATABASE_URL contains invalid pattern '{pattern}' - likely a placeholder")
-            return False
-    
-    # Basic format check for PostgreSQL URLs
-    if not url.startswith(('postgresql://', 'postgres://')):
-        logger.warning("DATABASE_URL should start with postgresql:// or postgres://")
-        return False
-    
-    # Check for minimum required components
-    if '@' not in url or '/' not in url:
-        logger.warning("DATABASE_URL missing required components (user@host/database)")
-        return False
-    
-    return True
+    placeholder_indicators = [
+        'host:port',  # Literal text "host:port"
+        'user:password',  # Default placeholder
+        '@host/',  # Generic host
+        'your-',
+        'example',
+        '[', ']', '{', '}'
+    ]
+    for indicator in placeholder_indicators:
+        if indicator.lower() in url.lower():
+            return True
+    return False
 
-# Fix the DATABASE_URL if needed
-DB_URL = fix_database_url(DB_URL)
+# Validate and fix DATABASE_URL
+if DB_URL and is_placeholder_url(DB_URL):
+    logger.error("DATABASE_URL is a placeholder value!")
+    logger.error(f"Found: {DB_URL}")
+    logger.error("Please set the actual DATABASE_URL in Render environment variables:")
+    logger.error("postgresql://nexa_admin:h7L101QmZt1WTyVHrnm4rLOz2wKRVF4G@dpg-d3hh2i63jp1c73fht4hg-a:5432/nexa_aerh")
+    logger.warning("Using in-memory storage until DATABASE_URL is fixed")
+    DB_URL = None
+elif DB_URL:
+    # Fix missing port if needed
+    parsed = urlparse(DB_URL)
+    if not parsed.port and parsed.hostname:
+        # Add default PostgreSQL port 5432
+        netloc = f"{parsed.username}:{parsed.password}@{parsed.hostname}:5432" if parsed.username else f"{parsed.hostname}:5432"
+        DB_URL = urlunparse((
+            parsed.scheme,
+            netloc,
+            parsed.path,
+            parsed.params,
+            parsed.query,
+            parsed.fragment
+        ))
+        logger.info("Fixed DATABASE_URL by adding port 5432")
+    logger.info(f"DATABASE_URL configured: {DB_URL.split('@')[0].split('://')[0]}://***@{DB_URL.split('@')[1] if '@' in DB_URL else 'unknown'}")
+else:
+    logger.info("No DATABASE_URL configured, using in-memory storage")
 
 # Attempt database connection with proper error handling
-if DB_URL and validate_database_url(DB_URL):
+if DB_URL:
     try:
         logger.info(f"Attempting to connect to database...")
         # Mask password in log
