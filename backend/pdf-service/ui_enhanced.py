@@ -19,7 +19,7 @@ import numpy as np
 # Page configuration MUST be the very first Streamlit command
 st.set_page_config(
     page_title="NEXA AI Document Analyzer Enterprise",
-    page_icon="📄",
+    page_icon="■",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -61,30 +61,119 @@ DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:password@localho
 # Persistence (attach Render Disk for production; fallback to temp)
 EMBEDDINGS_PATH = os.environ.get('RENDER_DISK_PATH', '/tmp') + '/spec_embeddings.pkl'
 
-# Custom CSS for professional styling
+# Custom CSS matching foreman app design
 st.markdown("""
     <style>
+    /* Global Styles */
     .main {
-        padding-top: 1rem;
+        background-color: #FFFFFF;
+        padding-top: 0.5rem;
     }
+    
+    /* Headers */
+    h1, h2, h3 {
+        color: #2D3748 !important;
+        font-weight: 700 !important;
+    }
+    
+    h1 { font-size: 28px !important; }
+    h2 { font-size: 20px !important; }
+    h3 { font-size: 16px !important; }
+    
+    /* Buttons - Professional Steel Blue */
     .stButton>button {
         width: 100%;
         background-color: #4682B4;
-        color: white;
-        border-radius: 8px;
-        font-weight: bold;
-        transition: all 0.3s;
+        color: #FFFFFF;
+        border-radius: 4px;
+        font-weight: 700;
+        font-size: 16px;
+        padding: 12px 24px;
+        transition: all 0.2s;
         border: none;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
     .stButton>button:hover {
         background-color: #5A7A9A;
-        box-shadow: 0 4px 12px rgba(70, 130, 180, 0.3);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
-    .metric-card {
-        background-color: #f8fafc;
-        padding: 1rem;
-        border-radius: 8px;
+    
+    /* Metric Cards */
+    [data-testid="stMetricValue"] {
+        font-size: 24px;
+        font-weight: 700;
+        color: #4682B4;
+    }
+    [data-testid="stMetricLabel"] {
+        font-size: 12px;
+        color: #5A7A9A;
+        font-weight: 500;
+    }
+    
+    /* Tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        background-color: #F8FAFC;
+        border-bottom: 1px solid #E2E8F0;
+    }
+    .stTabs [data-baseweb="tab"] {
+        color: #5A7A9A;
+        font-weight: 500;
+        font-size: 14px;
+    }
+    .stTabs [aria-selected="true"] {
+        color: #4682B4;
+        border-bottom-color: #4682B4;
+    }
+    
+    /* File Uploader */
+    [data-testid="stFileUploader"] {
+        background-color: #F8FAFC;
+        border: 1px solid #E2E8F0;
+        border-radius: 4px;
+        padding: 16px;
+    }
+    
+    /* Dataframe */
+    [data-testid="stDataFrame"] {
+        border: 1px solid #E2E8F0;
+        border-radius: 4px;
+    }
+    
+    /* Status Card */
+    .status-card {
+        background-color: #F8FAFC;
         border-left: 4px solid #4682B4;
+        padding: 16px;
+        border-radius: 4px;
+        margin: 8px 0;
+    }
+    
+    /* Success/Info/Warning - Subdued */
+    .stSuccess, .stInfo, .stWarning, .stError {
+        background-color: #F8FAFC;
+        border-left: 4px solid;
+        border-radius: 4px;
+        padding: 12px;
+        font-size: 14px;
+        font-weight: 500;
+    }
+    .stSuccess { border-left-color: #10B981; color: #065F46; }
+    .stInfo { border-left-color: #4682B4; color: #1E3A5F; }
+    .stWarning { border-left-color: #F59E0B; color: #78350F; }
+    .stError { border-left-color: #EF4444; color: #7F1D1D; }
+    
+    /* Sidebar */
+    [data-testid="stSidebar"] {
+        background-color: #F8FAFC;
+        border-right: 1px solid #E2E8F0;
+    }
+    [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
+        color: #2D3748 !important;
+    }
+    
+    /* Divider */
+    hr {
+        border-color: #E2E8F0;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -174,13 +263,26 @@ def analyze_infraction(infraction, chunks, embeddings, confidence_threshold=0.7)
         "spec_matches": len(relevant)
     }
 
-# UI Layout
-st.title("🏗️ NEXA AI Document Analyzer")
-st.markdown("**Enterprise QA Audit Tool** - Phase 1 Roadmap Implementation")
+# UI Layout - Header matching foreman app
+st.markdown("""
+<div style="background-color: #F8FAFC; padding: 16px; border-bottom: 1px solid #E2E8F0; margin: -1rem -1rem 1rem -1rem;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+        <div>
+            <div style="font-size: 14px; color: #5A7A9A; font-weight: 400;">NEXA Enterprise</div>
+            <div style="font-size: 24px; font-weight: 700; color: #2D3748; margin-top: 4px;">AI Document Analyzer</div>
+        </div>
+        <div style="background-color: #4682B4; padding: 6px 12px; border-radius: 4px;">
+            <div style="font-size: 10px; font-weight: 700; color: #FFFFFF; letter-spacing: 0.5px;">ENTERPRISE</div>
+            <div style="font-size: 11px; color: #FFFFFF; font-weight: 500; margin-top: 2px;">$500/user/month</div>
+        </div>
+    </div>
+    <div style="font-size: 14px; color: #5A7A9A; font-weight: 500;">{}</div>
+</div>
+""".format(datetime.now().strftime('%A, %B %d, %Y')), unsafe_allow_html=True)
 
-# Sidebar for metrics
+# Sidebar - Professional metrics
 with st.sidebar:
-    st.header("📊 System Metrics")
+    st.header("System Configuration")
     col1, col2 = st.columns(2)
     with col1:
         st.metric("Model", "MiniLM-L6-v2", delta="384-dim")
@@ -188,7 +290,7 @@ with st.sidebar:
         st.metric("Device", device.upper(), delta="Ready")
     
     st.divider()
-    st.subheader("🔧 Settings")
+    st.subheader("Analysis Parameters")
     confidence_threshold = st.slider("Confidence Threshold", 0.0, 1.0, 0.7, 0.05)
     chunk_size = st.slider("Chunk Size", 200, 800, 400, 50)
     
@@ -200,8 +302,8 @@ with st.sidebar:
     if st.checkbox("Offline Mode"):
         st.warning("Offline: Uploads queued for sync")
 
-# Main interface tabs
-tab1, tab2, tab3 = st.tabs(["📚 Learn Spec Book", "🔍 Analyze Audit", "📈 Results"])
+# Main interface tabs - Clean labels
+tab1, tab2, tab3 = st.tabs(["Learn Specification", "Analyze Audit", "Results"])
 
 with tab1:
     st.header("Upload and Learn Spec Book")
@@ -211,12 +313,12 @@ with tab1:
     
     col1, col2 = st.columns([2, 1])
     with col1:
-        if st.button("🚀 Learn Spec Book", type="primary", use_container_width=True):
+        if st.button("Process Specification Book", type="primary", use_container_width=True):
             if spec_file:
                 with st.spinner("Processing large spec book... This may take a few minutes"):
                     try:
                         chunks, embeddings = load_or_learn_spec(spec_file)
-                        st.success(f"✅ Successfully learned {len(chunks)} chunks from spec book")
+                        st.success(f"Successfully processed {len(chunks)} chunks from specification book")
                         st.info(f"Embeddings saved to: {EMBEDDINGS_PATH}")
                         
                         # Display sample chunks
@@ -230,7 +332,7 @@ with tab1:
     
     with col2:
         if os.path.exists(EMBEDDINGS_PATH):
-            st.success("✓ Spec learned")
+            st.success("Specification loaded")
             if st.button("Clear Cache"):
                 os.remove(EMBEDDINGS_PATH)
                 st.rerun()
@@ -243,9 +345,9 @@ with tab2:
     
     audit_file = st.file_uploader("Choose Audit PDF", type="pdf", key="audit_uploader")
     
-    if st.button("🔍 Analyze Infractions", type="primary", use_container_width=True):
+    if st.button("Analyze Infractions", type="primary", use_container_width=True):
         if not os.path.exists(EMBEDDINGS_PATH):
-            st.error("❌ Please learn the spec book first (Tab 1)")
+            st.error("ERROR: Please load specification book first (Tab 1)")
         elif not audit_file:
             st.warning("Please upload an audit document")
         else:
@@ -269,7 +371,7 @@ with tab2:
                             
                             results.append({
                                 "Infraction": inf.strip()[:150] + "..." if len(inf) > 150 else inf.strip(),
-                                "Status": "🔴 Repealable" if analysis["repealable"] else "✅ Valid",
+                                "Status": "REPEALABLE" if analysis["repealable"] else "VALID",
                                 "Confidence": f"{analysis['confidence']:.1%}",
                                 "Spec Matches": analysis["spec_matches"],
                                 "Primary Reason": analysis["reasons"][0] if analysis["reasons"] else "No spec match found"
@@ -281,7 +383,7 @@ with tab2:
                     st.session_state['analysis_results'] = results
                     st.session_state['analysis_timestamp'] = datetime.now()
                     
-                    st.success(f"✅ Analyzed {len(results)} infractions")
+                    st.success(f"Analysis complete: {len(results)} infractions processed")
                     
                 except Exception as e:
                     st.error(f"Analysis error: {str(e)}")
@@ -297,7 +399,7 @@ with tab3:
         col1, col2, col3, col4 = st.columns(4)
         
         total_infractions = len(results)
-        repealable = sum(1 for r in results if "🔴" in r["Status"])
+        repealable = sum(1 for r in results if r["Status"] == "REPEALABLE")
         valid = total_infractions - repealable
         avg_confidence = np.mean([float(r["Confidence"].strip('%'))/100 for r in results])
         
@@ -325,9 +427,9 @@ with tab3:
         # Apply filters
         filtered_results = results
         if status_filter == "Repealable":
-            filtered_results = [r for r in results if "🔴" in r["Status"]]
+            filtered_results = [r for r in results if r["Status"] == "REPEALABLE"]
         elif status_filter == "Valid":
-            filtered_results = [r for r in results if "✅" in r["Status"]]
+            filtered_results = [r for r in results if r["Status"] == "VALID"]
         
         # Sort results
         if sort_by == "Confidence":
@@ -343,7 +445,7 @@ with tab3:
         col1, col2 = st.columns(2)
         
         with col1:
-            if st.button("📥 Export to JSON"):
+            if st.button("Export to JSON"):
                 json_str = json.dumps(filtered_results, indent=2)
                 st.download_button(
                     label="Download JSON",
@@ -353,7 +455,7 @@ with tab3:
                 )
         
         with col2:
-            if st.button("📊 Generate Report"):
+            if st.button("Generate Report"):
                 report = f"""
 NEXA AI Document Analysis Report
 Generated: {timestamp.strftime('%Y-%m-%d %H:%M:%S')}
@@ -380,7 +482,7 @@ DETAILS
                     mime="text/plain"
                 )
     else:
-        st.info("📋 No analysis results yet. Upload and analyze an audit document in Tab 2.")
+        st.info("No analysis results available. Please process an audit document in the Analyze tab.")
 
 # Footer
 st.divider()
