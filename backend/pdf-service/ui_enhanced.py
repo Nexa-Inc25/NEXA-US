@@ -16,6 +16,14 @@ from datetime import datetime
 import json
 import numpy as np
 
+# Page configuration MUST be the very first Streamlit command
+st.set_page_config(
+    page_title="NEXA AI Document Analyzer Enterprise",
+    page_icon="📄",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
 # Download NLTK data (skip if already exists)
 try:
     nltk.data.find('tokenizers/punkt')
@@ -52,14 +60,6 @@ DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:password@localho
 
 # Persistence (attach Render Disk for production; fallback to temp)
 EMBEDDINGS_PATH = os.environ.get('RENDER_DISK_PATH', '/tmp') + '/spec_embeddings.pkl'
-
-# Page configuration
-st.set_page_config(
-    page_title="NEXA AI Document Analyzer Enterprise",
-    page_icon="📄",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
 
 # Custom CSS for professional styling
 st.markdown("""
