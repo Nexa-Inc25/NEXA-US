@@ -2,8 +2,9 @@ services:
   # FastAPI Backend Service
   - type: web
     name: nexa-api
-    runtime: docker
-    dockerfilePath: ./Dockerfile.api
+    runtime: python
+    buildCommand: pip install -r backend/pdf-service/requirements.txt
+    startCommand: cd backend/pdf-service && uvicorn api:app --host 0.0.0.0 --port $PORT --workers 2
     branch: main
     healthCheckPath: /health
     envVars:
@@ -20,8 +21,9 @@ services:
   # Streamlit Frontend Service  
   - type: web
     name: nexa-ui
-    runtime: docker
-    dockerfilePath: ./Dockerfile.ui
+    runtime: python
+    buildCommand: pip install -r backend/pdf-service/requirements.txt
+    startCommand: cd backend/pdf-service && streamlit run ui.py --server.port $PORT --server.address 0.0.0.0 --server.headless true
     branch: main
     envVars:
       - key: API_URL
