@@ -32,8 +32,8 @@ ENV PATH="/usr/local/bin:$PATH"
 # Expose port (Render sets this via $PORT env var)
 EXPOSE 8501
 
-# Use uvicorn for FastAPI (more stable for deployments)
-CMD cd backend/pdf-service && python -m uvicorn api:app \
-    --host 0.0.0.0 \
-    --port ${PORT:-8000} \
-    --workers 1
+# Change to app directory
+WORKDIR /app/backend/pdf-service
+
+# Use uvicorn for FastAPI (exec form for better compatibility)
+CMD ["sh", "-c", "python -m uvicorn api:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1"]
