@@ -1,31 +1,32 @@
 """
 NEXA AI Document Analyzer - Streamlit Frontend Service
-Web UI for spec upload, audit analysis, and results visualization
-Connects to FastAPI backend service
+Aligns with Phase 1-3 of NEXA Roadmap for AI-driven processing
 """
 
 import streamlit as st
-import requests
-import json
-import pandas as pd
-import asyncio
-import aiohttp
 import os
-import time
+import pickle
+from sentence_transformers import SentenceTransformer, util
+from pypdf import PdfReader
+import nltk
+import re
+import torch
+import psycopg2
 from datetime import datetime
-import plotly.express as px
-import plotly.graph_objects as go
+import json
+import numpy as np
 
-# API Configuration
-API_URL = os.getenv("API_URL", "http://localhost:8000")
+nltk.download('punkt', quiet=True)
 
-@st.cache_data(ttl=60)
-def get_health_status():
-    """Cached health check to reduce repeated network calls."""
-    try:
-        return requests.get(f"{API_URL}/health", timeout=5).json()
-    except Exception:
-        return {"status": "error"}
+# Use lightweight model; check for GPU
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+model = SentenceTransformer('all-MiniLM-L6-v2', device=device)
+
+# Database connection (keep for future integration)
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:password@localhost/nexa_db")
+
+# Persistence (attach Render Disk for production; fallback to temp)
+EMBEDDINGS_PATH = os.environ.get('RENDER_DISK_PATH', '/tmp') + '/spec_embeddings.pkl'
 
 # Page configuration
 st.set_page_config(

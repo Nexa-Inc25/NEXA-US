@@ -29,7 +29,7 @@ ENV PATH="/usr/local/bin:$PATH"
 EXPOSE 8501
 
 # Use streamlit command directly (it's installed in PATH via pip)
-CMD streamlit run backend/pdf-service/ui.py \
+CMD streamlit run backend/pdf-service/ui_enhanced.py \
     --server.port ${PORT:-8501} \
     --server.address 0.0.0.0 \
     --server.headless true \
