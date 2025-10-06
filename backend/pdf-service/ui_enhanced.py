@@ -133,19 +133,39 @@ st.markdown("""
         padding: 16px;
     }
     
-    /* Dataframe */
+    /* Dataframe - Foreman Style */
     [data-testid="stDataFrame"] {
-        border: 1px solid #E2E8F0;
+        border: none;
         border-radius: 4px;
+        overflow: hidden;
     }
     
-    /* Status Card */
-    .status-card {
+    /* Job Cards - Foreman Style */
+    .job-card {
         background-color: #F8FAFC;
         border-left: 4px solid #4682B4;
         padding: 16px;
         border-radius: 4px;
-        margin: 8px 0;
+        margin-bottom: 8px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+    .job-card-active { border-left-color: #4682B4; }
+    .job-card-completed { border-left-color: #10B981; }
+    .job-card-review { border-left-color: #F59E0B; }
+    .job-card-pending { border-left-color: #9CA3AF; }
+    
+    /* Stat Cards - Foreman Style */
+    .stat-card-container {
+        display: flex;
+        gap: 8px;
+        margin: 16px 0;
+    }
+    .stat-card-item {
+        flex: 1;
+        background-color: #F8FAFC;
+        padding: 16px;
+        border-radius: 4px;
+        text-align: center;
     }
     
     /* Success/Info/Warning - Subdued */
@@ -437,8 +457,27 @@ with tab3:
         elif sort_by == "Spec Matches":
             filtered_results = sorted(filtered_results, key=lambda x: x["Spec Matches"], reverse=True)
         
-        # Display table
-        st.dataframe(filtered_results, use_container_width=True)
+        # Display as job cards (foreman app style)
+        for idx, r in enumerate(filtered_results):
+            status_color = "#10B981" if r["Status"] == "VALID" else "#F59E0B"
+            status_class = "job-card-completed" if r["Status"] == "VALID" else "job-card-review"
+            
+            st.markdown(f"""
+            <div class="job-card {status_class}" style="border-left-color: {status_color};">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                    <div style="flex: 1; margin-right: 8px;">
+                        <div style="font-size: 16px; font-weight: 500; color: #2D3748; margin-bottom: 4px;">
+                            {r['Infraction'][:100]}...
+                        </div>
+                    </div>
+                    <div style="font-size: 14px; color: #5A7A9A; font-weight: 500;">{r['Confidence']}</div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-size: 14px; font-weight: 500; color: {status_color};">{r['Status']}</div>
+                    <div style="font-size: 20px; color: #5A7A9A;">→</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
         
         # Export options
         st.divider()
