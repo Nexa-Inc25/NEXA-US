@@ -16,10 +16,6 @@ headless = true
 gatherUsageStats = false
 serverAddress = "0.0.0.0"
 
-[runner]
-magicEnabled = false
-installTracer = false
-
 [client]
 showErrorDetails = true
 toolbarMode = "minimal"
