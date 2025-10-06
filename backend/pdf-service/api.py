@@ -731,6 +731,23 @@ async def closeout_generate(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate closeout: {str(e)}")
 
+@app.get("/")
+async def root():
+    """Root endpoint - API information"""
+    return {
+        "service": "NEXA AI Document Analyzer API",
+        "version": "1.0.0",
+        "status": "running",
+        "endpoints": {
+            "health": "/health",
+            "learn_spec": "/learn-spec/ (POST)",
+            "analyze_audit": "/analyze-audit/ (POST)",
+            "metrics": "/metrics",
+            "benchmark": "/bench/knn"
+        },
+        "documentation": "/docs"
+    }
+
 @app.get("/health")
 async def health():
     """Health check endpoint"""
