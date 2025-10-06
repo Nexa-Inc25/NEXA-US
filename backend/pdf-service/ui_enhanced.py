@@ -283,18 +283,12 @@ def analyze_infraction(infraction, chunks, embeddings, confidence_threshold=0.7)
         "spec_matches": len(relevant)
     }
 
-# UI Layout - Header matching foreman app
+# UI Layout - Clean header
 st.markdown("""
 <div style="background-color: #F8FAFC; padding: 16px; border-bottom: 1px solid #E2E8F0; margin: -1rem -1rem 1rem -1rem;">
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-        <div>
-            <div style="font-size: 14px; color: #5A7A9A; font-weight: 400;">NEXA Enterprise</div>
-            <div style="font-size: 24px; font-weight: 700; color: #2D3748; margin-top: 4px;">AI Document Analyzer</div>
-        </div>
-        <div style="background-color: #4682B4; padding: 6px 12px; border-radius: 4px;">
-            <div style="font-size: 10px; font-weight: 700; color: #FFFFFF; letter-spacing: 0.5px;">ENTERPRISE</div>
-            <div style="font-size: 11px; color: #FFFFFF; font-weight: 500; margin-top: 2px;">$500/user/month</div>
-        </div>
+    <div style="margin-bottom: 8px;">
+        <div style="font-size: 14px; color: #5A7A9A; font-weight: 400;">NEXA</div>
+        <div style="font-size: 24px; font-weight: 700; color: #2D3748; margin-top: 4px;">AI Document Analyzer</div>
     </div>
     <div style="font-size: 14px; color: #5A7A9A; font-weight: 500;">{}</div>
 </div>
