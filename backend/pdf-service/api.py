@@ -27,6 +27,7 @@ from functools import lru_cache
 from typing import List, Optional
 import math
 import logging
+from urllib.parse import urlparse, urlunparse
 
 app = FastAPI(title="NEXA AI Document Analyzer API")
 
@@ -69,6 +70,35 @@ async def encode_texts_async(texts: List[str], batch_size: int = 32):
 # Database connection with validation
 DB_URL = os.getenv("DATABASE_URL")
 
+# Fix DATABASE_URL if it's missing port (common Render issue)
+def fix_database_url(url):
+    """Fix DATABASE_URL by adding port 5432 if missing"""
+    if not url:
+        return None
+    
+    # Parse the URL to check for port
+    parsed = urlparse(url)
+    
+    # If no port specified, add default PostgreSQL port 5432
+    if not parsed.port:
+        # Render internal databases use port 5432
+        # Format: postgresql://user:pass@host/db -> postgresql://user:pass@host:5432/db
+        if parsed.hostname:
+            # Reconstruct URL with port
+            netloc = f"{parsed.username}:{parsed.password}@{parsed.hostname}:5432" if parsed.username else f"{parsed.hostname}:5432"
+            fixed_url = urlunparse((
+                parsed.scheme,
+                netloc,
+                parsed.path,
+                parsed.params,
+                parsed.query,
+                parsed.fragment
+            ))
+            logger.info(f"Fixed DATABASE_URL by adding port 5432")
+            return fixed_url
+    
+    return url
+
 # Validate DATABASE_URL format
 def validate_database_url(url):
     """Validate that DATABASE_URL follows PostgreSQL connection string format"""
@@ -76,7 +106,7 @@ def validate_database_url(url):
         return False
     
     # Check for common invalid patterns that might indicate placeholder text
-    invalid_patterns = ['[', ']', '{', '}', '<', '>', 'your-', 'YOUR_', 'example', 'EXAMPLE']
+    invalid_patterns = ['[', ']', '{', '}', '<', '>', 'your-', 'YOUR_', 'example', 'EXAMPLE', ':port']
     for pattern in invalid_patterns:
         if pattern in url:
             logger.warning(f"DATABASE_URL contains invalid pattern '{pattern}' - likely a placeholder")
@@ -93,6 +123,9 @@ def validate_database_url(url):
         return False
     
     return True
+
+# Fix the DATABASE_URL if needed
+DB_URL = fix_database_url(DB_URL)
 
 # Attempt database connection with proper error handling
 if DB_URL and validate_database_url(DB_URL):
