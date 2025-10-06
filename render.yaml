@@ -29,7 +29,7 @@ services:
   - type: web
     name: nexa-ui
     runtime: docker
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./Dockerfile.streamlit
     branch: main
     envVars:
       - key: API_URL
@@ -43,5 +43,5 @@ databases:
     plan: pro
     databaseName: nexa
     user: nexa
-    postgresMajorVersion: 15
+    postgresMajorVersion: "15"
     ipAllowList: []
