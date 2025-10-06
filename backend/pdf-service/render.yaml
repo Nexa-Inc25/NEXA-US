@@ -4,7 +4,7 @@ services:
     name: nexa-api
     runtime: python
     buildCommand: pip install --no-cache-dir -r backend/pdf-service/requirements.txt
-    startCommand: cd backend/pdf-service && python3 -m uvicorn api:app --host 0.0.0.0 --port $PORT --workers 2
+    startCommand: /bin/sh -c "cd backend/pdf-service && /usr/local/bin/python3 -m uvicorn api:app --host 0.0.0.0 --port $PORT --workers 2"
     branch: main
     healthCheckPath: /health
     envVars:
@@ -25,7 +25,7 @@ services:
     name: nexa-ui
     runtime: python
     buildCommand: pip install --no-cache-dir -r backend/pdf-service/requirements.txt
-    startCommand: cd backend/pdf-service && python3 -m streamlit run ui.py --server.port $PORT --server.address 0.0.0.0 --server.headless true
+    startCommand: /bin/sh -c "cd backend/pdf-service && /usr/local/bin/python3 -m streamlit run ui.py --server.port $PORT --server.address 0.0.0.0 --server.headless true"
     branch: main
     envVars:
       - key: API_URL
