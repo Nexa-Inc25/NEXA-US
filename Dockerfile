@@ -32,10 +32,8 @@ ENV PATH="/usr/local/bin:$PATH"
 # Expose port (Render sets this via $PORT env var)
 EXPOSE 8501
 
-# Use streamlit command directly (it's installed in PATH via pip)
-CMD streamlit run backend/pdf-service/ui_enhanced.py \
-    --server.port ${PORT:-8501} \
-    --server.address 0.0.0.0 \
-    --server.headless true \
-    --server.maxUploadSize 200 \
-    --server.enableCORS false
+# Use uvicorn for FastAPI (more stable for deployments)
+CMD cd backend/pdf-service && python -m uvicorn api:app \
+    --host 0.0.0.0 \
+    --port ${PORT:-8000} \
+    --workers 1
