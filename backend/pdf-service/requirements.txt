@@ -3,8 +3,8 @@ fastapi==0.104.1
 uvicorn[standard]==0.24.0
 streamlit==1.29.0
 
-# PDF processing
-PyMuPDF==1.23.8
+# PDF processing - Using pypdf for faster builds
+pypdf==3.17.0
 python-multipart==0.0.6
 reportlab==4.0.7
 

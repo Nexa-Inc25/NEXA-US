@@ -7,7 +7,7 @@ Optimized for Render Pro deployment with PostgreSQL
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-import fitz  # PyMuPDF
+from pypdf import PdfReader  # Using pypdf instead of PyMuPDF for faster builds
 from sentence_transformers import SentenceTransformer
 import faiss
 import numpy as np
@@ -83,28 +83,23 @@ def clean_infraction_text(text):
     return text
 
 def extract_text(pdf_path, chunk_size=500, batch_size=50):
-    """Extract text from PDF with optimized chunking"""
-    doc = fitz.open(pdf_path)
+    """Extract text from PDF with optimized chunking using pypdf"""
+    reader = PdfReader(pdf_path)
     text_chunks = []
     
-    for batch_start in range(0, doc.page_count, batch_size):
-        batch_end = min(batch_start + batch_size, doc.page_count)
+    for page_num, page in enumerate(reader.pages):
+        page_text = page.extract_text()
         
-        for page_num in range(batch_start, batch_end):
-            page = doc[page_num]
-            page_text = page.get_text("text")
-            
-            # Chunk large pages
-            for i in range(0, len(page_text), chunk_size):
-                chunk = page_text[i:i+chunk_size]
-                if chunk.strip():
-                    text_chunks.append({
-                        'text': chunk,
-                        'page': page_num + 1,
-                        'source': os.path.basename(pdf_path)
-                    })
+        # Chunk large pages
+        for i in range(0, len(page_text), chunk_size):
+            chunk = page_text[i:i+chunk_size]
+            if chunk.strip():
+                text_chunks.append({
+                    'text': chunk,
+                    'page': page_num + 1,
+                    'source': os.path.basename(pdf_path)
+                })
     
-    doc.close()
     return text_chunks
 
 def create_index(all_chunks, user_id):
