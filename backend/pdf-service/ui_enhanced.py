@@ -24,7 +24,28 @@ except LookupError:
 
 # Use lightweight model; check for GPU
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-model = SentenceTransformer('all-MiniLM-L6-v2', device=device)
+
+# Handle model loading with retries and cache management
+@st.cache_resource
+def load_model():
+    try:
+        return SentenceTransformer('all-MiniLM-L6-v2', device=device)
+    except Exception as e:
+        st.warning(f"Model loading error: {e}. Retrying...")
+        # Clear any lock files
+        import shutil
+        cache_dir = "/opt/render/.cache/torch/sentence_transformers"
+        if os.path.exists(cache_dir):
+            for file in os.listdir(cache_dir):
+                if file.endswith(".lock"):
+                    try:
+                        os.remove(os.path.join(cache_dir, file))
+                    except:
+                        pass
+        # Try again with fresh download
+        return SentenceTransformer('all-MiniLM-L6-v2', device=device, cache_folder="/tmp/models")
+
+model = load_model()
 
 # Database connection (keep for future integration)
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:password@localhost/nexa_db")
