@@ -1,0 +1,47 @@
+# Render.com deployment configuration for NEXA API using Docker
+services:
+  # FastAPI Backend Service with Docker
+  - type: web
+    name: nexa-api-docker
+    runtime: docker
+    dockerfilePath: ./backend/pdf-service/Dockerfile.render
+    dockerContext: ./backend/pdf-service
+    branch: main
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # Database URL will be auto-populated by Render when you attach a database
+      - key: DATABASE_URL
+        fromDatabase:
+          name: nexa-postgres
+          property: connectionString
+      # Logging configuration
+      - key: LOG_LEVEL
+        value: INFO
+      # Vector index configuration (optimized for speed)
+      - key: VECTOR_INDEX_TYPE
+        value: hnsw
+      - key: HNSW_M
+        value: "16"
+      - key: HNSW_EF_CONSTRUCTION
+        value: "80"
+      - key: HNSW_EF_SEARCH
+        value: "60"
+      # Processing configuration
+      - key: CHUNK_SIZE
+        value: "500"
+      - key: MAX_PAGES
+        value: "1500"
+      - key: PAGE_BATCH_SIZE
+        value: "50"
+    # Use Pro plan for better performance
+    plan: pro-plus
+
+databases:
+  # PostgreSQL database with pgvector extension
+  - name: nexa-postgres
+    databaseName: nexadb
+    user: nexaadmin
+    plan: pro
+    postgresMajorVersion: 15
+    ipAllowList: []

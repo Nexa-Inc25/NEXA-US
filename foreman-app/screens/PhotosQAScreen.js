@@ -255,6 +255,7 @@ const PhotosQAScreen = ({ route, navigation }) => {
         )}
       </ScrollView>
     </SafeAreaView>
+  );
 };
 
 const styles = StyleSheet.create({

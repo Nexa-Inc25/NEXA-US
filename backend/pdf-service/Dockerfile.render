@@ -1,0 +1,43 @@
+# Production Dockerfile for NEXA API on Render.com
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies (removed PyMuPDF deps as we're using pypdf)
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    gcc \
+    g++ \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first for better caching
+COPY requirements_render.txt .
+
+# Install Python dependencies
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements_render.txt
+
+# Download NLTK data if needed
+RUN python -c "import nltk; nltk.download('punkt', quiet=True)" || true
+
+# Copy application code
+COPY api.py .
+
+# Create temp directory for file uploads
+RUN mkdir -p /tmp
+
+# Create non-root user for security
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app /tmp
+USER appuser
+
+# The PORT environment variable is set by Render
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:${PORT:-8000}/health || exit 1
+
+# Start FastAPI application using PORT from environment
+CMD ["sh", "-c", "uvicorn api:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1"]

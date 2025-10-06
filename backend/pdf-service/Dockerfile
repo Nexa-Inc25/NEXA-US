@@ -2,10 +2,10 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies for PyMuPDF
+# Install system dependencies (removed PyMuPDF deps as we're using pypdf)
 RUN apt-get update && apt-get install -y \
-    libmupdf-dev \
-    mupdf-tools \
+    gcc \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .

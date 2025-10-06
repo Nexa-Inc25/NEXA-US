@@ -1,0 +1,22 @@
+# Core frameworks
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# PDF processing (using pypdf instead of PyMuPDF for faster builds)
+pypdf==3.17.0
+python-multipart==0.0.6
+reportlab==4.0.7
+
+# AI/ML
+sentence-transformers==2.2.2
+faiss-cpu==1.7.4
+numpy==1.24.3
+nltk==3.8.1
+
+# Database
+psycopg2-binary==2.9.9
+pgvector==0.2.4
+
+# Utilities
+python-dotenv==1.0.0
+aiohttp==3.9.1

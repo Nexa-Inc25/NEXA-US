@@ -66,64 +66,122 @@ async def encode_texts_async(texts: List[str], batch_size: int = 32):
         model.encode, texts, show_progress_bar=False, batch_size=batch_size
     )
 
-# Database connection
+# Database connection with validation
 DB_URL = os.getenv("DATABASE_URL")
-if DB_URL:
-    conn = psycopg2.connect(DB_URL)
-    cursor = conn.cursor()
+
+# Validate DATABASE_URL format
+def validate_database_url(url):
+    """Validate that DATABASE_URL follows PostgreSQL connection string format"""
+    if not url:
+        return False
     
-    # Create tables and vector index (HNSW with cosine ops)
-    cursor.execute("""
-        CREATE EXTENSION IF NOT EXISTS vector;
-        CREATE TABLE IF NOT EXISTS audit_log (
-            id SERIAL PRIMARY KEY,
-            user_id VARCHAR(100),
-            action VARCHAR(100),
-            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            details JSONB
-        )
-    """)
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS spec_chunks (
-            id SERIAL PRIMARY KEY,
-            text TEXT,
-            embedding vector(384),
-            section_reference VARCHAR(100),
-            source_file VARCHAR(255)
-        )
-    """)
-    # Ensure ANN index exists with cosine ops for <=> queries (switchable: HNSW or IVFFlat)
-    if VECTOR_INDEX_TYPE == "ivfflat":
-        cursor.execute(f"""
-            DO $$
-            BEGIN
-                IF NOT EXISTS (
-                    SELECT 1 FROM pg_indexes WHERE indexname = 'spec_chunks_embedding_ivf_idx'
-                ) THEN
-                    CREATE INDEX spec_chunks_embedding_ivf_idx
-                    ON spec_chunks USING ivfflat (embedding vector_cosine_ops)
-                    WITH (lists = {IVFFLAT_LISTS});
-                END IF;
-            END
-            $$;
+    # Check for common invalid patterns that might indicate placeholder text
+    invalid_patterns = ['[', ']', '{', '}', '<', '>', 'your-', 'YOUR_', 'example', 'EXAMPLE']
+    for pattern in invalid_patterns:
+        if pattern in url:
+            logger.warning(f"DATABASE_URL contains invalid pattern '{pattern}' - likely a placeholder")
+            return False
+    
+    # Basic format check for PostgreSQL URLs
+    if not url.startswith(('postgresql://', 'postgres://')):
+        logger.warning("DATABASE_URL should start with postgresql:// or postgres://")
+        return False
+    
+    # Check for minimum required components
+    if '@' not in url or '/' not in url:
+        logger.warning("DATABASE_URL missing required components (user@host/database)")
+        return False
+    
+    return True
+
+# Attempt database connection with proper error handling
+if DB_URL and validate_database_url(DB_URL):
+    try:
+        logger.info(f"Attempting to connect to database...")
+        # Mask password in log
+        masked_url = DB_URL.split('@')[0].split('://')[0] + '://***@' + DB_URL.split('@')[1] if '@' in DB_URL else DB_URL
+        logger.info(f"Connecting to: {masked_url}")
+        
+        conn = psycopg2.connect(DB_URL)
+        cursor = conn.cursor()
+        logger.info("Successfully connected to PostgreSQL database")
+        
+        # Create tables and vector index (HNSW with cosine ops)
+        cursor.execute("""
+            CREATE EXTENSION IF NOT EXISTS vector;
+            CREATE TABLE IF NOT EXISTS audit_log (
+                id SERIAL PRIMARY KEY,
+                user_id VARCHAR(100),
+                action VARCHAR(100),
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                details JSONB
+            )
         """)
-    else:
-        cursor.execute(f"""
-            DO $$
-            BEGIN
-                IF NOT EXISTS (
-                    SELECT 1 FROM pg_indexes WHERE indexname = 'spec_chunks_embedding_hnsw_idx'
-                ) THEN
-                    CREATE INDEX spec_chunks_embedding_hnsw_idx
-                    ON spec_chunks USING hnsw (embedding vector_cosine_ops)
-                    WITH (m = {HNSW_M}, ef_construction = {HNSW_EF_CONSTRUCTION});
-                END IF;
-            END
-            $$;
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS spec_chunks (
+                id SERIAL PRIMARY KEY,
+                text TEXT,
+                embedding vector(384),
+                section_reference VARCHAR(100),
+                source_file VARCHAR(255)
+            )
         """)
-    conn.commit()
+        # Ensure ANN index exists with cosine ops for <=> queries (switchable: HNSW or IVFFlat)
+        if VECTOR_INDEX_TYPE == "ivfflat":
+            cursor.execute(f"""
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM pg_indexes WHERE indexname = 'spec_chunks_embedding_ivf_idx'
+                    ) THEN
+                        CREATE INDEX spec_chunks_embedding_ivf_idx
+                        ON spec_chunks USING ivfflat (embedding vector_cosine_ops)
+                        WITH (lists = {IVFFLAT_LISTS});
+                    END IF;
+                END
+                $$;
+            """)
+        else:
+            cursor.execute(f"""
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM pg_indexes WHERE indexname = 'spec_chunks_embedding_hnsw_idx'
+                    ) THEN
+                        CREATE INDEX spec_chunks_embedding_hnsw_idx
+                        ON spec_chunks USING hnsw (embedding vector_cosine_ops)
+                        WITH (m = {HNSW_M}, ef_construction = {HNSW_EF_CONSTRUCTION});
+                    END IF;
+                END
+                $$;
+            """)
+        conn.commit()
+        logger.info(f"Database initialized with {VECTOR_INDEX_TYPE} index")
+        
+    except psycopg2.ProgrammingError as e:
+        logger.error(f"Database connection failed - ProgrammingError: {str(e)}")
+        logger.warning("Falling back to in-memory storage")
+        conn = None
+        cursor = None
+    except psycopg2.OperationalError as e:
+        logger.error(f"Database connection failed - OperationalError: {str(e)}")
+        logger.warning("Database may be unavailable. Falling back to in-memory storage")
+        conn = None
+        cursor = None
+    except Exception as e:
+        logger.error(f"Unexpected database connection error: {str(e)}")
+        logger.warning("Falling back to in-memory storage")
+        conn = None
+        cursor = None
 else:
-    print("Warning: No DATABASE_URL configured, using in-memory storage")
+    if DB_URL:
+        logger.warning(f"DATABASE_URL is set but invalid: '{DB_URL[:50]}...' (truncated)")
+        logger.warning("Please set a valid PostgreSQL connection string in Render.com environment variables")
+        logger.warning("Format: postgresql://user:password@host:port/dbname")
+    else:
+        logger.info("No DATABASE_URL configured")
+    
+    logger.info("Using in-memory storage (no persistence between restarts)")
     conn = None
     cursor = None
 
