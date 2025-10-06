@@ -1,0 +1,29 @@
+FROM python:3.11-slim
+
+# Install build essentials and create symlinks for compatibility
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && ln -sf /usr/local/bin/python /usr/local/bin/python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements first for better caching
+COPY backend/pdf-service/requirements.txt ./backend/pdf-service/
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r backend/pdf-service/requirements.txt
+
+# Copy application code
+COPY backend/pdf-service ./backend/pdf-service
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PATH="/usr/local/bin:$PATH"
+
+# Expose port (Render sets this via $PORT env var)
+EXPOSE 8501
+
+# Use shell form to expand $PORT variable
+CMD python -m streamlit run backend/pdf-service/ui.py --server.port ${PORT:-8501} --server.address 0.0.0.0 --server.headless true

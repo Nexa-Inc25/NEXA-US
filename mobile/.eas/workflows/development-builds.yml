@@ -1,0 +1,16 @@
+name: Create Development Builds
+
+on:
+  push:
+    branches:
+      - develop
+      - feature/*
+
+jobs:
+  build_development:
+    type: build
+    params:
+      platform: all
+      profile: development
+    env:
+      EXPO_PUBLIC_ENV: development

@@ -19,9 +19,17 @@ import plotly.graph_objects as go
 # API Configuration
 API_URL = os.getenv("API_URL", "http://localhost:8000")
 
+@st.cache_data(ttl=60)
+def get_health_status():
+    """Cached health check to reduce repeated network calls."""
+    try:
+        return requests.get(f"{API_URL}/health", timeout=5).json()
+    except Exception:
+        return {"status": "error"}
+
 # Page configuration
 st.set_page_config(
-    page_title="NEXA AI Document Analyzer",
+    page_title="NEXA AI Document Analyzer Enterprise",
     page_icon="📄",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -35,7 +43,7 @@ st.markdown("""
     }
     .stButton>button {
         width: 100%;
-        background-color: #00d4ff;
+        background-color: #4682B4;
         color: white;
         border-radius: 8px;
         font-weight: bold;
@@ -43,8 +51,8 @@ st.markdown("""
         border: none;
     }
     .stButton>button:hover {
-        background-color: #00a0cc;
-        box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+        background-color: #5A7A9A;
+        box-shadow: 0 4px 12px rgba(70, 130, 180, 0.3);
     }
     .success-box {
         background-color: rgba(0, 255, 136, 0.1);
@@ -78,13 +86,21 @@ st.markdown("""
     .metric-value {
         font-size: 2rem;
         font-weight: bold;
-        color: #00d4ff;
+        color: #4682B4;
     }
     .metric-label {
         font-size: 0.9rem;
         color: #666;
         margin-top: 0.5rem;
     }
+    /* Progress bar tint */
+    .stProgress > div > div > div {
+        background-color: #4682B4;
+    }
+    /* DataFrame table styling */
+    .stDataFrame { border: 1px solid #E2E8F0; }
+    .stDataFrame th, .stDataFrame td { border-bottom: 1px solid #E2E8F0; padding: 8px; }
+    .stDataFrame th { background-color: #F8FAFC; font-weight: 600; color: #2D3748; }
     div[data-testid="stSidebar"] {
         background-color: #f8f9fa;
     }
@@ -128,30 +144,26 @@ with st.sidebar:
     st.title("🔍 NEXA AI Analyzer")
     st.markdown("---")
     
-    # Service status check
+    # Service status check (cached)
     with st.container():
-        try:
-            health_response = requests.get(f"{API_URL}/health", timeout=5)
-            if health_response.status_code == 200:
-                health_data = health_response.json()
-                spec_loaded = health_data.get("index_loaded", False)
-                chunks_loaded = health_data.get("chunks_loaded", 0)
-                
-                st.session_state.spec_loaded = spec_loaded
-                
-                st.markdown('<div class="sidebar-status">', unsafe_allow_html=True)
-                if spec_loaded:
-                    st.success("✅ Service Online")
-                    st.info(f"📚 Spec Chunks: {chunks_loaded}")
-                else:
-                    st.warning("⚠️ No Spec Loaded")
-                    st.caption("Upload spec books to begin")
-                st.markdown('</div>', unsafe_allow_html=True)
-            else:
-                st.error("❌ Service Error")
-        except:
+        health_data = get_health_status()
+        if health_data.get("status") == "error":
+            st.markdown('<div class="sidebar-status">', unsafe_allow_html=True)
             st.error("❌ API Offline")
             st.caption("Check backend service")
+            st.markdown('</div>', unsafe_allow_html=True)
+        else:
+            spec_loaded = bool(health_data.get("index_loaded", False))
+            chunks_loaded = int(health_data.get("chunks_loaded", 0))
+            st.session_state.spec_loaded = spec_loaded
+            st.markdown('<div class="sidebar-status">', unsafe_allow_html=True)
+            if spec_loaded:
+                st.success("✅ Service Online")
+                st.info(f"📚 Spec Chunks: {chunks_loaded}")
+            else:
+                st.warning("⚠️ No Spec Loaded")
+                st.caption("Upload spec books to begin")
+            st.markdown('</div>', unsafe_allow_html=True)
     
     st.markdown("---")
     

@@ -1,0 +1,72 @@
+{
+  "expo": {
+    "name": "NEXA Foreman Enterprise",
+    "slug": "nexa-foreman-enterprise",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "nexa-enterprise",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFFFFF"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/YOUR_PROJECT_ID"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.nexa.foreman.enterprise",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "NSCameraUsageDescription": "NEXA needs camera access to capture QA photos for spec analysis",
+        "NSPhotoLibraryUsageDescription": "NEXA needs photo library access to select QA photos"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "package": "com.nexa.foreman.enterprise",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "AUTH0_DOMAIN": "dev-4klipkgroc7grk1q.us.auth0.com",
+      "AUTH0_CLIENT_ID": "YOUR_AUTH0_CLIENT_ID",
+      "AUTH0_AUDIENCE": "https://api.nexa.local",
+      "API_URL": "https://nexa-api.onrender.com",
+      "SUBSCRIPTION_TIER": "enterprise",
+      "SUBSCRIPTION_COST": "$500/user/month",
+      "FEATURES": {
+        "unlimited_specs": true,
+        "priority_support": true,
+        "audit_retention": 365,
+        "api_calls": 10000,
+        "sla_uptime": 0.999,
+        "response_time_sla": 5
+      },
+      "BRANDING": {
+        "primary_color": "#4682B4",
+        "secondary_color": "#F5F5F5",
+        "accent_color": "#00D4FF",
+        "text_color": "#333333",
+        "premium_gradient": "linear-gradient(135deg, #4682B4 0%, #00D4FF 100%)"
+      }
+    }
+  }
+}

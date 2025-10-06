@@ -34,24 +34,38 @@ logs/**/*.log
 venv/
 venv*/
 __pycache__/
-*.pyc
-
 # Databases
 *.sqlite
 *.db
 
-# Terraform
-.terraform/
-*.tfstate
-*.tfstate.*
-crash.log
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+env/
+venv/
+.env
 
-# Docker
-*.local
-.env.docker
+# Node
+node_modules/
+npm-debug.log*
 
-# IDE/OS
+# IDE
 .vscode/
 .idea/
+
+# OS
 .DS_Store
 Thumbs.db
+
+# Project specific
+*.log
+tmp/
+temp/
+
+# Large files
+*.zip
+*.tar.gz
+mobile/assets/sample/
+mobile/assets/PGE*/

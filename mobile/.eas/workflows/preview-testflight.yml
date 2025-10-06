@@ -1,0 +1,32 @@
+name: Preview Build and TestFlight Submission
+
+on:
+  push:
+    branches:
+      - staging
+      - release/*
+
+jobs:
+  build_preview_ios:
+    type: build
+    params:
+      platform: ios
+      profile: preview
+    env:
+      EXPO_PUBLIC_ENV: preview
+      
+  submit_to_testflight:
+    type: submit
+    depends_on:
+      - build_preview_ios
+    params:
+      platform: ios
+      profile: preview
+      
+  build_preview_android:
+    type: build
+    params:
+      platform: android
+      profile: preview
+    env:
+      EXPO_PUBLIC_ENV: preview

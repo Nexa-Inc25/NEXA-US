@@ -1,0 +1,47 @@
+services:
+  # FastAPI Backend Service
+  - type: web
+    name: nexa-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile.api
+    branch: main
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: nexa-db
+          property: connectionString
+      - key: AUTH_ENABLED
+        value: "false"
+      - key: VECTOR_INDEX_TYPE
+        value: hnsw
+      - key: HNSW_M
+        value: "16"
+      - key: HNSW_EF_CONSTRUCTION
+        value: "80"
+      - key: HNSW_EF_SEARCH
+        value: "60"
+      - key: LOG_LEVEL
+        value: INFO
+    plan: pro
+  
+  # Streamlit Frontend Service  
+  - type: web
+    name: nexa-ui
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    branch: main
+    envVars:
+      - key: API_URL
+        value: https://nexa-api.onrender.com
+      - key: AUTH_ENABLED
+        value: "false"
+    plan: pro
+
+databases:
+  - name: nexa-db
+    plan: pro
+    databaseName: nexa
+    user: nexa
+    postgresMajorVersion: 15
+    ipAllowList: []
