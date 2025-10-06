@@ -24,7 +24,8 @@ RUN pip install --upgrade pip && \
 # Download NLTK data if needed
 RUN python -c "import nltk; nltk.download('punkt', quiet=True)" || true
 
-# Copy application code
+# Copy application code (force rebuild with timestamp comment)
+# Updated: 2025-01-06 19:49 - Fixed database connection handling
 COPY backend/pdf-service/api.py ./api.py
 
 # Create temp directory for file uploads
