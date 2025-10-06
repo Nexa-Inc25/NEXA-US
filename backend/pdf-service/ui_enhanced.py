@@ -6,15 +6,16 @@ Aligns with Phase 1-3 of NEXA Roadmap for AI-driven processing
 import streamlit as st
 import os
 import pickle
-from sentence_transformers import SentenceTransformer, util
+from sentence_transformers import SentenceTransformer
 from pypdf import PdfReader
 import nltk
 import re
 import torch
-import psycopg2
 from datetime import datetime
 import json
 import numpy as np
+import faiss
+from sklearn.metrics.pairwise import cosine_similarity
 
 # Page configuration MUST be the very first Streamlit command
 st.set_page_config(
@@ -58,8 +59,14 @@ model = load_model()
 # Database connection (keep for future integration)
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:password@localhost/nexa_db")
 
-# Persistence (attach Render Disk for production; fallback to temp)
-EMBEDDINGS_PATH = os.environ.get('RENDER_DISK_PATH', '/tmp') + '/spec_embeddings.pkl'
+# Environment and paths
+ENV = os.getenv("ENV", "local")  # 'prod' for Pinecone, else FAISS
+DATA_DIR = os.environ.get('RENDER_DISK_PATH', '/tmp') + '/data'
+os.makedirs(DATA_DIR, exist_ok=True)
+
+FAISS_INDEX_PATH = os.path.join(DATA_DIR, 'spec_index.faiss')
+CHUNKS_PATH = os.path.join(DATA_DIR, 'spec_chunks.pkl')
+EMBEDDINGS_PATH = os.path.join(DATA_DIR, 'spec_embeddings.npy')
 
 # Custom CSS matching foreman app design
 st.markdown("""
@@ -199,89 +206,123 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 def extract_text_from_pdf(file):
-    """Extract text from PDF file"""
+    """Extract text from PDF file and return chunks"""
     reader = PdfReader(file)
-    return ''.join(page.extract_text() + '\n' for page in reader.pages)
-
-def chunk_text(text, chunk_size=400):
-    """Chunk text for efficient embedding"""
-    sentences = nltk.sent_tokenize(text)
-    chunks, current = [], ''
-    for sent in sentences:
-        if len(current) + len(sent) > chunk_size:
-            chunks.append(current.strip())
-            current = sent
-        else:
-            current += ' ' + sent
-    if current: 
-        chunks.append(current.strip())
+    text = ''.join(page.extract_text() + '\n' for page in reader.pages)
+    # Split by double newlines (paragraphs)
+    chunks = [s.strip() for s in text.split('\n\n') if s.strip()]
     return chunks
 
+def create_faiss_index(embeddings):
+    """Create FAISS IVF index for efficient search"""
+    dim = embeddings.shape[1]
+    nlist = max(10, int(np.sqrt(len(embeddings))))  # Dynamic clustering
+    quantizer = faiss.IndexFlatL2(dim)
+    index = faiss.IndexIVFFlat(quantizer, dim, nlist)
+    index.train(embeddings)
+    index.add(embeddings)
+    return index
+
+def save_faiss_data(index, chunks, embeddings):
+    """Save FAISS index and associated data"""
+    faiss.write_index(index, FAISS_INDEX_PATH)
+    with open(CHUNKS_PATH, 'wb') as f:
+        pickle.dump(chunks, f)
+    np.save(EMBEDDINGS_PATH, embeddings)
+
+def load_faiss_data():
+    """Load FAISS index and associated data"""
+    if not os.path.exists(FAISS_INDEX_PATH):
+        return None, None, None
+    index = faiss.read_index(FAISS_INDEX_PATH)
+    with open(CHUNKS_PATH, 'rb') as f:
+        chunks = pickle.load(f)
+    embeddings = np.load(EMBEDDINGS_PATH)
+    return index, chunks, embeddings
+
 @st.cache_resource
-def load_or_learn_spec(uploaded_file):
-    """Cache spec embeddings for performance"""
-    if os.path.exists(EMBEDDINGS_PATH):
-        with open(EMBEDDINGS_PATH, 'rb') as f:
-            return pickle.load(f)
+def process_spec_book(uploaded_file):
+    """Process spec book with FAISS indexing"""
+    chunks = extract_text_from_pdf(uploaded_file)
     
-    text = extract_text_from_pdf(uploaded_file)
-    chunks = chunk_text(text)
+    # Generate embeddings
+    embeddings = model.encode(chunks, show_progress_bar=True, batch_size=32, convert_to_numpy=True)
     
-    # Batch encode for large specs
-    embeddings = model.encode(chunks, show_progress_bar=True, batch_size=32)
+    # Create FAISS index
+    index = create_faiss_index(embeddings)
     
     # Save to disk
-    os.makedirs(os.path.dirname(EMBEDDINGS_PATH), exist_ok=True)
-    with open(EMBEDDINGS_PATH, 'wb') as f:
-        pickle.dump((chunks, embeddings), f)
+    save_faiss_data(index, chunks, embeddings)
     
-    return chunks, embeddings
+    return len(chunks)
 
-def extract_go_back_infractions(audit_text):
-    """Extract go-back infractions from audit text"""
-    # Regex for "go-back" infractions; customize if format varies
-    patterns = [
-        r'(go-back.*?)(?=\n\n|\Z|go-back)',
-        r'(infraction:.*?)(?=\n\n|\Z|infraction:)',
-        r'(violation:.*?)(?=\n\n|\Z|violation:)'
-    ]
-    
+def extract_infractions(chunks):
+    """Extract infractions from audit chunks"""
+    # Look for chunks that start with infraction markers
+    patterns = ['infraction:', 'go-back', 'violation:', 'non-compliant']
     infractions = []
-    for pattern in patterns:
-        infractions.extend(re.findall(pattern, audit_text, re.IGNORECASE | re.DOTALL))
     
-    return infractions if infractions else audit_text.split('\n')[:20]  # Fallback to first 20 lines
+    for chunk in chunks:
+        chunk_lower = chunk.lower()
+        if any(pattern in chunk_lower for pattern in patterns):
+            infractions.append(chunk)
+    
+    # If no specific infractions found, use all substantial chunks
+    if not infractions:
+        infractions = [c for c in chunks if len(c.strip()) > 50]
+    
+    return infractions
 
-def analyze_infraction(infraction, chunks, embeddings, confidence_threshold=0.7):
-    """Analyze single infraction against spec book"""
-    inf_emb = model.encode([infraction])
-    cos_scores = util.cos_sim(inf_emb, embeddings)[0]
+def analyze_audit_document(uploaded_file, confidence_threshold=0.7):
+    """Analyze audit document using FAISS"""
+    # Load FAISS index
+    faiss_index, spec_chunks, spec_embeddings = load_faiss_data()
+    if faiss_index is None:
+        raise ValueError("Spec book not loaded. Please process spec book first.")
     
-    top_k = 5  # Top matches for better reasoning
-    top_idx = cos_scores.argsort(descending=True)[:top_k]
-    top_scores = cos_scores[top_idx]
+    # Extract infractions from audit
+    audit_chunks = extract_text_from_pdf(uploaded_file)
+    infractions = extract_infractions(audit_chunks)
     
-    relevant = [(chunks[i], score.item()) for i, score in zip(top_idx, top_scores) if score > 0.5]
+    if not infractions:
+        return []
     
-    # Calculate confidence based on similarity scores
-    confidence = sum(score for _, score in relevant) / top_k if relevant else 0.0
+    # Generate embeddings for infractions
+    infraction_embeddings = model.encode(infractions, batch_size=16, convert_to_numpy=True)
     
-    # Determine if infraction is repealable
-    is_repealable = len(relevant) >= 2 and confidence > confidence_threshold
+    results = []
+    for i, inf_emb in enumerate(infraction_embeddings):
+        # Search FAISS index
+        distances, indices = faiss_index.search(inf_emb.reshape(1, -1), k=5)
+        
+        # Calculate cosine similarities
+        similarities = cosine_similarity(inf_emb.reshape(1, -1), spec_embeddings[indices[0]])[0]
+        
+        # Get max similarity
+        max_similarity = max(similarities) if len(similarities) > 0 else 0.0
+        
+        # Determine if repealable
+        can_repeal = max_similarity > confidence_threshold
+        
+        # Get relevant spec sections
+        reasons = []
+        spec_matches = 0
+        for j, idx in enumerate(indices[0]):
+            if similarities[j] > 0.6:
+                spec_matches += 1
+                if similarities[j] > 0.6 and can_repeal:
+                    reason = f"Match ({similarities[j]:.0%}): {spec_chunks[idx][:150]}..."
+                    reasons.append(reason)
+        
+        results.append({
+            "infraction": infractions[i],
+            "can_repeal": can_repeal,
+            "confidence": float(max_similarity),
+            "reasons": reasons[:3] if can_repeal else [],
+            "spec_matches": spec_matches
+        })
     
-    # Generate reasons
-    reasons = []
-    for chunk, score in relevant[:3]:  # Top 3 reasons
-        if score > 0.5:
-            reason = f"Spec match ({score:.0%}): {chunk[:150]}..."
-            reasons.append(reason)
-    
-    return {
-        "repealable": is_repealable,
-        "confidence": confidence,
-        "reasons": reasons,
-        "spec_matches": len(relevant)
-    }
+    return results
 
 # UI Layout - Clean header
 st.markdown("""
@@ -329,27 +370,27 @@ with tab1:
     with col1:
         if st.button("Process Specification Book", type="primary", use_container_width=True):
             if spec_file:
-                with st.spinner("Processing large spec book... This may take a few minutes"):
+                with st.spinner("Processing spec book with FAISS indexing..."):
                     try:
-                        chunks, embeddings = load_or_learn_spec(spec_file)
-                        st.success(f"Successfully processed {len(chunks)} chunks from specification book")
-                        st.info(f"Embeddings saved to: {EMBEDDINGS_PATH}")
-                        
-                        # Display sample chunks
-                        with st.expander("View Sample Chunks"):
-                            for i, chunk in enumerate(chunks[:5]):
-                                st.text(f"Chunk {i+1}: {chunk[:200]}...")
+                        num_chunks = process_spec_book(spec_file)
+                        st.success(f"Successfully processed {num_chunks} chunks with FAISS index")
+                        st.info(f"FAISS index saved to: {FAISS_INDEX_PATH}")
                     except Exception as e:
                         st.error(f"Error processing spec: {str(e)}")
             else:
                 st.warning("Please upload a spec book first")
     
     with col2:
-        if os.path.exists(EMBEDDINGS_PATH):
+        if os.path.exists(FAISS_INDEX_PATH):
             st.success("Specification loaded")
             if st.button("Clear Cache"):
-                os.remove(EMBEDDINGS_PATH)
-                st.rerun()
+                try:
+                    os.remove(FAISS_INDEX_PATH)
+                    os.remove(CHUNKS_PATH)
+                    os.remove(EMBEDDINGS_PATH)
+                    st.rerun()
+                except:
+                    pass
         else:
             st.info("No spec loaded")
 
@@ -360,47 +401,40 @@ with tab2:
     audit_file = st.file_uploader("Choose Audit PDF", type="pdf", key="audit_uploader")
     
     if st.button("Analyze Infractions", type="primary", use_container_width=True):
-        if not os.path.exists(EMBEDDINGS_PATH):
+        if not os.path.exists(FAISS_INDEX_PATH):
             st.error("ERROR: Please load specification book first (Tab 1)")
         elif not audit_file:
             st.warning("Please upload an audit document")
         else:
-            with st.spinner("Cross-referencing audit against spec book..."):
+            with st.spinner("Analyzing audit with FAISS vector search..."):
                 try:
-                    # Extract audit text
-                    audit_text = extract_text_from_pdf(audit_file)
-                    infractions = extract_go_back_infractions(audit_text)
+                    # Analyze using FAISS
+                    analysis_results = analyze_audit_document(audit_file, confidence_threshold)
                     
-                    # Load embeddings
-                    with open(EMBEDDINGS_PATH, 'rb') as f:
-                        chunks, embeddings = pickle.load(f)
-                    
-                    # Analyze each infraction
-                    results = []
-                    progress_bar = st.progress(0)
-                    
-                    for idx, inf in enumerate(infractions):
-                        if len(inf.strip()) > 20:  # Skip very short lines
-                            analysis = analyze_infraction(inf, chunks, embeddings, confidence_threshold)
-                            
+                    if not analysis_results:
+                        st.warning("No infractions found in audit document")
+                    else:
+                        # Format results for display
+                        results = []
+                        for result in analysis_results:
                             results.append({
-                                "Infraction": inf.strip()[:150] + "..." if len(inf) > 150 else inf.strip(),
-                                "Status": "REPEALABLE" if analysis["repealable"] else "VALID",
-                                "Confidence": f"{analysis['confidence']:.1%}",
-                                "Spec Matches": analysis["spec_matches"],
-                                "Primary Reason": analysis["reasons"][0] if analysis["reasons"] else "No spec match found"
+                                "Infraction": result["infraction"][:150] + "..." if len(result["infraction"]) > 150 else result["infraction"],
+                                "Status": "REPEALABLE" if result["can_repeal"] else "VALID",
+                                "Confidence": f"{result['confidence']:.1%}",
+                                "Spec Matches": result["spec_matches"],
+                                "Primary Reason": result["reasons"][0] if result["reasons"] else "No spec match found"
                             })
                         
-                        progress_bar.progress((idx + 1) / len(infractions))
-                    
-                    # Store results in session state
-                    st.session_state['analysis_results'] = results
-                    st.session_state['analysis_timestamp'] = datetime.now()
-                    
-                    st.success(f"Analysis complete: {len(results)} infractions processed")
+                        # Store results in session state
+                        st.session_state['analysis_results'] = results
+                        st.session_state['analysis_timestamp'] = datetime.now()
+                        
+                        st.success(f"Analysis complete: {len(results)} infractions processed with FAISS")
                     
                 except Exception as e:
                     st.error(f"Analysis error: {str(e)}")
+                    import traceback
+                    st.code(traceback.format_exc())
 
 with tab3:
     st.header("Analysis Results")
