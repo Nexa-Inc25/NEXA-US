@@ -1,0 +1,17 @@
+# Ignore Poetry files to prevent auto-detection
+pyproject.toml
+poetry.lock
+poetry.toml
+
+# Ignore unnecessary files
+*.pyc
+__pycache__/
+.git/
+.github/
+.vscode/
+.idea/
+*.log
+*.sqlite
+.DS_Store
+mobile/
+web/
