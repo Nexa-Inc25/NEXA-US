@@ -68,76 +68,109 @@ FAISS_INDEX_PATH = os.path.join(DATA_DIR, 'spec_index.faiss')
 CHUNKS_PATH = os.path.join(DATA_DIR, 'spec_chunks.pkl')
 EMBEDDINGS_PATH = os.path.join(DATA_DIR, 'spec_embeddings.npy')
 
-# Custom CSS matching foreman app design
+# Custom CSS matching foreman app design - Enhanced readability
 st.markdown("""
     <style>
+    /* Force light theme globally */
+    .stApp {
+        background-color: #FFFFFF;
+    }
+    
     /* Global Styles */
     .main {
         background-color: #FFFFFF;
-        padding-top: 0.5rem;
+        padding: 2rem;
     }
     
-    /* Headers */
+    /* Headers - Much larger and clearer */
     h1, h2, h3 {
-        color: #2D3748 !important;
+        color: #1a202c !important;
         font-weight: 700 !important;
+        line-height: 1.3 !important;
     }
     
-    h1 { font-size: 28px !important; }
-    h2 { font-size: 20px !important; }
-    h3 { font-size: 16px !important; }
+    h1 { font-size: 36px !important; margin-bottom: 16px !important; }
+    h2 { font-size: 26px !important; margin-bottom: 12px !important; }
+    h3 { font-size: 20px !important; margin-bottom: 8px !important; }
     
-    /* Buttons - Professional Steel Blue */
+    /* All text larger and more readable */
+    p, div, span, label {
+        font-size: 16px !important;
+        line-height: 1.6 !important;
+        color: #2D3748 !important;
+    }
+    
+    /* Buttons - Much larger and more prominent */
     .stButton>button {
         width: 100%;
         background-color: #4682B4;
-        color: #FFFFFF;
-        border-radius: 4px;
+        color: #FFFFFF !important;
+        border-radius: 8px;
         font-weight: 700;
-        font-size: 16px;
-        padding: 12px 24px;
+        font-size: 18px !important;
+        padding: 16px 32px !important;
         transition: all 0.2s;
         border: none;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        min-height: 54px;
     }
     .stButton>button:hover {
-        background-color: #5A7A9A;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        background-color: #3a6a94;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        transform: translateY(-1px);
     }
     
-    /* Metric Cards */
+    /* Metric Cards - Much larger */
     [data-testid="stMetricValue"] {
-        font-size: 24px;
-        font-weight: 700;
-        color: #4682B4;
+        font-size: 36px !important;
+        font-weight: 700 !important;
+        color: #4682B4 !important;
     }
     [data-testid="stMetricLabel"] {
-        font-size: 12px;
-        color: #5A7A9A;
-        font-weight: 500;
+        font-size: 16px !important;
+        color: #5A7A9A !important;
+        font-weight: 600 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    [data-testid="stMetricDelta"] {
+        font-size: 14px !important;
     }
     
-    /* Tabs */
+    /* Tabs - Much larger and clearer */
     .stTabs [data-baseweb="tab-list"] {
         background-color: #F8FAFC;
-        border-bottom: 1px solid #E2E8F0;
+        border-bottom: 2px solid #E2E8F0;
+        padding: 8px 0;
     }
     .stTabs [data-baseweb="tab"] {
-        color: #5A7A9A;
-        font-weight: 500;
-        font-size: 14px;
+        color: #5A7A9A !important;
+        font-weight: 600 !important;
+        font-size: 18px !important;
+        padding: 12px 24px !important;
     }
     .stTabs [aria-selected="true"] {
-        color: #4682B4;
-        border-bottom-color: #4682B4;
+        color: #4682B4 !important;
+        border-bottom: 3px solid #4682B4 !important;
+        font-weight: 700 !important;
     }
     
-    /* File Uploader */
+    /* File Uploader - Much more prominent */
     [data-testid="stFileUploader"] {
         background-color: #F8FAFC;
-        border: 1px solid #E2E8F0;
-        border-radius: 4px;
-        padding: 16px;
+        border: 2px dashed #CBD5E0;
+        border-radius: 8px;
+        padding: 32px;
+        min-height: 150px;
+    }
+    [data-testid="stFileUploader"] label {
+        font-size: 18px !important;
+        font-weight: 600 !important;
+        color: #2D3748 !important;
+    }
+    [data-testid="stFileUploader"] small {
+        font-size: 16px !important;
+        color: #718096 !important;
     }
     
     /* Dataframe - Foreman Style */
@@ -175,26 +208,56 @@ st.markdown("""
         text-align: center;
     }
     
-    /* Success/Info/Warning - Subdued */
+    /* Success/Info/Warning - Much more visible */
     .stSuccess, .stInfo, .stWarning, .stError {
-        background-color: #F8FAFC;
-        border-left: 4px solid;
-        border-radius: 4px;
-        padding: 12px;
-        font-size: 14px;
-        font-weight: 500;
+        border-left: 5px solid;
+        border-radius: 6px;
+        padding: 20px !important;
+        font-size: 16px !important;
+        font-weight: 600 !important;
+        margin: 16px 0 !important;
     }
-    .stSuccess { border-left-color: #10B981; color: #065F46; }
-    .stInfo { border-left-color: #4682B4; color: #1E3A5F; }
-    .stWarning { border-left-color: #F59E0B; color: #78350F; }
-    .stError { border-left-color: #EF4444; color: #7F1D1D; }
+    .stSuccess { 
+        border-left-color: #10B981; 
+        background-color: #D1FAE5 !important;
+        color: #065F46 !important; 
+    }
+    .stInfo { 
+        border-left-color: #4682B4; 
+        background-color: #DBEAFE !important;
+        color: #1E3A5F !important; 
+    }
+    .stWarning { 
+        border-left-color: #F59E0B; 
+        background-color: #FEF3C7 !important;
+        color: #78350F !important; 
+    }
+    .stError { 
+        border-left-color: #EF4444; 
+        background-color: #FEE2E2 !important;
+        color: #7F1D1D !important; 
+    }
     
-    /* Sidebar */
+    /* Sidebar - Much cleaner and more readable */
     [data-testid="stSidebar"] {
         background-color: #F8FAFC;
-        border-right: 1px solid #E2E8F0;
+        border-right: 2px solid #E2E8F0;
+        padding: 2rem 1rem !important;
     }
-    [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
+    [data-testid="stSidebar"] h2 {
+        color: #1a202c !important;
+        font-size: 22px !important;
+        font-weight: 700 !important;
+        margin-bottom: 16px !important;
+    }
+    [data-testid="stSidebar"] h3 {
+        color: #2D3748 !important;
+        font-size: 18px !important;
+        font-weight: 600 !important;
+    }
+    [data-testid="stSidebar"] label {
+        font-size: 15px !important;
+        font-weight: 600 !important;
         color: #2D3748 !important;
     }
     
@@ -324,14 +387,14 @@ def analyze_audit_document(uploaded_file, confidence_threshold=0.7):
     
     return results
 
-# UI Layout - Clean header
+# UI Layout - Clean header with much larger text
 st.markdown("""
-<div style="background-color: #F8FAFC; padding: 16px; border-bottom: 1px solid #E2E8F0; margin: -1rem -1rem 1rem -1rem;">
-    <div style="margin-bottom: 8px;">
-        <div style="font-size: 14px; color: #5A7A9A; font-weight: 400;">NEXA</div>
-        <div style="font-size: 24px; font-weight: 700; color: #2D3748; margin-top: 4px;">AI Document Analyzer</div>
+<div style="background-color: #F8FAFC; padding: 32px 24px; border-bottom: 2px solid #E2E8F0; margin: -2rem -2rem 2rem -2rem;">
+    <div style="margin-bottom: 12px;">
+        <div style="font-size: 16px; color: #5A7A9A; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">NEXA</div>
+        <div style="font-size: 40px; font-weight: 700; color: #1a202c; margin-top: 8px; line-height: 1.2;">AI Document Analyzer</div>
     </div>
-    <div style="font-size: 14px; color: #5A7A9A; font-weight: 500;">{}</div>
+    <div style="font-size: 18px; color: #5A7A9A; font-weight: 500;">{}</div>
 </div>
 """.format(datetime.now().strftime('%A, %B %d, %Y')), unsafe_allow_html=True)
 
@@ -362,7 +425,7 @@ tab1, tab2, tab3 = st.tabs(["Learn Specification", "Analyze Audit", "Results"])
 
 with tab1:
     st.header("Upload and Learn Spec Book")
-    st.markdown("Upload your large spec book PDF (e.g., PG&E sections)")
+    st.markdown("<p style='font-size: 18px; color: #5A7A9A;'>Upload your large spec book PDF (e.g., PG&E sections) to build the knowledge base</p>", unsafe_allow_html=True)
     
     spec_file = st.file_uploader("Choose Spec Book PDF", type="pdf", key="spec_uploader")
     
@@ -396,7 +459,7 @@ with tab1:
 
 with tab2:
     st.header("Analyze QA Audit Document")
-    st.markdown("Upload your QA audit document for infraction analysis")
+    st.markdown("<p style='font-size: 18px; color: #5A7A9A;'>Upload your QA audit document for infraction analysis and repeal recommendations</p>", unsafe_allow_html=True)
     
     audit_file = st.file_uploader("Choose Audit PDF", type="pdf", key="audit_uploader")
     
