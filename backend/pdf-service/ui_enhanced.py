@@ -11,6 +11,14 @@ import io
 import logging
 import time
 import torch
+import nltk
+from nltk.tokenize import sent_tokenize
+
+# Download NLTK data if not already present
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    nltk.download('punkt', quiet=True)
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -51,12 +59,12 @@ def extract_text_from_pdf(pdf_file):
     logger.info(f"Extracted text length: {len(text)} characters")
     return text
 
-# Function to chunk text
+# Function to chunk text using NLTK
 def chunk_text(text, max_tokens=512):
-    logger.info("Chunking text...")
+    logger.info("Chunking text with NLTK...")
     if not text:
         return []
-    sentences = text.split("\n")
+    sentences = sent_tokenize(text)  # Use NLTK for sentence tokenization
     chunks = []
     current_chunk = []
     current_length = 0
