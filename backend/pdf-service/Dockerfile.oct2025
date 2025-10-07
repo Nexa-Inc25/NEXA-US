@@ -1,5 +1,5 @@
-# Base from Python 3.9 for compatibility
-FROM python:3.9-slim
+# Base from Python 3.10 for compatibility with latest transformers
+FROM python:3.10-slim
 
 # Install system dependencies (including Tesseract for OCR)
 RUN apt-get update && apt-get install -y \
