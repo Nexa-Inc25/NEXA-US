@@ -3,6 +3,7 @@ FROM python:3.11-slim
 # Install build essentials
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    tesseract-ocr \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
