@@ -1,9 +1,10 @@
 FROM python:3.11-slim
 
-# Install build essentials
+# Install build essentials and curl for health checks
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     tesseract-ocr \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -36,10 +37,20 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PATH="/usr/local/bin:$PATH"
 
 # Expose port (Render sets this via $PORT env var)
-EXPOSE ${PORT:-8501}
+EXPOSE ${PORT:-10000}
 
 # Change to app directory
 WORKDIR /app/backend/pdf-service
 
 # Run Streamlit with increased upload size and proper config
-CMD ["sh", "-c", "streamlit run ui_enhanced.py --server.port ${PORT:-8501} --server.address 0.0.0.0 --server.headless true --server.fileWatcherType none --server.runOnSave false --server.maxUploadSize 500 --server.enableXsrfProtection false"]
+# Use PORT environment variable from Render
+CMD streamlit run ui_enhanced.py \
+    --server.port=${PORT:-10000} \
+    --server.address=0.0.0.0 \
+    --server.headless=true \
+    --server.fileWatcherType=none \
+    --server.runOnSave=false \
+    --server.maxUploadSize=500 \
+    --server.enableXsrfProtection=false \
+    --server.enableCORS=false \
+    --server.enableWebsocketCompression=false

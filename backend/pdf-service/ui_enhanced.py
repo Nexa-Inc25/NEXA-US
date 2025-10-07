@@ -34,20 +34,37 @@ logger = logging.getLogger(__name__)
 # Cache model to load once
 @st.cache_resource
 def load_model():
-    logger.info("Loading Sentence-BERT model...")
-    model = SentenceTransformer('all-MiniLM-L6-v2', device='cuda' if torch.cuda.is_available() else 'cpu')
-    return model
-
-# Initialize model
-model = load_model()
+    try:
+        logger.info("Loading Sentence-BERT model...")
+        model = SentenceTransformer('all-MiniLM-L6-v2', device='cuda' if torch.cuda.is_available() else 'cpu')
+        logger.info("Model loaded successfully")
+        return model
+    except Exception as e:
+        logger.error(f"Error loading model: {e}")
+        st.error(f"Failed to load model: {e}")
+        return None
 
 # Cache custom taggers
 @st.cache_resource
 def load_custom_taggers():
-    logger.info("Loading custom taggers...")
-    pos_tagger = train_pos_tagger()
-    ner_tagger = train_ner_tagger()
-    return pos_tagger, ner_tagger
+    try:
+        logger.info("Loading custom taggers...")
+        pos_tagger = train_pos_tagger()
+        ner_tagger = train_ner_tagger()
+        logger.info("Custom taggers loaded successfully")
+        return pos_tagger, ner_tagger
+    except Exception as e:
+        logger.error(f"Error loading custom taggers: {e}")
+        # Return None values if loading fails
+        return None, None
+
+# Initialize model first with proper error handling
+model = None
+try:
+    model = load_model()
+except Exception as e:
+    logger.error(f"Failed to initialize model: {e}")
+    model = None
 
 # Initialize custom taggers
 pos_tagger, ner_tagger = load_custom_taggers()
@@ -220,20 +237,18 @@ def chunk_text(text, max_tokens=200, overlap=50):
                        (f" and {len(set(tokens))-5} more" if len(set(tokens)) > 5 else ""))
     return chunks
 
-# Function to generate embeddings
-def generate_embeddings(chunks, batch_size=16):
+# Function to generate embeddings for text chunks
+def generate_embeddings(chunks):
     logger.info(f"Generating embeddings for {len(chunks)} chunks...")
     if not chunks:
         return np.array([])
-    embeddings = []
-    for i in range(0, len(chunks), batch_size):
-        batch = chunks[i:i + batch_size]
-        start = time.time()
-        batch_embeddings = model.encode(batch, convert_to_numpy=True, batch_size=batch_size, show_progress_bar=True)
-        embeddings.append(batch_embeddings)
-        logger.info(f"Batch {i//batch_size + 1} processed in {time.time() - start:.2f} seconds")
-    return np.vstack(embeddings) if embeddings else np.array([])
-
+    if model is None:
+        logger.error("Model not available for embedding generation")
+        st.error("Model not loaded. Please refresh the page.")
+        return np.array([])
+    embeddings = model.encode(chunks, show_progress_bar=True)
+    logger.info(f"Generated {len(embeddings)} embeddings")
+    return embeddings
 # Function to create FAISS index
 def create_faiss_index(embeddings, index_path="faiss_index.bin"):
     logger.info("Creating FAISS index...")
@@ -255,8 +270,21 @@ def load_faiss_index(index_path="faiss_index.bin"):
     return None
 
 # Streamlit app
-st.title("AI Document Analyzer")
-tabs = st.tabs(["Learn Specification", "Analyze Audit", "Results"])
+st.set_page_config(
+    page_title="NEXA Document Intelligence",
+    page_icon="🚧",
+    layout="wide"
+)
+
+st.title("🚧 NEXA Document Intelligence System")
+st.markdown("**Enterprise Construction Specification Analyzer**")
+
+# Check if model is loaded
+if model is None:
+    st.error("⚠️ Model failed to load. Please contact support.")
+    st.stop()
+
+tabs = st.tabs(["📚 Learn Specification", "📋 Analyze Audit", "✅ Results"])
 
 # Tab 1: Learn Specification
 with tabs[0]:

@@ -1,0 +1,232 @@
+Section NNP O
+4.1.2 CD B-SECTION
+: : O
+Poles NNS O
+must MD O
+be VB O
+buried VBN O
+at IN O
+least JJS O
+6 CD B-MEASURE
+feet NNS I-MEASURE
+deep JJ O
+. . O
+
+Conductors NNS O
+must MD O
+be VB O
+copper NN B-MATERIAL
+, , O
+not RB O
+aluminum NN B-MATERIAL
+. . O
+
+Minimum JJ O
+clearance NN O
+from IN O
+ground NN O
+is VBZ O
+12 CD B-MEASURE
+feet NNS I-MEASURE
+. . O
+
+All DT O
+bolts NNS B-MATERIAL
+must MD O
+be VB O
+grade NN O
+8.8 CD B-GRADE
+. . O
+
+Insulation NN O
+must MD O
+be VB O
+rated VBN O
+for IN O
+600V CD B-MEASURE
+. . O
+
+Anchors NNS B-MATERIAL
+must MD O
+be VB O
+galvanized JJ B-MATERIAL
+steel NN I-MATERIAL
+. . O
+
+Anchor NN O
+depth NN O
+is VBZ O
+5 CD B-MEASURE
+feet NNS I-MEASURE
+. . O
+
+Crossarms NNS B-MATERIAL
+must MD O
+be VB O
+fiberglass NN B-MATERIAL
+. . O
+
+Pole NN O
+spacing NN O
+maximum JJ O
+150 CD B-MEASURE
+feet NNS I-MEASURE
+. . O
+
+Hardware NN B-MATERIAL
+must MD O
+be VB O
+stainless JJ B-MATERIAL
+steel NN I-MATERIAL
+. . O
+
+Infraction NN O
+1 CD B-ID
+: : O
+Pole NN O
+buried VBN O
+4 CD B-MEASURE
+feet NNS I-MEASURE
+in IN O
+Zone NN B-ZONE
+A NNP I-ZONE
+. . O
+
+Section NNP O
+4.2.1 CD B-SECTION
+specifies VBZ O
+copper NN B-MATERIAL
+conductors NNS O
+. . O
+
+Section NNP O
+4.3.1 CD B-SECTION
+requires VBZ O
+grade NN O
+8.8 CD B-GRADE
+bolts NNS B-MATERIAL
+. . O
+
+Zone NN B-ZONE
+C NNP I-ZONE
+has VBZ O
+aluminum NN B-MATERIAL
+conductors NNS O
+. . O
+
+Grade NN O
+5.6 CD B-GRADE
+bolts NNS B-MATERIAL
+found VBN O
+. . O
+
+Pole NN O
+depth NN O
+4 CD B-MEASURE
+feet NNS I-MEASURE
+. . O
+
+Clearance NN O
+10 CD B-MEASURE
+feet NNS I-MEASURE
+detected VBN O
+. . O
+
+400V CD B-MEASURE
+insulation NN O
+rated VBN O
+. . O
+
+Zone NN B-ZONE
+D NNP I-ZONE
+inspection NN O
+failed VBD O
+. . O
+
+Section NNP O
+4.4.1 CD B-SECTION
+: : O
+Anchors NNS B-MATERIAL
+galvanized JJ B-MATERIAL
+steel NN I-MATERIAL
+required VBD O
+. . O
+
+Section NNP O
+4.4.2 CD B-SECTION
+: : O
+Minimum JJ O
+anchor NN O
+depth NN O
+5 CD B-MEASURE
+feet NNS I-MEASURE
+. . O
+
+Section NNP O
+4.5.1 CD B-SECTION
+: : O
+Crossarms NNS B-MATERIAL
+fiberglass NN B-MATERIAL
+composite NN I-MATERIAL
+. . O
+
+Section NNP O
+4.5.2 CD B-SECTION
+: : O
+Maximum JJ O
+pole NN O
+spacing NN O
+150 CD B-MEASURE
+feet NNS I-MEASURE
+. . O
+
+Section NNP O
+4.6.1 CD B-SECTION
+: : O
+All DT O
+hardware NN B-MATERIAL
+stainless JJ B-MATERIAL
+steel NN I-MATERIAL
+. . O
+
+Zone NN B-ZONE
+E NNP I-ZONE
+requires VBZ O
+special JJ O
+permits NNS O
+. . O
+
+Transformer NN B-MATERIAL
+rated VBN O
+15kV CD B-MEASURE
+. . O
+
+Circuit NN O
+breaker NN B-MATERIAL
+200A CD B-MEASURE
+minimum JJ O
+. . O
+
+Grounding NN O
+rod NN B-MATERIAL
+copper NN B-MATERIAL
+clad VBN I-MATERIAL
+. . O
+
+Wire NN B-MATERIAL
+gauge NN O
+AWG NN O
+2/0 CD B-GRADE
+. . O
+
+Conduit NN B-MATERIAL
+PVC NN B-MATERIAL
+schedule NN O
+40 CD B-GRADE
+. . O
+
+Zone NN B-ZONE
+F NNP I-ZONE
+utility NN O
+easement NN O
+. . O
