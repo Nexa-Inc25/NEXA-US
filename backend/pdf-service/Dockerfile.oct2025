@@ -1,0 +1,49 @@
+# Base from Python 3.9 for compatibility
+FROM python:3.9-slim
+
+# Install system dependencies (including Tesseract for OCR)
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    tesseract-ocr \
+    tesseract-ocr-eng \
+    libtesseract-dev \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgomp1 \
+    wget \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user for security
+RUN useradd -m -u 1000 user
+USER user
+ENV HOME=/home/user \
+    PATH=/home/user/.local/bin:$PATH
+
+# Set working directory
+WORKDIR $HOME/app
+
+# Install Python dependencies
+COPY --chown=user ./requirements_oct2025.txt requirements.txt
+RUN pip install --no-cache-dir --upgrade pip wheel --user && \
+    pip install --no-cache-dir -r requirements.txt --user && \
+    python -c "import nltk; nltk.download('punkt', quiet=True)"
+
+# Copy app code
+COPY --chown=user . $HOME/app
+
+# Create data directory for embeddings (use /data for Render disk if attached)
+RUN mkdir -p /data || true
+
+# Expose Render default port
+EXPOSE 8000
+
+# Health check for Render
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8000/health || exit 1
+
+# Run with uvicorn (single worker for memory efficiency)
+CMD ["uvicorn", "app_oct2025_enhanced:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
