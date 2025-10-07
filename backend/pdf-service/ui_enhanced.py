@@ -96,6 +96,9 @@ def chunk_text(text, max_tokens=200, overlap=50):
     current_chunk = []
     current_length = 0
     
+    # Track entities for logging
+    found_entities = []
+    
     for sentence in sentences:
         if not sentence.strip():
             continue
@@ -115,6 +118,11 @@ def chunk_text(text, max_tokens=200, overlap=50):
         except:
             ner_tags = [(token, 'O') for token in tokens]
         
+        # Log entities found
+        entities_in_sentence = [(token, tag) for token, tag in ner_tags if tag != 'O']
+        if entities_in_sentence:
+            found_entities.extend(entities_in_sentence)
+        
         # Filter tokens based on POS and NER
         filtered_tokens = []
         for i, (token, pos) in enumerate(pos_tags):
@@ -129,9 +137,30 @@ def chunk_text(text, max_tokens=200, overlap=50):
                 # Start new chunk at section boundaries
                 if 'SECTION' in ner_tag and current_chunk and len(current_chunk) > 20:
                     chunks.append(" ".join(current_chunk))
-                    logger.info(f"Found section entity: {token}")
+                    logger.info(f"Found section entity: {token} ({ner_tag})")
                     current_chunk = []
                     current_length = 0
+                # Log other important entities
+                elif 'EQUIPMENT' in ner_tag:
+                    logger.debug(f"Found equipment: {token}")
+                elif 'MATERIAL' in ner_tag:
+                    logger.debug(f"Found material: {token}")
+                elif 'MEASURE' in ner_tag:
+                    logger.debug(f"Found measurement: {token}")
+                elif 'GRADE' in ner_tag:
+                    logger.debug(f"Found grade: {token}")
+                elif 'ZONE' in ner_tag:
+                    logger.debug(f"Found zone: {token}")
+                elif 'STANDARD' in ner_tag:
+                    logger.debug(f"Found standard: {token}")
+                elif 'SPECIFICATION' in ner_tag:
+                    logger.debug(f"Found specification: {token}")
+                elif 'INSTALLATION' in ner_tag:
+                    logger.debug(f"Found installation: {token}")
+                elif 'LOCATION' in ner_tag:
+                    logger.debug(f"Found location: {token}")
+                elif 'TEST' in ner_tag:
+                    logger.debug(f"Found test: {token}")
             
             # Keep important POS tags
             elif pos in ['NN', 'NNS', 'NNP', 'NNPS', 'VB', 'VBZ', 'VBN', 'VBG', 'JJ', 'CD', 'MD']:
@@ -177,6 +206,18 @@ def chunk_text(text, max_tokens=200, overlap=50):
                 chunks.append(sentence.strip())
     
     logger.info(f"Created {len(chunks)} chunks with custom taggers")
+    if found_entities:
+        entity_types = {}
+        for token, tag in found_entities:
+            entity_type = tag.split('-')[-1] if '-' in tag else tag
+            if entity_type not in entity_types:
+                entity_types[entity_type] = []
+            entity_types[entity_type].append(token)
+        
+        logger.info(f"Found {len(found_entities)} entities:")
+        for entity_type, tokens in entity_types.items():
+            logger.info(f"  - {entity_type}: {', '.join(set(tokens)[:5])}" + 
+                       (f" and {len(set(tokens))-5} more" if len(set(tokens)) > 5 else ""))
     return chunks
 
 # Function to generate embeddings

@@ -1,0 +1,723 @@
+Section NNP O
+4.1.2 CD B-SECTION
+: : O
+Poles NNS B-EQUIPMENT
+must MD O
+be VB O
+buried VBN B-INSTALLATION
+at IN O
+least JJS O
+6 CD B-MEASURE
+feet NNS I-MEASURE
+deep JJ O
+. . O
+
+Conductors NNS B-EQUIPMENT
+must MD O
+be VB O
+copper NN B-MATERIAL
+, , O
+not RB O
+aluminum NN B-MATERIAL
+. . O
+
+Minimum JJ O
+clearance NN O
+from IN O
+ground NN B-LOCATION
+is VBZ O
+12 CD B-MEASURE
+feet NNS I-MEASURE
+. . O
+
+All DT O
+bolts NNS B-EQUIPMENT
+must MD O
+be VB O
+grade NN O
+8.8 CD B-GRADE
+. . O
+
+Insulation NN B-EQUIPMENT
+must MD O
+be VB O
+rated VBN O
+for IN O
+600V CD B-MEASURE
+. . O
+
+Anchors NNS B-EQUIPMENT
+must MD O
+be VB O
+galvanized JJ B-MATERIAL
+steel NN I-MATERIAL
+. . O
+
+Anchor NN B-EQUIPMENT
+depth NN O
+is VBZ O
+5 CD B-MEASURE
+feet NNS I-MEASURE
+. . O
+
+Crossarms NNS B-EQUIPMENT
+must MD O
+be VB O
+fiberglass NN B-MATERIAL
+. . O
+
+Pole NN B-EQUIPMENT
+spacing NN O
+maximum JJ O
+150 CD B-MEASURE
+feet NNS I-MEASURE
+. . O
+
+Hardware NN B-EQUIPMENT
+must MD O
+be VB O
+stainless JJ B-MATERIAL
+steel NN I-MATERIAL
+. . O
+
+Infraction NN O
+1 CD O
+: : O
+Pole NN B-EQUIPMENT
+buried VBN B-INSTALLATION
+4 CD B-MEASURE
+feet NNS I-MEASURE
+in IN O
+Zone NN B-ZONE
+A NNP I-ZONE
+. . O
+
+Section NNP O
+5.2.3 CD B-SECTION
+: : O
+Transformers NNS B-EQUIPMENT
+shall MD O
+be VB O
+mounted VBN B-INSTALLATION
+at IN O
+least JJS O
+10 CD B-MEASURE
+feet NNS I-MEASURE
+above IN O
+ground NN B-LOCATION
+level NN O
+. . O
+
+Cables NNS B-EQUIPMENT
+must MD O
+be VB O
+insulated VBN B-INSTALLATION
+with IN O
+XLPE NN B-MATERIAL
+or CC O
+EPR NN B-MATERIAL
+. . O
+
+Conduit NN B-EQUIPMENT
+diameter NN O
+minimum JJ O
+2 CD B-MEASURE
+inches NNS I-MEASURE
+. . O
+
+Switchgear NN B-EQUIPMENT
+rated VBN O
+for IN O
+15kV CD B-MEASURE
+. . O
+
+Grounding NN O
+rods NNS B-EQUIPMENT
+made VBN O
+of IN O
+copper-clad JJ B-MATERIAL
+steel NN I-MATERIAL
+. . O
+
+Trench NN B-EQUIPMENT
+depth NN O
+at IN O
+least JJS O
+36 CD B-MEASURE
+inches NNS I-MEASURE
+for IN O
+underground JJ B-INSTALLATION
+lines NNS B-EQUIPMENT
+. . O
+
+Fuses NNS B-EQUIPMENT
+must MD O
+be VB O
+type NN O
+K NN B-GRADE
+or CC O
+T NN B-GRADE
+. . O
+
+Circuit NN B-EQUIPMENT
+breakers NNS I-EQUIPMENT
+rated VBN O
+at IN O
+1200A CD B-MEASURE
+. . O
+
+Poles NNS B-EQUIPMENT
+made VBN O
+of IN O
+Douglas NN B-MATERIAL
+fir NN I-MATERIAL
+or CC O
+composite NN B-MATERIAL
+. . O
+
+Guy NN O
+wires NNS B-EQUIPMENT
+shall MD O
+be VB O
+7/16 CD B-MEASURE
+inch NN I-MEASURE
+steel NN B-MATERIAL
+. . O
+
+Section NNP O
+6.3.4 CD B-SECTION
+: : O
+All DT O
+connections NNS B-EQUIPMENT
+shall MD O
+be VB O
+made VBN O
+with IN O
+compression NN B-SPECIFICATION
+fittings NNS I-SPECIFICATION
+rated VBN O
+for IN O
+outdoor JJ B-SPECIFICATION
+use NN O
+. . O
+
+Voltage NN O
+drop NN B-TEST
+limited VBN O
+to TO O
+3% CD B-MEASURE
+maximum JJ O
+. . O
+
+Conductor NN B-EQUIPMENT
+size NN O
+minimum JJ O
+#2 CD B-GRADE
+AWG NN B-MEASURE
+. . O
+
+Overhead JJ B-INSTALLATION
+lines NNS B-EQUIPMENT
+require VB O
+bird NN O
+guards NNS B-EQUIPMENT
+on IN O
+insulators NNS B-EQUIPMENT
+. . O
+
+Underground JJ B-INSTALLATION
+cables NNS B-EQUIPMENT
+protected VBN O
+by IN O
+PVC NN B-MATERIAL
+conduit NN B-EQUIPMENT
+. . O
+
+Transformers NNS B-EQUIPMENT
+enclosed VBN O
+in IN O
+pad-mounted JJ B-INSTALLATION
+enclosures NNS B-EQUIPMENT
+. . O
+
+Circuit NN B-EQUIPMENT
+identification NN O
+using VBG O
+color-coded JJ B-SPECIFICATION
+tape NN B-MATERIAL
+. . O
+
+Safety NN O
+barriers NNS B-EQUIPMENT
+required VBN O
+around IN O
+substations NNS B-LOCATION
+. . O
+
+Emergency NN O
+shutdown NN O
+switches NNS B-EQUIPMENT
+rated VBN O
+for IN O
+600A CD B-MEASURE
+. . O
+
+Lightning NN O
+arrestors NNS B-EQUIPMENT
+installed VBN B-INSTALLATION
+at IN O
+all DT O
+pole NN B-EQUIPMENT
+tops NNS O
+. . O
+
+Section NNP O
+7.4.5 CD B-SECTION
+: : O
+All DT O
+structures NNS B-EQUIPMENT
+must MD O
+meet VB O
+NESC NN B-STANDARD
+standards NNS O
+for IN O
+wind NN O
+loading NN B-TEST
+. . O
+
+Creepage NN O
+distance NN O
+minimum JJ O
+20 CD B-MEASURE
+mm/kV NNS I-MEASURE
+. . O
+
+Guy NN O
+anchors NNS B-EQUIPMENT
+tested VBN B-TEST
+to TO O
+10,000 CD B-MEASURE
+lbs NNS I-MEASURE
+pull NN O
+strength NN B-TEST
+. . O
+
+Dead-end JJ O
+assemblies NNS B-EQUIPMENT
+use VB O
+preformed VBN B-SPECIFICATION
+grips NNS B-EQUIPMENT
+. . O
+
+Service NN O
+drops NNS B-EQUIPMENT
+limited VBN O
+to TO O
+100 CD B-MEASURE
+feet NNS I-MEASURE
+. . O
+
+Meter NN B-EQUIPMENT
+bases NNS I-EQUIPMENT
+made VBN O
+of IN O
+polycarbonate NN B-MATERIAL
+. . O
+
+Disconnect NN O
+switches NNS B-EQUIPMENT
+lockable JJ B-SPECIFICATION
+in IN O
+open JJ O
+position NN O
+. . O
+
+Cable NN B-EQUIPMENT
+trays NNS I-EQUIPMENT
+galvanized VBN B-MATERIAL
+steel NN I-MATERIAL
+. . O
+
+Junction NN B-EQUIPMENT
+boxes NNS I-EQUIPMENT
+NEMA NN B-STANDARD
+4X NN B-GRADE
+rated VBN O
+. . O
+
+Warning NN O
+signs NNS B-EQUIPMENT
+required VBN O
+on IN O
+high-voltage JJ O
+equipment NN B-EQUIPMENT
+. . O
+
+Section NNP O
+8.1.6 CD B-SECTION
+: : O
+Overhead JJ B-INSTALLATION
+conductors NNS B-EQUIPMENT
+spaced VBN O
+at IN O
+minimum JJ O
+18 CD B-MEASURE
+inches NNS I-MEASURE
+apart RB O
+. . O
+
+Insulators NNS B-EQUIPMENT
+made VBN O
+of IN O
+porcelain NN B-MATERIAL
+or CC O
+glass NN B-MATERIAL
+. . O
+
+Busbars NNS B-EQUIPMENT
+constructed VBN O
+of IN O
+copper NN B-MATERIAL
+or CC O
+aluminum NN B-MATERIAL
+. . O
+
+Load NN O
+capacity NN O
+tested VBN B-TEST
+to TO O
+500A CD B-MEASURE
+minimum JJ O
+. . O
+
+Pole NN B-EQUIPMENT
+foundations NNS O
+use VB O
+concrete NN B-MATERIAL
+with IN O
+4000 CD B-MEASURE
+psi NN I-MEASURE
+strength NN B-TEST
+. . O
+
+Crossarm NN B-EQUIPMENT
+braces NNS O
+galvanized VBN B-MATERIAL
+steel NN I-MATERIAL
+. . O
+
+Service NN O
+entrances NNS B-EQUIPMENT
+require VB O
+weatherproof JJ B-SPECIFICATION
+covers NNS B-EQUIPMENT
+. . O
+
+Ground NN O
+wires NNS B-EQUIPMENT
+connected VBN B-INSTALLATION
+to TO O
+electrodes NNS B-EQUIPMENT
+. . O
+
+Cable NN B-EQUIPMENT
+insulation NN O
+tested VBN B-TEST
+for IN O
+15kV CD B-MEASURE
+dielectric JJ B-TEST
+strength NN O
+. . O
+
+Switchgear NN B-EQUIPMENT
+installed VBN B-INSTALLATION
+in IN O
+control NN B-LOCATION
+rooms NNS I-LOCATION
+. . O
+
+Infraction NN O
+11 CD O
+: : O
+Transformers NNS B-EQUIPMENT
+mounted VBN B-INSTALLATION
+at IN O
+8 CD B-MEASURE
+feet NNS I-MEASURE
+in IN O
+Area NN B-ZONE
+K NNP I-ZONE
+. . O
+
+Infraction NN O
+21 CD O
+: : O
+Bolted VBN B-SPECIFICATION
+connections NNS B-EQUIPMENT
+used VBN O
+instead RB O
+of IN O
+compression NN B-SPECIFICATION
+fittings NNS I-SPECIFICATION
+. . O
+
+Infraction NN O
+22 CD O
+: : O
+Voltage NN O
+drop NN B-TEST
+measured VBN B-TEST
+at IN O
+5% CD B-MEASURE
+. . O
+
+Infraction NN O
+31 CD O
+: : O
+Structures NNS B-EQUIPMENT
+not RB O
+meeting VBG O
+NESC NN B-STANDARD
+standards NNS O
+. . O
+
+Infraction NN O
+32 CD O
+: : O
+Creepage NN O
+distance NN O
+15 CD B-MEASURE
+mm/kV NNS I-MEASURE
+. . O
+
+Infraction NN O
+41 CD O
+: : O
+Conductors NNS B-EQUIPMENT
+spaced VBN O
+12 CD B-MEASURE
+inches NNS I-MEASURE
+apart RB O
+. . O
+
+Infraction NN O
+42 CD O
+: : O
+Plastic NN B-MATERIAL
+insulators NNS B-EQUIPMENT
+used VBN O
+. . O
+
+Infraction NN O
+50 CD O
+: : O
+Switchgear NN B-EQUIPMENT
+installed VBN B-INSTALLATION
+outdoors RB O
+instead RB O
+of IN O
+control NN B-LOCATION
+rooms NNS I-LOCATION
+. . O
+
+Section NNP O
+9.2.1 CD B-SECTION
+: : O
+Raceways NNS B-EQUIPMENT
+shall MD O
+be VB O
+rigid JJ B-MATERIAL
+metal NN I-MATERIAL
+or CC O
+schedule NN O
+80 CD B-GRADE
+PVC NN B-MATERIAL
+. . O
+
+Pull NN B-EQUIPMENT
+boxes NNS I-EQUIPMENT
+sized VBN O
+per IN O
+NEC NN B-STANDARD
+Article NN O
+314 CD B-SECTION
+. . O
+
+Bonding NN O
+jumpers NNS B-EQUIPMENT
+#6 CD B-GRADE
+AWG NN B-MEASURE
+minimum JJ O
+. . O
+
+Surge NN O
+protection NN B-EQUIPMENT
+devices NNS I-EQUIPMENT
+rated VBN O
+20kA CD B-MEASURE
+. . O
+
+Splice NN B-EQUIPMENT
+enclosures NNS I-EQUIPMENT
+submersible JJ B-SPECIFICATION
+rated VBN O
+. . O
+
+Manhole NN B-LOCATION
+covers NNS B-EQUIPMENT
+rated VBN O
+H-20 CD B-GRADE
+loading NN B-TEST
+. . O
+
+Duct NN B-EQUIPMENT
+banks NNS I-EQUIPMENT
+concrete NN B-MATERIAL
+encased VBN B-INSTALLATION
+. . O
+
+Infraction NN O
+51 CD O
+: : O
+Flexible JJ B-MATERIAL
+raceways NNS B-EQUIPMENT
+used VBN O
+. . O
+
+Infraction NN O
+52 CD O
+: : O
+Pull NN B-EQUIPMENT
+boxes NNS I-EQUIPMENT
+undersized JJ O
+. . O
+
+Infraction NN O
+53 CD O
+: : O
+#8 CD B-GRADE
+AWG NN B-MEASURE
+bonding NN O
+jumpers NNS B-EQUIPMENT
+. . O
+
+Infraction NN O
+54 CD O
+: : O
+15kA CD B-MEASURE
+surge NN O
+protection NN B-EQUIPMENT
+. . O
+
+Infraction NN O
+55 CD O
+: : O
+Non-submersible JJ B-SPECIFICATION
+splice NN B-EQUIPMENT
+enclosures NNS I-EQUIPMENT
+. . O
+
+Infraction NN O
+56 CD O
+: : O
+H-10 CD B-GRADE
+rated VBN O
+manhole NN B-LOCATION
+covers NNS B-EQUIPMENT
+. . O
+
+Infraction NN O
+57 CD O
+: : O
+Duct NN B-EQUIPMENT
+banks NNS I-EQUIPMENT
+without IN O
+concrete NN B-MATERIAL
+encasement NN B-INSTALLATION
+. . O
+
+Section NNP O
+10.5.7 CD B-SECTION
+: : O
+Neutral NN B-EQUIPMENT
+conductors NNS I-EQUIPMENT
+grounded VBN B-INSTALLATION
+at IN O
+service NN O
+entrance NN B-LOCATION
+only RB O
+. . O
+
+Phase NN B-EQUIPMENT
+conductors NNS I-EQUIPMENT
+color-coded JJ B-SPECIFICATION
+per IN O
+IEEE NN B-STANDARD
+standards NNS O
+. . O
+
+Terminations NNS B-EQUIPMENT
+torqued VBN B-TEST
+to TO O
+manufacturer NN O
+specifications NNS O
+. . O
+
+Fiber NN B-MATERIAL
+optic NN I-MATERIAL
+cables NNS B-EQUIPMENT
+in IN O
+innerduct NN B-EQUIPMENT
+. . O
+
+Vaults NNS B-LOCATION
+ventilated VBN B-SPECIFICATION
+per IN O
+OSHA NN B-STANDARD
+requirements NNS O
+. . O
+
+Risers NNS B-EQUIPMENT
+protected VBN O
+with IN O
+U-guards NN B-EQUIPMENT
+to TO O
+8 CD B-MEASURE
+feet NNS I-MEASURE
+. . O
+
+Capacitor NN B-EQUIPMENT
+banks NNS I-EQUIPMENT
+fused VBN B-SPECIFICATION
+individually RB O
+. . O
+
+Relays NNS B-EQUIPMENT
+tested VBN B-TEST
+annually RB O
+. . O
+
+Infraction NN O
+58 CD O
+: : O
+Multiple JJ O
+neutral NN B-EQUIPMENT
+grounding NN B-INSTALLATION
+points NNS O
+. . O
+
+Infraction NN O
+59 CD O
+: : O
+Non-standard JJ B-SPECIFICATION
+phase NN B-EQUIPMENT
+colors NNS O
+. . O
+
+Infraction NN O
+60 CD O
+: : O
+Loose JJ O
+terminations NNS B-EQUIPMENT
+found VBN O
+. . O
