@@ -20,10 +20,51 @@ from pydantic import BaseModel
 import pytesseract
 from PIL import Image
 import logging
+import time
+from multiprocessing import Pool, cpu_count
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# === CPU PERFORMANCE OPTIMIZATION ===
+# Detect available cores and optimize threading for CPU-only inference
+num_cores = int(os.environ.get('RENDER_CORES', len(os.sched_getaffinity(0)) if hasattr(os, 'sched_getaffinity') else cpu_count()))
+optimal_threads = max(1, num_cores // 2)  # Use half cores to avoid oversubscription
+
+# Set PyTorch threading for optimal CPU performance
+torch.set_num_threads(optimal_threads)
+torch.set_num_interop_threads(1)  # Minimize for inference
+
+# Enable oneDNN/MKL optimizations
+os.environ.setdefault('OMP_NUM_THREADS', str(optimal_threads))
+os.environ.setdefault('MKL_NUM_THREADS', str(optimal_threads))
+os.environ.setdefault('PYTORCH_ENABLE_MPS_FALLBACK', '1')
+
+logger.info(f"⚡ CPU Optimization: {num_cores} cores detected, using {optimal_threads} threads")
+logger.info(f"⚡ PyTorch threads: {torch.get_num_threads()}, Inter-op threads: {torch.get_num_interop_threads()}")
+
+# Log PyTorch configuration for debugging
+if logger.level <= logging.DEBUG:
+    logger.debug(f"PyTorch config: {torch.__config__.show()}")
+
+# Performance monitoring
+class PerformanceMonitor:
+    def __init__(self):
+        self.timings = {}
+    
+    def start(self, operation: str):
+        self.timings[operation] = time.time()
+    
+    def end(self, operation: str) -> float:
+        if operation in self.timings:
+            elapsed = time.time() - self.timings[operation]
+            logger.info(f"⏱️ {operation}: {elapsed:.2f}s")
+            del self.timings[operation]
+            return elapsed
+        return 0.0
+
+perf_monitor = PerformanceMonitor()
 
 # Download NLTK data
 nltk.download('punkt', quiet=True)
@@ -45,10 +86,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Model setup (GPU if available)
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+# Model setup (force CPU for Render deployment)
+device = 'cpu'  # Always use CPU for consistent performance on Render
 logger.info(f"🔧 Using device: {device}")
+
+# Load model with performance monitoring
+perf_monitor.start("Model loading")
 model = SentenceTransformer('all-MiniLM-L6-v2', device=device)
+perf_monitor.end("Model loading")
 
 # Persistence (use /data for Render disk if available)
 EMBEDDINGS_PATH = '/data/spec_embeddings.pkl' if os.path.exists('/data') else 'spec_embeddings.pkl'
@@ -210,7 +255,19 @@ def learn_spec_book(file_content: bytes, use_ocr: bool = False) -> dict:
             raise HTTPException(status_code=400, detail="No chunks created from spec text")
         
         logger.info(f"Generating embeddings for {len(chunks)} chunks...")
-        embeddings = model.encode(chunks, convert_to_tensor=False, show_progress_bar=False)
+        
+        # Optimize batch size based on available memory (smaller batches for free tier)
+        batch_size = min(32, max(8, optimal_threads * 4))
+        
+        perf_monitor.start("Embeddings generation")
+        embeddings = model.encode(
+            chunks, 
+            convert_to_tensor=False, 
+            show_progress_bar=False,
+            batch_size=batch_size,
+            normalize_embeddings=True  # Normalize for better cosine similarity
+        )
+        perf_monitor.end("Embeddings generation")
         
         # Store embeddings
         os.makedirs(os.path.dirname(EMBEDDINGS_PATH) if os.path.dirname(EMBEDDINGS_PATH) else '.', exist_ok=True)
@@ -360,15 +417,29 @@ async def analyze_audit(file: UploadFile = File(...)):
         with open(EMBEDDINGS_PATH, 'rb') as f:
             chunks, embeddings = pickle.load(f)
         
-        # Analyze each infraction
+        # Analyze infractions with batch processing
         results = []
         confidence_threshold = 0.5
+        max_infractions = min(100, len(infractions))  # Limit to 100 per request
         
-        for inf in infractions[:100]:  # Limit to 100 per request
-            # Generate embedding for infraction
-            inf_emb = model.encode([inf], convert_to_tensor=False)
+        # Batch encode all infractions for better performance
+        perf_monitor.start("Infraction embeddings")
+        batch_size = min(32, max(8, optimal_threads * 4))
+        inf_embeddings = model.encode(
+            infractions[:max_infractions], 
+            convert_to_tensor=False,
+            batch_size=batch_size,
+            normalize_embeddings=True
+        )
+        perf_monitor.end("Infraction embeddings")
+        
+        # Process each infraction with its pre-computed embedding
+        perf_monitor.start("Similarity matching")
+        for idx, inf in enumerate(infractions[:max_infractions]):
+            # Use pre-computed embedding
+            inf_emb = inf_embeddings[idx:idx+1]
             
-            # Calculate cosine similarity
+            # Calculate cosine similarity (optimized with normalized vectors)
             cos_scores = util.cos_sim(inf_emb, embeddings)[0]
             
             # Get top matches
@@ -428,6 +499,8 @@ async def analyze_audit(file: UploadFile = File(...)):
                 match_count=match_count,
                 reasons=reasons
             ))
+        
+        perf_monitor.end("Similarity matching")
         
         logger.info(f"Analysis complete: {len(results)} infractions processed")
         return results
