@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: nexa-doc-analyzer-oct2025
+    runtime: docker
+    dockerfilePath: ./backend/pdf-service/Dockerfile.oct2025
+    dockerContext: .
+    repo: https://github.com/yourusername/nexa-inc-mvp  # Update with your repo URL
+    branch: main
+    healthCheckPath: /health
+    disk:
+      name: embeddings-disk
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.9"
+      - key: LOG_LEVEL
+        value: INFO
+      - key: MAX_FILE_SIZE_MB
+        value: "1100"
+      - key: EMBEDDINGS_PATH
+        value: /data/spec_embeddings.pkl
+      - key: CONFIDENCE_THRESHOLD
+        value: "0.5"
+    plan: starter  # $7/month for persistent disk
+    # plan: free  # Use free tier for testing (no persistent disk)
+    region: oregon  # or your preferred region
