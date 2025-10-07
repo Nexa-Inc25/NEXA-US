@@ -19,7 +19,7 @@ COPY backend/pdf-service/requirements.txt ./backend/pdf-service/
 RUN pip install --no-cache-dir -r backend/pdf-service/requirements.txt
 
 # Pre-download NLTK data to avoid runtime errors
-RUN python -m nltk.downloader punkt
+RUN python -m nltk.downloader punkt averaged_perceptron_tagger maxent_ne_chunker words stopwords
 ENV NLTK_DATA=/app/nltk_data
 
 

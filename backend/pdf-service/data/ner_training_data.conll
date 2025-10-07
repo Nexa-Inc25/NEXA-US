@@ -1,0 +1,110 @@
+Section O O
+4.1.2 B-SECTION O
+: O O
+Poles O O
+must O O
+be O O
+buried O O
+at O O
+least O O
+6 B-MEASURE O
+feet I-MEASURE O
+deep O O
+. O O
+
+Conductors O O
+must O O
+be O O
+copper B-MATERIAL O
+, O O
+not O O
+aluminum B-MATERIAL O
+. O O
+
+Minimum O O
+clearance O O
+from O O
+ground O O
+is O O
+12 B-MEASURE O
+feet I-MEASURE O
+. O O
+
+All O O
+bolts B-MATERIAL O
+must O O
+be O O
+grade B-SPEC O
+8.8 I-SPEC O
+. O O
+
+Insulation O O
+must O O
+be O O
+rated O O
+for O O
+600V B-SPEC O
+minimum O O
+. O O
+
+Anchors B-MATERIAL O
+must O O
+be O O
+galvanized B-MATERIAL O
+steel I-MATERIAL O
+. O O
+
+Minimum O O
+anchor O O
+depth O O
+is O O
+5 B-MEASURE O
+feet I-MEASURE O
+. O O
+
+Crossarms B-MATERIAL O
+must O O
+be O O
+fiberglass B-MATERIAL O
+composite I-MATERIAL O
+. O O
+
+Maximum O O
+pole O O
+spacing O O
+is O O
+150 B-MEASURE O
+feet I-MEASURE O
+. O O
+
+Hardware B-MATERIAL O
+must O O
+be O O
+stainless B-MATERIAL O
+steel I-MATERIAL O
+. O O
+
+Zone B-ZONE O
+A I-ZONE O
+requires O O
+special O O
+compliance O O
+. O O
+
+Infraction O O
+1 B-ID O
+: O O
+Pole O O
+buried O O
+4 B-MEASURE O
+feet I-MEASURE O
+deep O O
+. O O
+
+Zone B-ZONE O
+D I-ZONE O
+has O O
+grade B-SPEC O
+5.6 I-SPEC O
+bolts B-MATERIAL O
+. O O

@@ -1,0 +1,15 @@
+Section/NN 4.1.2/NN :/:
+Poles/NNS must/MD be/VB buried/VBN at/IN least/JJS 6/CD feet/NNS deep/JJ ./.
+Conductors/NNS must/MD be/VB copper/NN ,/, not/RB aluminum/NN ./.
+Minimum/JJ clearance/NN from/IN ground/NN is/VBZ 12/CD feet/NNS ./.
+All/DT bolts/NNS must/MD be/VB grade/NN 8.8/CD ./.
+Insulation/NN must/MD be/VB rated/VBN for/IN 600V/CD minimum/JJ ./.
+Anchors/NNS must/MD be/VB galvanized/VBN steel/NN ./.
+Minimum/JJ anchor/NN depth/NN is/VBZ 5/CD feet/NNS ./.
+Crossarms/NNS must/MD be/VB fiberglass/NN composite/NN ./.
+Maximum/JJ pole/NN spacing/NN is/VBZ 150/CD feet/NNS ./.
+Hardware/NN must/MD be/VB stainless/JJ steel/NN ./.
+Zone/NN A/NNP requires/VBZ special/JJ compliance/NN ./.
+Infraction/NN 1/CD :/: Pole/NN buried/VBN 4/CD feet/NNS deep/JJ ./.
+Grade/NN 5.6/CD bolts/NNS found/VBN in/IN Zone/NN D/NNP ./.
+Aluminum/NN conductors/NNS used/VBN in/IN Zone/NN C/NNP ./.

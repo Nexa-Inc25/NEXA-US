@@ -12,13 +12,20 @@ import logging
 import time
 import torch
 import nltk
-from nltk.tokenize import sent_tokenize
+from nltk.tokenize import sent_tokenize, word_tokenize
+from nltk.corpus import stopwords
+from custom_taggers import train_pos_tagger, train_ner_tagger
 
 # Download NLTK data if not already present
 try:
     nltk.data.find('tokenizers/punkt')
+    nltk.data.find('corpora/stopwords')
 except LookupError:
     nltk.download('punkt', quiet=True)
+    nltk.download('stopwords', quiet=True)
+    nltk.download('averaged_perceptron_tagger', quiet=True)
+    nltk.download('maxent_ne_chunker', quiet=True)
+    nltk.download('words', quiet=True)
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -33,6 +40,25 @@ def load_model():
 
 # Initialize model
 model = load_model()
+
+# Cache custom taggers
+@st.cache_resource
+def load_custom_taggers():
+    logger.info("Loading custom taggers...")
+    pos_tagger = train_pos_tagger()
+    ner_tagger = train_ner_tagger()
+    return pos_tagger, ner_tagger
+
+# Initialize custom taggers
+pos_tagger, ner_tagger = load_custom_taggers()
+
+# Get stopwords
+try:
+    stop_words = set(stopwords.words('english'))
+    # Keep important modal verbs and technical terms
+    stop_words -= {'must', 'shall', 'should', 'not', 'no'}
+except:
+    stop_words = set()
 
 # Function to extract text from PDF with OCR fallback
 def extract_text_from_pdf(pdf_file):
@@ -59,33 +85,98 @@ def extract_text_from_pdf(pdf_file):
     logger.info(f"Extracted text length: {len(text)} characters")
     return text
 
-# Function to chunk text using NLTK
-def chunk_text(text, max_tokens=512):
-    logger.info("Chunking text with NLTK...")
+# Enhanced chunking with custom taggers
+def chunk_text(text, max_tokens=200, overlap=50):
+    logger.info("Chunking text with custom taggers...")
     if not text:
         return []
-    sentences = sent_tokenize(text)  # Use NLTK for sentence tokenization
+    
+    sentences = sent_tokenize(text)
     chunks = []
     current_chunk = []
     current_length = 0
+    
     for sentence in sentences:
         if not sentence.strip():
             continue
-        sentence_length = len(sentence.split())
-        if current_length + sentence_length > max_tokens:
+        
+        # Tokenize and tag
+        tokens = word_tokenize(sentence)
+        
+        # Apply POS tagging
+        try:
+            pos_tags = pos_tagger.tag(tokens)
+        except:
+            pos_tags = nltk.pos_tag(tokens)
+        
+        # Apply NER tagging
+        try:
+            ner_tags = ner_tagger.tag(tokens)
+        except:
+            ner_tags = [(token, 'O') for token in tokens]
+        
+        # Filter tokens based on POS and NER
+        filtered_tokens = []
+        for i, (token, pos) in enumerate(pos_tags):
+            ner_tag = ner_tags[i][1] if i < len(ner_tags) else 'O'
+            
+            # Keep important tokens
+            keep = False
+            
+            # Keep entities
+            if ner_tag != 'O':
+                keep = True
+                # Start new chunk at section boundaries
+                if 'SECTION' in ner_tag and current_chunk and len(current_chunk) > 20:
+                    chunks.append(" ".join(current_chunk))
+                    logger.info(f"Found section entity: {token}")
+                    current_chunk = []
+                    current_length = 0
+            
+            # Keep important POS tags
+            elif pos in ['NN', 'NNS', 'NNP', 'NNPS', 'VB', 'VBZ', 'VBN', 'VBG', 'JJ', 'CD', 'MD']:
+                keep = True
+            
+            # Keep technical terms and numbers
+            elif token.isdigit() or '.' in token or token.isupper():
+                keep = True
+            
+            # Skip stopwords unless important
+            elif token.lower() not in stop_words:
+                keep = True
+            
+            if keep:
+                filtered_tokens.append(token)
+        
+        # Add filtered tokens to chunk
+        token_length = len(filtered_tokens)
+        
+        if current_length + token_length > max_tokens:
             if current_chunk:
                 chunks.append(" ".join(current_chunk))
-            current_chunk = [sentence]
-            current_length = sentence_length
+                # Overlap
+                overlap_count = min(overlap, len(current_chunk))
+                current_chunk = current_chunk[-overlap_count:] + filtered_tokens
+                current_length = overlap_count + token_length
+            else:
+                current_chunk = filtered_tokens
+                current_length = token_length
         else:
-            current_chunk.append(sentence)
-            current_length += sentence_length
+            current_chunk.extend(filtered_tokens)
+            current_length += token_length
+    
     if current_chunk:
         chunks.append(" ".join(current_chunk))
+    
+    # Ensure minimum chunks
     if len(chunks) == 0:
-        logger.warning("No valid chunks created. Adding raw text as single chunk.")
-        chunks = [text] if text.strip() else []
-    logger.info(f"Created {len(chunks)} chunks")
+        logger.warning("No chunks created with taggers, falling back to sentence chunking")
+        # Fallback to simple sentence chunking
+        for sentence in sentences[:10]:  # Limit to avoid single huge chunk
+            if sentence.strip():
+                chunks.append(sentence.strip())
+    
+    logger.info(f"Created {len(chunks)} chunks with custom taggers")
     return chunks
 
 # Function to generate embeddings
@@ -102,8 +193,8 @@ def generate_embeddings(chunks, batch_size=16):
         logger.info(f"Batch {i//batch_size + 1} processed in {time.time() - start:.2f} seconds")
     return np.vstack(embeddings) if embeddings else np.array([])
 
-# Function to create FAISS index with fallback for small datasets
-def create_faiss_index(embeddings, index_path="faiss_index.bin", min_points=10):
+# Function to create FAISS index
+def create_faiss_index(embeddings, index_path="faiss_index.bin"):
     logger.info("Creating FAISS index...")
     if embeddings.shape[0] == 0:
         logger.error("No embeddings to index")
