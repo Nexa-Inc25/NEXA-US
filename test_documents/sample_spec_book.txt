@@ -1,0 +1,92 @@
+UTILITY SPECIFICATION BOOK - PG&E SECTION 4.0
+==============================================
+
+SECTION 4.1: POLE INSTALLATION REQUIREMENTS
+-------------------------------------------
+
+4.1.1 WOOD POLE SPECIFICATIONS
+All wood poles must be treated with preservative per ANSI O5.1 standard.
+Minimum class rating: Class 3 for distribution lines.
+All poles must be inspected and tagged prior to installation.
+
+4.1.2 POLE DEPTH REQUIREMENTS
+Pole embedment depth must be 10% of pole length plus 2 feet.
+Example: 40-foot pole requires 6 feet of embedment (40 x 0.10 + 2 = 6).
+Soil conditions may require additional depth per engineering approval.
+
+4.1.3 GUY WIRE SPECIFICATIONS
+All guy wires must be high-strength galvanized steel.
+Minimum breaking strength: 10,000 lbs for distribution poles.
+Guy anchors must be rated for 125% of guy wire strength.
+
+SECTION 4.2: CONDUCTOR INSTALLATION
+----------------------------------
+
+4.2.1 CONDUCTOR TYPES
+Primary conductors: Aluminum Conductor Steel Reinforced (ACSR) only.
+Minimum size: 2/0 ACSR for overhead distribution.
+All conductors must meet ASTM B-232 specifications.
+
+4.2.2 CONDUCTOR CLEARANCES
+Minimum ground clearance: 18 feet for roads, 15 feet for other areas.
+Minimum separation from buildings: 10 feet horizontal, 8 feet vertical.
+Communication cable separation: Minimum 40 inches below power conductors.
+
+4.2.3 CONDUCTOR TENSION
+Maximum tension: 60% of rated breaking strength under normal conditions.
+Sag must be calculated for 120°F ambient temperature.
+All spans must be verified with tension meters before energization.
+
+SECTION 4.3: GROUNDING REQUIREMENTS
+----------------------------------
+
+4.3.1 GROUND ROD SPECIFICATIONS
+All ground rods must be copper-clad steel.
+Minimum dimensions: 5/8 inch diameter x 8 feet length.
+Ground resistance must not exceed 25 ohms per IEEE Std 142.
+
+4.3.2 GROUNDING INSTALLATION
+Ground rods must be driven full depth (within 2 inches of surface).
+All connections must use compression connectors or exothermic welding.
+Ground wire must be #6 AWG copper minimum, continuous to ground rod.
+
+4.3.3 TESTING REQUIREMENTS
+All grounds must be tested with calibrated ground resistance meter.
+Test results must be documented on installation cards.
+Failed grounds (>25 ohms) require additional rods or enhanced grounding.
+
+SECTION 4.4: EQUIPMENT INSTALLATION
+----------------------------------
+
+4.4.1 TRANSFORMER MOUNTING
+Transformers must be mounted on cross-arms with through bolts.
+All mounting hardware must be hot-dip galvanized.
+Minimum bolt size: 5/8 inch diameter, grade 5 or better.
+
+4.4.2 CUTOUT INSTALLATION
+Cutouts must be installed on bracket with 3-bolt mounting.
+Fuse size must match transformer protection requirements.
+All cutout bases must be tested for proper operation before energization.
+
+4.4.3 LIGHTNING ARRESTERS
+Lightning arresters required on all transformers and capacitor banks.
+Arresters must be polymer-housed, station-class rated.
+Arrester ground lead must be direct connection to ground rod (no splices).
+
+SECTION 4.5: SAFETY REQUIREMENTS
+-------------------------------
+
+4.5.1 CLEARANCE VERIFICATION
+All clearances must be verified before energization.
+Minimum approach distance for 12kV: 2 feet 2 inches.
+Work must stop if clearances cannot be maintained.
+
+4.5.2 EQUIPMENT RATING
+All equipment must be rated for system voltage or higher.
+Equipment operating at reduced ratings must have engineering approval.
+De-rated equipment must be clearly tagged with reduced rating.
+
+4.5.3 WORK COMPLETION
+All work must pass QA inspection before energization.
+Installation cards must be complete and signed by qualified inspector.
+Any deviations from spec book require engineering approval and documentation.

@@ -1,0 +1,74 @@
+QUALITY ASSURANCE AUDIT REPORT
+Job #2025-0614 - Distribution Line Extension
+Date: October 6, 2025
+Inspector: J. Martinez, QA Lead
+
+INFRACTIONS IDENTIFIED
+======================
+
+INFRACTION #1: NON-COMPLIANT POLE EMBEDMENT
+Location: Pole #47, Station 12+50
+Issue: Pole embedment measured at 5 feet 8 inches. For a 40-foot pole, required depth is 6 feet per specification.
+Status: GO-BACK REQUIRED
+Crew must re-excavate and set pole to proper depth.
+
+INFRACTION #2: INADEQUATE CONDUCTOR CLEARANCE
+Location: Span between Poles #52-53, over Elm Street
+Issue: Conductor height measured at 17 feet 4 inches above road surface. Minimum clearance is 18 feet per spec book Section 4.2.2.
+Status: GO-BACK REQUIRED
+Conductors must be re-tensioned to achieve proper clearance.
+
+INFRACTION #3: GROUND ROD NOT FULLY DRIVEN
+Location: Pole #49
+Issue: Ground rod protruding 6 inches above grade. Specification requires rod to be driven within 2 inches of surface.
+Status: GO-BACK REQUIRED
+Drive ground rod to proper depth.
+
+INFRACTION #4: MISSING LIGHTNING ARRESTER GROUND CONNECTION
+Location: Transformer at Pole #51
+Issue: Lightning arrester ground lead has splice connection instead of direct connection to ground rod.
+Status: GO-BACK REQUIRED
+Section 4.4.3 requires direct connection with no splices. Reconnect properly.
+
+INFRACTION #5: IMPROPER GUY WIRE MATERIAL
+Location: Pole #48
+Issue: Crew used non-galvanized steel cable for guy wire installation.
+Status: GO-BACK REQUIRED
+Replace with high-strength galvanized steel per Section 4.1.3.
+
+INFRACTION #6: CUTOUT MOUNTED WITH 2 BOLTS
+Location: Pole #50 cutout bracket
+Issue: Cutout mounted using only 2 bolts. Section 4.4.2 requires 3-bolt mounting.
+Status: GO-BACK REQUIRED
+Install third bolt to meet specification.
+
+INFRACTION #7: TRANSFORMER MOUNTING HARDWARE
+Location: Pole #52 transformer
+Issue: Mounting bolts are zinc-plated instead of hot-dip galvanized as required by Section 4.4.1.
+Status: GO-BACK REQUIRED
+Replace with properly galvanized hardware.
+
+INFRACTION #8: EXCESSIVE GROUND RESISTANCE
+Location: Pole #53
+Issue: Ground resistance tested at 32 ohms. Maximum allowed is 25 ohms per Section 4.3.1.
+Status: GO-BACK REQUIRED
+Install additional ground rod or enhanced grounding to achieve compliance.
+
+INFRACTION #9: CONDUCTOR TYPE NON-COMPLIANT
+Location: Span #54-55
+Issue: All-aluminum conductor (AAC) used instead of required ACSR per Section 4.2.1.
+Status: GO-BACK REQUIRED - CRITICAL
+This is a major violation. Conductor must be replaced with proper ACSR.
+
+INFRACTION #10: INCOMPLETE INSTALLATION CARD
+Location: Pole #47
+Issue: Installation card not signed by inspector as required by Section 4.5.3.
+Status: VIOLATION - CORRECT
+Complete and sign installation card before energization.
+
+========================================
+SUMMARY: 10 infractions identified
+Critical: 1
+Go-backs required: 9
+Estimated correction time: 16-20 work hours
+========================================

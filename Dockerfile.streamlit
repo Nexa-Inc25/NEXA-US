@@ -23,7 +23,9 @@ ENV NLTK_DATA=/app/nltk_data
 
 # Copy application code - FORCE REBUILD HERE
 # Updated: 2025-01-06 20:41 - Streamlit set_page_config fix applied
+# Updated: 2025-10-06 19:26 - Fixed file upload issues with config.toml
 COPY backend/pdf-service/ui_enhanced.py ./backend/pdf-service/ui_enhanced.py
+COPY backend/pdf-service/.streamlit ./backend/pdf-service/.streamlit
 COPY backend/pdf-service ./backend/pdf-service
 
 # Set environment variables
@@ -37,5 +39,5 @@ EXPOSE ${PORT:-8501}
 # Change to app directory
 WORKDIR /app/backend/pdf-service
 
-# Run Streamlit
-CMD ["sh", "-c", "streamlit run ui_enhanced.py --server.port ${PORT:-8501} --server.address 0.0.0.0 --server.headless true --server.fileWatcherType none --server.runOnSave false"]
+# Run Streamlit with increased upload size and proper config
+CMD ["sh", "-c", "streamlit run ui_enhanced.py --server.port ${PORT:-8501} --server.address 0.0.0.0 --server.headless true --server.fileWatcherType none --server.runOnSave false --server.maxUploadSize 500 --server.enableXsrfProtection false"]

@@ -1,75 +1,82 @@
-# 🚨 Fix "File does not exist: ui_enhanced.py" Error
+# 🚨 Fix "cd: /app/backend/pdf-service: No such file or directory" Error
 
 ## The Problem
-Render is running a **custom start command** from the dashboard that's looking for `ui_enhanced.py` in the wrong directory.
+Render is running a **custom start command** from the dashboard that's trying to cd to a directory that doesn't exist.
 
 Error:
 ```
-Error: Invalid value: File does not exist: ui_enhanced.py
+bash: line 1: cd: /app/backend/pdf-service: No such file or directory
 ```
 
-## ✅ Good News
-The `StreamlitAPIException` is **GONE**! This is a simpler path issue.
+## Root Cause
+The **Start Command field in Render Dashboard is set** and overriding the Dockerfile's CMD. This custom command includes `cd /app/backend/pdf-service` but this path doesn't match the actual container structure.
 
-## 🔧 The Fix (Choose One)
+## ✅ THE FIX - USE CORRECT START COMMAND
 
-### Option 1: Use render.yaml (RECOMMENDED)
-I've updated `render.yaml` to use `Dockerfile.streamlit` which has the correct paths built-in.
-
-**Action:** Just push the changes and Render will auto-deploy with the correct configuration.
-
-### Option 2: Fix Start Command in Dashboard
-
-If you need to manually fix it in Render Dashboard:
+**Update the Start Command in Render Dashboard (without the cd):**
 
 1. **Go to:** https://dashboard.render.com
-2. **Click:** `nexa-ui` service (or `nexa-ai-analyzer-python`)
-3. **Settings Tab** → **Build & Deploy**
-4. **Start Command:** Update to:
+2. **Click:** `nexa-ui` service
+3. **Settings Tab** → **Build & Deploy** section
+4. **Start Command:** Replace with this exact command (NO cd):
+   
+   **WRONG** (Current):
    ```bash
    cd /app/backend/pdf-service && streamlit run ui_enhanced.py --server.port $PORT --server.address 0.0.0.0 --server.headless true --server.fileWatcherType none
    ```
    
-   OR leave it **blank** to use the Dockerfile CMD (recommended)
+   **CORRECT** (Use this):
+   ```bash
+   streamlit run ui_enhanced.py --server.port $PORT --server.address 0.0.0.0 --server.headless true --server.fileWatcherType none --server.runOnSave false
+   ```
 
 5. **Docker File Path:** Ensure it's set to `./Dockerfile.streamlit`
-6. **Save Changes**
+6. **Click "Save Changes"**
+7. **Manually trigger a redeploy** (Deploy button)
 
-## 📦 What I Fixed
+## Why This Happens
 
-1. **render.yaml** - Changed from `./Dockerfile` to `./Dockerfile.streamlit` ✅
-2. **PostgreSQL version** - Fixed lint error (string instead of number) ✅
+When you manually set a Start Command in Render's dashboard, it **completely overrides** the Dockerfile's CMD. The custom command was trying to navigate to a path before the container's working directory was properly set.
 
-## 🎯 Current File Structure
+## Why Removing `cd` Works
 
+The `Dockerfile.streamlit` already sets the working directory correctly:
+
+```dockerfile
+WORKDIR /app                              # Sets initial directory
+COPY backend/pdf-service ...              # Copies files to /app/backend/pdf-service
+WORKDIR /app/backend/pdf-service          # Changes to the service directory
+CMD ["sh", "-c", "streamlit run ..."]     # Runs from correct directory
 ```
-/app/                           ← Docker WORKDIR
-└── backend/
-    └── pdf-service/
-        ├── ui_enhanced.py      ← Your Streamlit app
-        ├── ui.py
-        ├── api.py
-        └── requirements.txt
-```
 
-The Dockerfile sets `WORKDIR /app/backend/pdf-service` so the command `streamlit run ui_enhanced.py` works correctly.
+The Dockerfile's `WORKDIR /app/backend/pdf-service` (line 38) means the container **already starts** in the correct directory. Adding `cd /app/backend/pdf-service` tries to navigate to a path that doesn't exist yet.
 
 ## 🚀 Next Steps
 
-1. **Push this commit** (render.yaml updated)
-2. **Render auto-deploys** with correct Dockerfile
-3. **Service should start successfully**
+### Step 1: Update the Start Command (NOW)
+1. Go to Render Dashboard → nexa-ui service
+2. Settings → Build & Deploy
+3. Replace Start Command with:
+   ```bash
+   streamlit run ui_enhanced.py --server.port $PORT --server.address 0.0.0.0 --server.headless true --server.fileWatcherType none --server.runOnSave false
+   ```
+4. Save Changes
+5. Click "Manual Deploy" → "Deploy latest commit"
 
-## 📊 Expected Success Log
-
-After fix, you should see:
+### Step 2: Monitor Logs
+After redeploying, you should see:
 ```
-==> Running CMD from Dockerfile.streamlit
+==> Running: sh -c streamlit run ui_enhanced.py --server.port $PORT ...
   You can now view your Streamlit app in your browser.
-  Network URL: http://0.0.0.0:8501
+  Network URL: http://0.0.0.0:10000
 ==> Your service is live 🎉
 ```
 
+## 📦 Files Updated
+
+1. **render.yaml** - Uses `./Dockerfile.streamlit` ✅
+2. **Dockerfile.streamlit** - Has correct CMD and WORKDIR ✅
+
 ---
 
-**The Streamlit error is FIXED! This is just a path issue that render.yaml will resolve! 🎉**
+**ACTION REQUIRED: Update the Start Command in Render Dashboard - remove the `cd` part and use only the streamlit command!**
