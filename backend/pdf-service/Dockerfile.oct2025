@@ -18,8 +18,11 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
+# Create data directory as root and set permissions
+RUN mkdir -p /data && chmod 755 /data
+
 # Create non-root user for security
-RUN useradd -m -u 1000 user
+RUN useradd -m -u 1000 user && chown -R user:user /data
 USER user
 ENV HOME=/home/user \
     PATH=/home/user/.local/bin:$PATH
@@ -35,9 +38,6 @@ RUN pip install --no-cache-dir --upgrade pip wheel --user && \
 
 # Copy app code
 COPY --chown=user ./backend/pdf-service/ $HOME/app
-
-# Create data directory for embeddings (use /data for Render disk if attached)
-RUN mkdir -p /data || true
 
 # Expose Render default port
 EXPOSE 8000
