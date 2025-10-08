@@ -55,28 +55,33 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# Add middleware
+# Add middleware - ORDER MATTERS! CORS must be last
+app.add_middleware(RateLimitMiddleware, calls=100, period=60)
+app.add_middleware(ErrorHandlingMiddleware)
+app.add_middleware(ValidationMiddleware)
+
+# CORS middleware MUST be added last to process responses correctly
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"]
 )
-
-app.add_middleware(RateLimitMiddleware, calls=100, period=60)
-app.add_middleware(ErrorHandlingMiddleware)
-app.add_middleware(ValidationMiddleware)
 
 # Model setup
 device = 'cpu'
 logger.info(f"🔧 Using device: {device}")
 model = SentenceTransformer('all-MiniLM-L6-v2', device=device)
 
-# Persistence paths
-DATA_PATH = '/data' if os.path.exists('/data') else '.'
+# Persistence paths - ALWAYS use /data on Render
+DATA_PATH = '/data'
 EMBEDDINGS_PATH = os.path.join(DATA_PATH, 'spec_embeddings.pkl')
 SPEC_METADATA_PATH = os.path.join(DATA_PATH, 'spec_metadata.json')
+
+# Create data directory if it doesn't exist
+os.makedirs(DATA_PATH, exist_ok=True)
 
 logger.info(f"💾 Data storage path: {DATA_PATH}")
 
