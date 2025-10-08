@@ -1,0 +1,99 @@
+version: '3.8'
+
+services:
+  # Postgres Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: nexa_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: nexa_core_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis (Optional - for caching/sessions)
+  redis:
+    image: redis:7-alpine
+    container_name: nexa_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # API Service (Node.js)
+  api:
+    build:
+      context: ../services/api
+      dockerfile: Dockerfile
+    container_name: nexa_api
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/nexa_core_dev
+      REDIS_URL: redis://redis:6379
+      ANALYZER_URL: https://nexa-doc-analyzer-oct2025.onrender.com
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../services/api:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: npm run dev
+
+  # Web Dashboard (React)
+  web:
+    build:
+      context: ../apps/web
+      dockerfile: Dockerfile.dev
+    container_name: nexa_web
+    environment:
+      REACT_APP_API_URL: http://localhost:3000
+    ports:
+      - "3001:3000"
+    volumes:
+      - ../apps/web:/app
+      - /app/node_modules
+    command: npm start
+
+  # LocalStack (AWS S3/SQS emulation for local dev)
+  localstack:
+    image: localstack/localstack:latest
+    container_name: nexa_localstack
+    environment:
+      SERVICES: s3,sqs
+      DEBUG: 1
+      DATA_DIR: /tmp/localstack/data
+    ports:
+      - "4566:4566"
+      - "4571:4571"
+    volumes:
+      - localstack_data:/tmp/localstack
+      - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  postgres_data:
+  redis_data:
+  localstack_data:
+
+networks:
+  default:
+    name: nexa_network

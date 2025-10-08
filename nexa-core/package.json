@@ -1,0 +1,47 @@
+{
+  "name": "nexa-core",
+  "version": "1.0.0",
+  "description": "Nexa field operations platform with AI-powered compliance analysis",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "services/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:api": "cd services/api && npm run dev",
+    "dev:web": "cd apps/web && npm start",
+    "dev:mobile": "cd apps/mobile && expo start",
+    "build": "npm run build:web && npm run build:api",
+    "build:web": "cd apps/web && npm run build",
+    "build:api": "cd services/api && npm run build",
+    "test": "npm run test --workspaces",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
+    "db:migrate": "psql $DATABASE_URL < db/schema.sql",
+    "db:seed": "psql $DATABASE_URL < db/seeds/dev.sql",
+    "db:reset": "npm run db:migrate && npm run db:seed",
+    "postinstall": "husky install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2",
+    "prettier": "^3.2.5"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
+  }
+}
