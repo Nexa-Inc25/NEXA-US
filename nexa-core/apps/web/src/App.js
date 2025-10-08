@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import { Activity, Users, FileCheck, AlertTriangle, TrendingUp, Clock, DollarSign, CheckCircle } from 'lucide-react';
+import { Activity, Users, FileCheck, AlertTriangle, CheckCircle } from 'lucide-react';
 
 function App() {
   const [stats, setStats] = useState({
