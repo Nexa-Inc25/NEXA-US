@@ -1,0 +1,55 @@
+services:
+  # PostgreSQL Database
+  - type: pserv
+    name: nexa-core-db
+    plan: free  # or starter for production
+    databaseName: nexa_core
+    user: nexa_admin
+    region: oregon
+    ipAllowList: []  # Allow all
+    
+  # API Service
+  - type: web
+    name: nexa-core-api
+    runtime: node
+    region: oregon
+    plan: free  # or starter for production
+    buildCommand: cd services/api && npm install
+    startCommand: cd services/api && npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: nexa-core-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ANALYZER_URL
+        value: https://nexa-doc-analyzer-oct2025.onrender.com
+      - key: MAX_UPLOAD_SIZE_MB
+        value: 100
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: 100
+      - key: LOG_LEVEL
+        value: info
+      - key: ENABLE_SWAGGER_DOCS
+        value: true
+    autoDeploy: true
+    
+  # Web Dashboard (Future - when React app is ready)
+  # - type: web
+  #   name: nexa-core-web
+  #   runtime: static
+  #   region: oregon
+  #   buildCommand: cd apps/web && npm install && npm run build
+  #   staticPublishPath: apps/web/build
+  #   envVars:
+  #     - key: REACT_APP_API_URL
+  #       fromService:
+  #         type: web
+  #         name: nexa-core-api
+  #         property: host
