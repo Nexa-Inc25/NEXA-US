@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 
-# Install build essentials
+# Install build essentials and system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
@@ -12,28 +12,35 @@ WORKDIR /app
 RUN pip install --upgrade pip
 
 # Copy requirements first for better caching
-COPY backend/pdf-service/requirements.txt ./backend/pdf-service/
+COPY backend/pdf-service/requirements.txt ./requirements.txt
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r backend/pdf-service/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Pre-download NLTK data to avoid runtime errors
-RUN python -c "import nltk; nltk.download('punkt', quiet=True)"
-ENV NLTK_DATA=/app/nltk_data
+# Pre-download NLTK data
+RUN python -c "import nltk; nltk.download('punkt', quiet=True)" || true
 
 # Copy application code
 COPY backend/pdf-service ./backend/pdf-service
+
+# Create necessary directories
+RUN mkdir -p /tmp /data && chmod 755 /data
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PATH="/usr/local/bin:$PATH"
 
-# Expose port (Render sets this via $PORT env var)
-EXPOSE 8501
+# CPU optimization for PyTorch
+ENV OMP_NUM_THREADS=4
+ENV MKL_NUM_THREADS=4
+ENV PYTORCH_ENABLE_MPS_FALLBACK=1
+
+# Expose correct port for API
+EXPOSE 8000
 
 # Change to app directory
 WORKDIR /app/backend/pdf-service
 
-# Use uvicorn for FastAPI (exec form for better compatibility)
-CMD ["sh", "-c", "python -m uvicorn api:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1"]
+# Run the FastAPI app with uvicorn (using simplified api.py that doesn't require OCR)
+CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]
