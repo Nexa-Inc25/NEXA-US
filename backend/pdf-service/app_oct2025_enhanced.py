@@ -107,7 +107,7 @@ class MultiSpecUploadResponse(BaseModel):
 
 class SpecManagementRequest(BaseModel):
     """Request for spec management operations"""
-    operation: str = Field(..., regex='^(clear|remove|list)$')
+    operation: str = Field(..., pattern='^(clear|remove|list)$')
     file_hash: Optional[str] = Field(None, description="File hash for remove operation")
 
 # === HELPER FUNCTIONS ===

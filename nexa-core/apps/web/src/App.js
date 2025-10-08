@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import { Activity, Users, FileCheck, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Activity, Users, FileCheck, AlertTriangle, CheckCircle, Database } from 'lucide-react';
 import UploadSection from './UploadSection';
+import SpecLibrary from './SpecLibrary';
 
 function App() {
+  const [currentPage, setCurrentPage] = useState('dashboard');
   const [stats, setStats] = useState({
     activeProjects: 0,
     totalCrews: 0,
@@ -61,6 +63,28 @@ function App() {
     );
   }
 
+  // Render Spec Library page if selected
+  if (currentPage === 'specs') {
+    return (
+      <div className="App">
+        <header className="dashboard-header">
+          <div className="header-content">
+            <div>
+              <h1>NEXA Dashboard</h1>
+              <p className="subtitle">Field Operations Management</p>
+            </div>
+            <div className="header-actions">
+              <button className="btn btn-secondary" onClick={() => setCurrentPage('dashboard')}>
+                Back to Dashboard
+              </button>
+            </div>
+          </div>
+        </header>
+        <SpecLibrary />
+      </div>
+    );
+  }
+
   return (
     <div className="App">
       {/* Header */}
@@ -71,6 +95,10 @@ function App() {
             <p className="subtitle">Field Operations Management</p>
           </div>
           <div className="header-actions">
+            <button className="btn btn-secondary" onClick={() => setCurrentPage('specs')}>
+              <Database size={20} />
+              Spec Library
+            </button>
             <button className="btn btn-primary">New Project</button>
             <button className="btn btn-secondary">Generate Report</button>
           </div>

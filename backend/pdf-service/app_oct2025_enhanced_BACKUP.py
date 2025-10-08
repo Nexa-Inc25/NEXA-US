@@ -132,7 +132,7 @@ PGE_PATTERNS = {
 
 class InfractionAnalysis(BaseModel):
     infraction: str = Field(..., min_length=1, max_length=500)
-    status: str = Field(..., regex='^(REPEALABLE|NOT_REPEALABLE|MAYBE_REPEALABLE)$')
+    status: str = Field(..., pattern='^(REPEALABLE|NOT_REPEALABLE|MAYBE_REPEALABLE)$')
     confidence: float = Field(..., ge=0.0, le=100.0, description="Confidence percentage (0-100)")
     match_count: int = Field(..., ge=0, description="Number of matching specs")
     reasons: List[str] = Field(default_factory=list, description="Reasons for the determination")
