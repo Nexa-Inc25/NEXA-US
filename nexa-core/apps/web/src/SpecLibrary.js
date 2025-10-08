@@ -51,7 +51,7 @@ function SpecLibrary() {
       formData.append('file', file);
 
       try {
-        const response = await fetch(`${ANALYZER_URL}/upload-spec-book`, {
+        const response = await fetch(`${ANALYZER_URL}/learn-spec/`, {
           method: 'POST',
           body: formData
         });
