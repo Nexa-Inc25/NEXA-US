@@ -47,7 +47,7 @@ function UploadSection() {
     formData.append('file', auditFile);
 
     try {
-      const response = await fetch(`${ANALYZER_URL}/analyze-audit/`, {
+      const response = await fetch(`${ANALYZER_URL}/analyze-audit`, {
         method: 'POST',
         body: formData
       });
