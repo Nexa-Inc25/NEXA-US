@@ -5,7 +5,7 @@ services:
     name: nexa-dashboard
     env: static
     branch: main
-    buildCommand: npm install && npm run build
+    buildCommand: chmod +x build.sh && ./build.sh
     staticPublishPath: ./build
     rootDir: nexa-core/apps/web
     envVars:
