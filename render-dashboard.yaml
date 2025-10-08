@@ -14,9 +14,9 @@ services:
       - key: REACT_APP_DOC_ANALYZER_URL
         value: https://nexa-doc-analyzer-oct2025.onrender.com
       - key: REACT_APP_AUTH0_DOMAIN
-        value: dev-4klipkgroc7grk1q.us.auth0.com
+        value: dev-kbnx7pja3zpg0lud.us.auth0.com
       - key: REACT_APP_AUTH0_CLIENT_ID
-        value: YOUR_AUTH0_CLIENT_ID
+        value: glA8cdWZIAKvNUUjxd2XQRcwLI4HM2f1
       - key: REACT_APP_ENV
         value: production
     
