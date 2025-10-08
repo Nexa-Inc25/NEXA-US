@@ -330,6 +330,81 @@ async def get_spec_library():
         storage_path=DATA_PATH
     )
 
+@app.post("/learn-spec/")
+async def learn_single_spec(file: UploadFile = File(...)):
+    """Upload and learn a single spec PDF (convenience endpoint)"""
+    # Reuse the multi-spec logic with a single file
+    files = [file]
+    mode = "append"
+    
+    if mode not in ['append', 'replace']:
+        raise HTTPException(status_code=400, detail="Mode must be 'append' or 'replace'")
+    
+    # Validate file
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Only PDF files are allowed")
+    
+    # Read file content
+    content = await file.read()
+    file_size = len(content)
+    
+    if file_size > 1100 * 1024 * 1024:  # 1100MB limit
+        raise HTTPException(status_code=400, detail="File too large (max 1100MB)")
+    
+    # Process the single file
+    start_time = time.time()
+    library = load_spec_library()
+    
+    if mode == 'replace':
+        library = {'chunks': [], 'embeddings': [], 'metadata': {'files': [], 'last_updated': None}}
+    
+    # Get file hash for deduplication
+    file_hash = get_file_hash(content)
+    existing_hashes = {f.get('file_hash') for f in library['metadata'].get('files', [])}
+    
+    if file_hash in existing_hashes:
+        raise HTTPException(status_code=400, detail=f"File already uploaded: {file.filename}")
+    
+    # Extract and process chunks
+    chunks = extract_text_chunks(content, file.filename)
+    
+    if not chunks:
+        raise HTTPException(status_code=400, detail="No text could be extracted from PDF")
+    
+    # Generate embeddings
+    logger.info(f"Generating embeddings for {len(chunks)} chunks...")
+    embed_start = time.time()
+    new_embeddings = model.encode(chunks, normalize_embeddings=True, show_progress_bar=False)
+    logger.info(f"⏱️ Embeddings generation: {time.time() - embed_start:.2f}s")
+    
+    # Add to library
+    library['chunks'].extend(chunks)
+    library['embeddings'].extend(new_embeddings.tolist() if hasattr(new_embeddings, 'tolist') else new_embeddings)
+    
+    # Update metadata
+    if 'metadata' not in library:
+        library['metadata'] = {'files': [], 'last_updated': None}
+    
+    library['metadata']['files'].append({
+        'filename': file.filename,
+        'file_hash': file_hash,
+        'chunk_count': len(chunks),
+        'file_size': file_size,
+        'upload_time': time.time()
+    })
+    library['metadata']['last_updated'] = time.time()
+    
+    # Save library
+    save_spec_library(library)
+    
+    processing_time = time.time() - start_time
+    
+    return {
+        "message": "Spec book learned successfully",
+        "chunks_learned": len(chunks),
+        "storage_path": str(DATA_PATH)
+    }
+
 @app.post("/upload-specs", response_model=MultiSpecUploadResponse)
 async def upload_multiple_specs(
     files: List[UploadFile] = File(..., description="PDF spec files to upload"),
