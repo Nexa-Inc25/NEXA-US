@@ -129,9 +129,32 @@ function SpecLibrary() {
             <p>Manage PG&E specs that the AI has learned</p>
           </div>
         </div>
-        <button onClick={fetchLibrary} className="btn btn-secondary">
-          <RefreshCw size={20} /> Refresh
-        </button>
+        <div className="header-actions">
+          <button onClick={fetchLibrary} className="btn btn-secondary">
+            <RefreshCw size={20} /> Refresh
+          </button>
+          <button onClick={async () => {
+            if (window.confirm('This will delete all uploaded specs. Are you sure?')) {
+              try {
+                const response = await fetch(`${ANALYZER_URL}/manage-specs`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ operation: 'clear' })
+                });
+                if (response.ok) {
+                  alert('Library cleared successfully');
+                  fetchLibrary();
+                } else {
+                  alert('Failed to clear library');
+                }
+              } catch (err) {
+                alert('Error: ' + err.message);
+              }
+            }
+          }} className="btn btn-danger">
+            <Trash2 size={20} /> Clear All
+          </button>
+        </div>
       </div>
 
       <div className="library-stats">
