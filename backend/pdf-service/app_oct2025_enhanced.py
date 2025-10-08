@@ -170,6 +170,46 @@ def save_spec_library(library: Dict[str, Any]):
     with open(SPEC_METADATA_PATH, 'w') as f:
         json.dump(library['metadata'], f, indent=2)
 
+def extract_text_chunks(pdf_content: bytes, filename: str, chunk_size: int = 1100) -> List[str]:
+    """Extract and chunk text from PDF with OCR cleaning"""
+    try:
+        pdf_reader = PdfReader(io.BytesIO(pdf_content))
+        chunks = []
+        
+        for page_num, page in enumerate(pdf_reader.pages):
+            text = page.extract_text()
+            if text:
+                # Clean the text
+                cleaned_text = clean_audit_garble(text)
+                
+                # Split into chunks
+                words = cleaned_text.split()
+                current_chunk = []
+                current_length = 0
+                
+                for word in words:
+                    word_length = len(word) + 1  # +1 for space
+                    if current_length + word_length > chunk_size and current_chunk:
+                        chunk_text = ' '.join(current_chunk)
+                        chunks.append(f"[{filename} p.{page_num+1}] {chunk_text}")
+                        current_chunk = [word]
+                        current_length = word_length
+                    else:
+                        current_chunk.append(word)
+                        current_length += word_length
+                
+                # Add remaining words as final chunk
+                if current_chunk:
+                    chunk_text = ' '.join(current_chunk)
+                    chunks.append(f"[{filename} p.{page_num+1}] {chunk_text}")
+        
+        logger.info(f"📄 Extracted {len(chunks)} chunks from {filename}")
+        return chunks
+        
+    except Exception as e:
+        logger.error(f"Error extracting text from {filename}: {e}")
+        return []
+
 def clean_audit_garble(text: str) -> str:
     """Enhanced cleaning for audit text garble"""
     original_length = len(text)
