@@ -730,6 +730,32 @@ async def analyze_audit(
     
     logger.info(f"✓ Method 1 found {method1_count} structured infractions")
     
+    # Method 1.5: Look for QC Audit format with "Non-Conforming Items"
+    if not infractions:
+        logger.info("🔍 Method 1.5: Looking for QC Audit non-conforming items pattern...")
+        # Look for "Total Number of Non-Conforming Items X"
+        nc_pattern = r'Total\s+Number\s+of\s+Non[-\s]?Conforming\s+Items\s+(\d+)'
+        nc_match = re.search(nc_pattern, audit_text, re.IGNORECASE)
+        
+        if nc_match:
+            nc_count = int(nc_match.group(1))
+            logger.info(f"✓ Found QC Audit with {nc_count} non-conforming items reported")
+            
+            # Look for checklist items marked "No" or with issues
+            lines = audit_text.split('\n')
+            for i, line in enumerate(lines):
+                line_lower = line.lower()
+                # Look for questions/items with "No" answers or issues
+                if any(indicator in line_lower for indicator in ['check "no"', 'check no', 'list the items', 'list the issues', 'missing']):
+                    # Capture the context around this item
+                    start = max(0, i-3)
+                    end = min(len(lines), i+7)
+                    block = '\n'.join(lines[start:end]).strip()
+                    if block and len(block) > 30 and block not in infractions:
+                        infractions.append(block)
+            
+            logger.info(f"✓ Method 1.5 found {len(infractions)} non-conforming items from checklist")
+    
     # Method 2: If no structured infractions found, look for keywords
     if not infractions:
         logger.info("🔍 Method 2: Looking for keyword-based infractions...")
@@ -737,9 +763,12 @@ async def analyze_audit(
             "go-back", "go back", "goback", 
             "infraction", "violation", "deficiency",
             "non-compliant", "non compliant", "noncompliant",
+            "non-conforming", "non conforming", "nonconforming",
             "correction required", "correction needed",
             "does not meet", "fails to meet",
-            "not in compliance", "out of compliance"
+            "not in compliance", "out of compliance",
+            "check no", "check \"no\"", "marked no",
+            "incomplete", "failed", "missing"
         ]
         
         lines = audit_text.split('\n')
