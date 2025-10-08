@@ -23,7 +23,7 @@ services:
         value: "60"
       - key: LOG_LEVEL
         value: INFO
-    plan: pro
+    plan: starter  # Updated from 'pro' to 'starter' ($7/month)
   
   # Streamlit Frontend Service  
   - type: web
@@ -36,11 +36,11 @@ services:
         value: https://nexa-api.onrender.com
       - key: AUTH_ENABLED
         value: "false"
-    plan: pro
+    plan: starter  # Updated from 'pro' to 'starter' ($7/month)
 
 databases:
   - name: nexa-db
-    plan: pro
+    plan: starter  # Updated from legacy 'pro' to 'starter' ($7/month)
     databaseName: nexa
     user: nexa
     postgresMajorVersion: "15"
