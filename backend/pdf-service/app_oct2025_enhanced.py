@@ -864,13 +864,35 @@ async def analyze_audit(
     
     logger.info(f"Analysis complete: {len(results)} infractions analyzed")
     
+    # Transform to frontend-compatible format (for backwards compatibility)
+    infractions_frontend = []
+    for r in results:
+        # Map to old frontend format
+        is_repealable = "REPEALABLE" in r['status']
+        confidence_value = 0.8 if r['confidence'] == "HIGH" else (0.6 if r['confidence'] == "MEDIUM" else 0.4)
+        
+        spec_refs = [m['source_spec'] for m in r['spec_matches'][:3]]
+        reason = r['spec_matches'][0]['spec_text'][:150] + "..." if r['spec_matches'] else "No matching specifications found"
+        
+        infractions_frontend.append({
+            "code": f"Item {r['infraction_id']}",
+            "description": r['infraction_text'][:200] + "..." if len(r['infraction_text']) > 200 else r['infraction_text'],
+            "is_repealable": is_repealable,
+            "confidence": confidence_value,
+            "reason": reason,
+            "spec_references": spec_refs,
+            "match_count": r['match_count'],
+            "status": r['status']
+        })
+    
     return {
         "audit_file": file.filename,
         "total_spec_files": len(library['metadata'].get('files', [])),
         "total_spec_chunks": len(library['chunks']),
         "infractions_found": len(infractions),
         "infractions_analyzed": len(results),
-        "analysis_results": results,
+        "infractions": infractions_frontend,  # Frontend-compatible format
+        "analysis_results": results,  # Keep new format too
         "summary": {
             "potentially_repealable": sum(1 for r in results if "REPEALABLE" in r['status']),
             "valid": sum(1 for r in results if r['status'] == "VALID"),
