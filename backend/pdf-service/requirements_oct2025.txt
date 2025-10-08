@@ -12,3 +12,5 @@ huggingface-hub==0.35.3
 python-multipart==0.0.20
 pytesseract==0.3.13
 pillow==10.4.0
+# Database (only if using PostgreSQL)
+psycopg2-binary==2.9.9
