@@ -165,9 +165,14 @@ def save_spec_library(library: Dict[str, Any]):
     # Create directory if needed
     os.makedirs(DATA_PATH, exist_ok=True)
     
+    # Ensure embeddings are in list format for saving
+    embeddings = library['embeddings']
+    if hasattr(embeddings, 'tolist'):
+        embeddings = embeddings.tolist()
+    
     # Save embeddings
     with open(EMBEDDINGS_PATH, 'wb') as f:
-        pickle.dump((library['chunks'], library['embeddings']), f)
+        pickle.dump((library['chunks'], embeddings), f)
     
     # Update metadata
     library['metadata']['total_chunks'] = len(library['chunks'])
@@ -425,9 +430,20 @@ async def learn_single_spec(file: UploadFile = File(...)):
         new_embeddings = model.encode(chunks, normalize_embeddings=True, show_progress_bar=False)
         logger.info(f"⏱️ Embeddings generation: {time.time() - embed_start:.2f}s")
         
-        # Add to library
+        # Add to library - handle both list and numpy array formats
         library['chunks'].extend(chunks)
-        library['embeddings'].extend(new_embeddings.tolist() if hasattr(new_embeddings, 'tolist') else new_embeddings)
+        
+        # Convert embeddings to list if they're numpy arrays
+        if hasattr(library['embeddings'], 'tolist'):
+            library['embeddings'] = library['embeddings'].tolist()
+        if not isinstance(library['embeddings'], list):
+            library['embeddings'] = []
+            
+        # Add new embeddings
+        if hasattr(new_embeddings, 'tolist'):
+            library['embeddings'].extend(new_embeddings.tolist())
+        else:
+            library['embeddings'].extend(new_embeddings)
         
         # Update metadata - ensure it exists and has correct structure
         if 'metadata' not in library or library['metadata'] is None:
