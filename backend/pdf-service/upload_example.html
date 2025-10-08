@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXA Multi-Spec Upload</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 { font-size: 2em; margin-bottom: 10px; }
+        .header p { opacity: 0.9; }
+        .content { padding: 30px; }
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            background: #f8f9ff;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .upload-area:hover {
+            background: #f0f2ff;
+            border-color: #764ba2;
+        }
+        .upload-area.dragover {
+            background: #e8ebff;
+            border-color: #764ba2;
+            transform: scale(1.02);
+        }
+        input[type="file"] { display: none; }
+        .file-list {
+            margin: 20px 0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .file-item {
+            background: #f8f9ff;
+            padding: 10px 15px;
+            margin: 5px 0;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .file-item .size { color: #666; font-size: 0.9em; }
+        .file-item .remove {
+            cursor: pointer;
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .mode-selector {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9ff;
+            border-radius: 10px;
+        }
+        .mode-selector label {
+            display: block;
+            padding: 10px;
+            cursor: pointer;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: transform 0.3s;
+            margin: 10px 5px;
+        }
+        .btn:hover { transform: scale(1.05); }
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.info { background: #d1ecf1; color: #0c5460; }
+        .library-info {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9ff;
+            border-radius: 10px;
+        }
+        .library-info h3 { color: #667eea; margin-bottom: 10px; }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+        .stat {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .stat .value {
+            font-size: 2em;
+            color: #667eea;
+            font-weight: bold;
+        }
+        .stat .label { color: #666; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 NEXA Multi-Spec Upload</h1>
+            <p>Upload multiple specification PDFs to build your compliance library</p>
+        </div>
+        
+        <div class="content">
+            <!-- Library Status -->
+            <div class="library-info">
+                <h3>📚 Current Library Status</h3>
+                <div class="stats">
+                    <div class="stat">
+                        <div class="value" id="totalFiles">-</div>
+                        <div class="label">Spec Files</div>
+                    </div>
+                    <div class="stat">
+                        <div class="value" id="totalChunks">-</div>
+                        <div class="label">Total Chunks</div>
+                    </div>
+                    <div class="stat">
+                        <div class="value" id="lastUpdate">Never</div>
+                        <div class="label">Last Update</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload Area -->
+            <div class="upload-area" id="uploadArea">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#667eea" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <h3 style="margin: 20px 0; color: #667eea;">Drop PDF files here or click to browse</h3>
+                <p style="color: #666;">You can select multiple spec files at once</p>
+                <input type="file" id="fileInput" multiple accept=".pdf">
+            </div>
+
+            <!-- Selected Files -->
+            <div id="fileList" class="file-list"></div>
+
+            <!-- Upload Mode -->
+            <div class="mode-selector">
+                <h3 style="margin-bottom: 10px;">Upload Mode</h3>
+                <label>
+                    <input type="radio" name="mode" value="append" checked>
+                    <strong>Append</strong> - Add to existing library (recommended)
+                </label>
+                <label>
+                    <input type="radio" name="mode" value="replace">
+                    <strong>Replace</strong> - Clear library and start fresh
+                </label>
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="text-align: center;">
+                <button class="btn" id="uploadBtn" disabled>Upload Spec Files</button>
+                <button class="btn btn-secondary" id="clearBtn">Clear Selection</button>
+                <button class="btn btn-secondary" id="refreshBtn">Refresh Status</button>
+            </div>
+
+            <!-- Status Messages -->
+            <div id="status" class="status"></div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_URL = 'https://nexa-doc-analyzer-oct2025.onrender.com';
+        // const API_URL = 'http://localhost:8000';  // For local testing
+        
+        let selectedFiles = [];
+
+        // Elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const status = document.getElementById('status');
+
+        // Load library status on page load
+        window.addEventListener('DOMContentLoaded', loadLibraryStatus);
+
+        // File selection
+        uploadArea.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', handleFileSelect);
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        // Button handlers
+        uploadBtn.addEventListener('click', uploadFiles);
+        clearBtn.addEventListener('click', clearSelection);
+        refreshBtn.addEventListener('click', loadLibraryStatus);
+
+        function handleFileSelect(e) {
+            handleFiles(e.target.files);
+        }
+
+        function handleFiles(files) {
+            for (let file of files) {
+                if (file.type === 'application/pdf') {
+                    selectedFiles.push(file);
+                }
+            }
+            updateFileList();
+        }
+
+        function updateFileList() {
+            fileList.innerHTML = '';
+            selectedFiles.forEach((file, index) => {
+                const item = document.createElement('div');
+                item.className = 'file-item';
+                item.innerHTML = `
+                    <span>${file.name}</span>
+                    <span class="size">${formatSize(file.size)}</span>
+                    <span class="remove" onclick="removeFile(${index})">✕</span>
+                `;
+                fileList.appendChild(item);
+            });
+            uploadBtn.disabled = selectedFiles.length === 0;
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateFileList();
+        }
+
+        function clearSelection() {
+            selectedFiles = [];
+            fileInput.value = '';
+            updateFileList();
+        }
+
+        function formatSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        async function uploadFiles() {
+            if (selectedFiles.length === 0) return;
+
+            const mode = document.querySelector('input[name="mode"]:checked').value;
+            const formData = new FormData();
+            
+            selectedFiles.forEach(file => {
+                formData.append('files', file);
+            });
+            formData.append('mode', mode);
+
+            uploadBtn.disabled = true;
+            showStatus('info', `Uploading ${selectedFiles.length} files...`);
+
+            try {
+                const response = await fetch(`${API_URL}/upload-specs`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showStatus('success', data.message);
+                    clearSelection();
+                    loadLibraryStatus();
+                } else {
+                    showStatus('error', data.detail || 'Upload failed');
+                }
+            } catch (error) {
+                showStatus('error', `Error: ${error.message}`);
+            } finally {
+                uploadBtn.disabled = false;
+            }
+        }
+
+        async function loadLibraryStatus() {
+            try {
+                const response = await fetch(`${API_URL}/spec-library`);
+                const data = await response.json();
+
+                document.getElementById('totalFiles').textContent = data.total_files || 0;
+                document.getElementById('totalChunks').textContent = data.total_chunks || 0;
+                
+                if (data.last_updated) {
+                    const date = new Date(data.last_updated);
+                    document.getElementById('lastUpdate').textContent = date.toLocaleDateString();
+                }
+            } catch (error) {
+                console.error('Failed to load library status:', error);
+            }
+        }
+
+        function showStatus(type, message) {
+            status.className = `status ${type}`;
+            status.textContent = message;
+            status.style.display = 'block';
+            
+            if (type !== 'error') {
+                setTimeout(() => {
+                    status.style.display = 'none';
+                }, 5000);
+            }
+        }
+    </script>
+</body>
+</html>

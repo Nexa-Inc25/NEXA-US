@@ -170,15 +170,19 @@ def construction_ner_features(tokens, index, history):
     ]
     features['is_installation'] = token.lower() in [
         'mounted', 'installed', 'underground', 'overhead', 'pad-mounted', 'pole-mounted',
-        'buried', 'exposed', 'connected', 'grounded', 'encased', 'enclosed'
-    ]
+        'buried', 'exposed', 'connected', 'grounded', 'encased', 'enclosed',
+        'surface-mounted', 'flush-mounted', 'direct-buried', 'rackmounted', 
+        'wall-mounted', 'ceiling-mounted', 'floor-mounted'
+    ] or '-mounted' in token.lower() or '-buried' in token.lower()
     features['is_location'] = token.lower() in [
         'ground', 'substation', 'substations', 'zone', 'area', 'control', 'room', 'rooms',
         'manhole', 'vault', 'entrance', 'outdoor', 'top', 'tops'
     ]
     features['is_test'] = token.lower() in [
-        'tested', 'test', 'strength', 'capacity', 'loading', 'drop', 'measured', 'torqued'
-    ]
+        'tested', 'test', 'tests', 'testing', 'strength', 'capacity', 'loading', 
+        'drop', 'measured', 'torqued', 'verified', 'resistance', 'dielectric', 
+        'pull', 'passed', 'failed', 'exceeds'
+    ] or token.lower().endswith(('test', 'tested'))
     features['is_standard'] = token in ['NESC', 'NEMA', 'NEC', 'IEEE', 'OSHA', 'ANSI']
     features['is_grade'] = bool(('#' in token and any(c.isdigit() for c in token)) or
                                 ('.' in token and any(c.isdigit() for c in token.split('.')[0])) or

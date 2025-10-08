@@ -1,0 +1,58 @@
+# Multi-spec support version
+FROM python:3.10-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    tesseract-ocr \
+    poppler-utils \
+    libgomp1 \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements first for better caching
+COPY requirements_oct2025.txt .
+
+# Install Python dependencies with CPU-only torch
+RUN pip install --no-cache-dir -r requirements_oct2025.txt
+
+# Install pdf2image for better OCR support
+RUN pip install --no-cache-dir pdf2image
+
+# Copy application files
+COPY app_multi_spec.py .
+COPY middleware.py .
+COPY utils.py .
+
+# Create data directory with proper permissions
+RUN mkdir -p /data && chmod 755 /data
+
+# Create static directory for favicon
+RUN mkdir -p /static && touch /static/favicon.ico
+
+# Set environment variables for CPU optimization
+ENV PYTORCH_ENABLE_MPS_FALLBACK=1
+ENV KMP_AFFINITY=granularity=fine,compact,1,0
+ENV KMP_BLOCKTIME=0
+ENV OMP_NUM_THREADS=4
+ENV MKL_NUM_THREADS=4
+ENV MKL_DYNAMIC=FALSE
+ENV DNNL_VERBOSE=0
+
+# Download NLTK data
+RUN python -c "import nltk; nltk.download('punkt')"
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import requests; exit(0 if requests.get('http://localhost:8000/health').status_code == 200 else 1)"
+
+# Run the application
+CMD ["uvicorn", "app_multi_spec:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# Build optimization comment - change this to force rebuild
+# Multi-spec version 2.0.0 - October 2025

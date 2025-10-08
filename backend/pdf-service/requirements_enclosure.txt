@@ -1,0 +1,14 @@
+fastapi==0.118.0
+uvicorn[standard]==0.37.0
+sentence-transformers==5.1.0
+pypdf==6.1.1
+nltk==3.9.2
+torch==2.8.0
+torchvision==0.23.0
+pandas==2.3.3
+huggingface-hub==0.36.0
+python-multipart==0.0.20
+pytesseract==0.3.13
+pillow==11.0.0
+rapidfuzz==3.9.0
+spellchecker==0.4

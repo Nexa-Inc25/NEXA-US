@@ -1,0 +1,56 @@
+FROM python:3.11-slim
+
+# Install build essentials and tesseract for OCR
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    tesseract-ocr \
+    poppler-utils \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Upgrade pip first
+RUN pip install --upgrade pip
+
+# Copy the CORRECT requirements file (with uvicorn)
+COPY backend/pdf-service/requirements_oct2025.txt ./requirements.txt
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Pre-download NLTK data
+RUN python -c "import nltk; nltk.download('punkt', quiet=True)"
+ENV NLTK_DATA=/app/nltk_data
+
+# Create data directory for persistent storage
+RUN mkdir -p /data && chmod 755 /data
+
+# Copy application code
+COPY backend/pdf-service ./backend/pdf-service
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PATH="/usr/local/bin:$PATH"
+
+# CPU optimization for PyTorch
+ENV OMP_NUM_THREADS=4
+ENV MKL_NUM_THREADS=4
+ENV PYTORCH_ENABLE_MPS_FALLBACK=1
+
+# Expose port (Render sets this via $PORT env var)
+EXPOSE 8000
+
+# Change to app directory
+WORKDIR /app/backend/pdf-service
+
+# Run the correct app file with uvicorn
+# Check which file exists and run it
+CMD ["sh", "-c", "if [ -f app_oct2025_enhanced.py ]; then \
+        python -m uvicorn app_oct2025_enhanced:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1; \
+    elif [ -f api.py ]; then \
+        python -m uvicorn api:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1; \
+    else \
+        echo 'No app file found!' && exit 1; \
+    fi"]
