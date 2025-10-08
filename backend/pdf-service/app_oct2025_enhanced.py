@@ -709,20 +709,30 @@ async def analyze_audit(
     logger.info(f"Analyzing audit: {file.filename}")
     audit_text = extract_text_from_pdf(content, use_ocr=True)
     
+    # Debug: Log sample of extracted text
+    logger.info(f"📄 Extracted text sample (first 500 chars): {audit_text[:500]}")
+    logger.info(f"📄 Text length: {len(audit_text)} characters")
+    
     # Extract infractions using multiple detection methods
     infractions = []
     
     # Method 1: Look for structured INFRACTION patterns (e.g., "INFRACTION #1:", "INFRACTION #2:")
+    logger.info("🔍 Method 1: Looking for structured INFRACTION patterns...")
     infraction_pattern = r'INFRACTION\s*#?\d+[:\.]?\s*(.*?)(?=INFRACTION\s*#?\d+|SUMMARY|$)'
     matches = re.finditer(infraction_pattern, audit_text, re.IGNORECASE | re.DOTALL)
     
+    method1_count = 0
     for match in matches:
         infraction_text = match.group(0).strip()
         if len(infraction_text) > 20:  # Filter out very short matches
             infractions.append(infraction_text)
+            method1_count += 1
+    
+    logger.info(f"✓ Method 1 found {method1_count} structured infractions")
     
     # Method 2: If no structured infractions found, look for keywords
     if not infractions:
+        logger.info("🔍 Method 2: Looking for keyword-based infractions...")
         keywords = [
             "go-back", "go back", "goback", 
             "infraction", "violation", "deficiency",
@@ -735,23 +745,34 @@ async def analyze_audit(
         lines = audit_text.split('\n')
         current_block = []
         
+        keyword_matches = []
         for i, line in enumerate(lines):
             line_lower = line.lower()
-            if any(kw in line_lower for kw in keywords):
+            matched_keywords = [kw for kw in keywords if kw in line_lower]
+            if matched_keywords:
+                keyword_matches.append((i, matched_keywords, line[:100]))
                 # Capture context (previous and next lines)
                 start = max(0, i-2)
                 end = min(len(lines), i+5)
                 block = '\n'.join(lines[start:end]).strip()
                 if block and block not in infractions:
                     infractions.append(block)
+        
+        logger.info(f"✓ Method 2 found {len(infractions)} keyword-based infractions from {len(keyword_matches)} keyword matches")
+        if keyword_matches and len(keyword_matches) <= 5:
+            for line_num, kws, line_text in keyword_matches:
+                logger.info(f"  Line {line_num}: keywords={kws}, text='{line_text}...'")
     
     if not infractions:
-        logger.warning(f"No infractions detected in {file.filename}")
+        logger.warning(f"❌ No infractions detected in {file.filename}")
+        logger.warning(f"📄 Check if the PDF contains keywords like: go-back, infraction, violation, deficiency, non-compliant")
         return {
             "message": "No infractions found in this audit",
             "infractions": [],
             "audit_file": file.filename,
-            "note": "If this audit contains infractions, they may not match our detection patterns. Please check the audit format."
+            "text_length": len(audit_text),
+            "text_sample": audit_text[:500] + "..." if len(audit_text) > 500 else audit_text,
+            "note": "The analyzer looked for keywords like 'go-back', 'infraction', 'violation', 'deficiency', etc. but found none. Please verify the PDF contains these terms or check the text_sample to see what was extracted."
         }
     
     # Analyze infractions against spec library
