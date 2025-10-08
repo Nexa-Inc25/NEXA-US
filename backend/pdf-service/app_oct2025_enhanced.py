@@ -168,6 +168,12 @@ def load_spec_library() -> Dict[str, Any]:
                 if isinstance(metadata, dict):
                     if 'files' not in metadata:
                         metadata['files'] = []
+                    # Convert float timestamps to ISO strings for backward compatibility
+                    for file_info in metadata.get('files', []):
+                        if isinstance(file_info.get('upload_time'), (int, float)):
+                            file_info['upload_time'] = datetime.fromtimestamp(file_info['upload_time']).isoformat()
+                    if isinstance(metadata.get('last_updated'), (int, float)):
+                        metadata['last_updated'] = datetime.fromtimestamp(metadata['last_updated']).isoformat()
                     library['metadata'].update(metadata)
         except Exception as e:
             logger.warning(f"Could not load metadata: {e}")
@@ -493,9 +499,9 @@ async def learn_single_spec(file: UploadFile = File(...)):
             'file_hash': file_hash,
             'chunk_count': len(chunks),
             'file_size': file_size,
-            'upload_time': time.time()
+            'upload_time': datetime.utcnow().isoformat()
         })
-        library['metadata']['last_updated'] = time.time()
+        library['metadata']['last_updated'] = datetime.utcnow().isoformat()
         
         # Save library
         save_spec_library(library)
