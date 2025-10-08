@@ -1,13 +1,13 @@
 # Render Blueprint - NEXA Web Dashboard
 # Deploys the admin dashboard as a static site on Render
 services:
-  # Web Dashboard - Admin Portal
   - type: web
     name: nexa-dashboard
-    runtime: static
-    buildCommand: cd nexa-core/apps/web && npm install && npm run build
-    staticPublishPath: ./nexa-core/apps/web/build
+    env: static
     branch: main
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./build
+    rootDir: nexa-core/apps/web
     envVars:
       - key: REACT_APP_API_URL
         value: https://nexa-core-api.onrender.com
@@ -19,7 +19,6 @@ services:
         value: YOUR_AUTH0_CLIENT_ID
       - key: REACT_APP_ENV
         value: production
-    plan: free  # Static sites can use free tier
     
     # Headers for SPA routing
     headers:
@@ -27,7 +26,7 @@ services:
         value:
           Cache-Control: no-cache
     
-    # Redirects for client-side routing
+    # Routes for client-side routing (React Router)
     routes:
       - type: rewrite
         source: /*
