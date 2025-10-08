@@ -63,8 +63,16 @@ function SpecLibrary() {
           const data = await response.json();
           results.push({ file: file.name, success: true, chunks: data.chunks_learned });
         } else {
-          const data = await response.json();
-          results.push({ file: file.name, success: false, error: data.detail });
+          let errorMsg = `Status: ${response.status}`;
+          try {
+            const data = await response.json();
+            errorMsg = data.detail || data.message || errorMsg;
+          } catch (e) {
+            const text = await response.text();
+            errorMsg = text || errorMsg;
+          }
+          console.error(`Upload failed for ${file.name}:`, errorMsg);
+          results.push({ file: file.name, success: false, error: errorMsg });
         }
       } catch (err) {
         results.push({ file: file.name, success: false, error: err.message });
