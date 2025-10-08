@@ -1,0 +1,34 @@
+# Render Blueprint - Without Database (Uses In-Memory Storage)
+# Simpler deployment for testing the Python API
+services:
+  # FastAPI Backend Service
+  - type: web
+    name: nexa-python-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    branch: main
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: "8000"
+      - key: LOG_LEVEL
+        value: INFO
+      - key: AUTH_ENABLED
+        value: "false"
+    plan: free  # Use 'starter' for production ($7/month)
+  
+  # Optional: Streamlit Frontend Service
+  # - type: web
+  #   name: nexa-ui
+  #   runtime: docker
+  #   dockerfilePath: ./Dockerfile.streamlit
+  #   branch: main
+  #   envVars:
+  #     - key: API_URL
+  #       value: https://nexa-python-api.onrender.com
+  #     - key: AUTH_ENABLED
+  #       value: "false"
+  #   plan: free
+
+# No database - API will use in-memory storage
+# This is fine for testing and document processing that doesn't need persistence

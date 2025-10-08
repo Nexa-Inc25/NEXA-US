@@ -38,9 +38,24 @@ services:
         value: "false"
     plan: starter  # Updated from 'pro' to 'starter' ($7/month)
 
+# Database configuration - Choose one option below:
+
+# Option 1: No database (API will use in-memory storage)
+# Comment out or remove the databases section entirely
+
+# Option 2: Free tier database (very limited - for testing only)
+# databases:
+#   - name: nexa-db
+#     plan: free
+#     databaseName: nexa
+#     user: nexa
+#     postgresMajorVersion: "15"
+#     ipAllowList: []
+
+# Option 3: Basic plan database (production ready)
 databases:
   - name: nexa-db
-    plan: starter  # Updated from legacy 'pro' to 'starter' ($7/month)
+    plan: basic-256mb  # Valid basic plan: $7/month, 256MB RAM
     databaseName: nexa
     user: nexa
     postgresMajorVersion: "15"

@@ -1,0 +1,36 @@
+# Render Blueprint - Free Tier for Testing
+# Note: Free tier services sleep after 15 minutes of inactivity
+services:
+  # FastAPI Backend Service
+  - type: web
+    name: nexa-api-free
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    branch: main
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: "8000"
+      - key: LOG_LEVEL
+        value: INFO
+    plan: free  # Free tier - sleeps after 15 min
+  
+  # Streamlit Frontend Service (Optional)
+  # - type: web
+  #   name: nexa-ui-free
+  #   runtime: docker
+  #   dockerfilePath: ./Dockerfile.streamlit
+  #   branch: main
+  #   envVars:
+  #     - key: API_URL
+  #       value: https://nexa-api-free.onrender.com
+  #   plan: free
+
+# Note: Free PostgreSQL databases are limited
+# Consider using in-memory storage for testing
+# databases:
+#   - name: nexa-db-free
+#     plan: free  # Very limited: 256MB storage, 1GB bandwidth
+#     databaseName: nexafree
+#     user: nexauser
+#     postgresMajorVersion: "15"

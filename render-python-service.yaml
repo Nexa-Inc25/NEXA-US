@@ -1,0 +1,50 @@
+# Render Blueprint for Python Document Analyzer API
+# This deploys the Python FastAPI service separately from Node.js
+services:
+  # Python FastAPI Document Analyzer Service
+  - type: web
+    name: nexa-python-analyzer
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    branch: main
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # Port configuration
+      - key: PORT
+        value: "8000"
+      
+      # Optional: Database URL if you have PostgreSQL
+      # - key: DATABASE_URL
+      #   fromDatabase:
+      #     name: nexa-postgres
+      #     property: connectionString
+      
+      # Logging
+      - key: LOG_LEVEL
+        value: INFO
+      
+      # Performance optimization
+      - key: RENDER_CORES
+        value: "2"
+      
+      # Document processing settings
+      - key: CHUNK_SIZE
+        value: "500"
+      - key: MAX_PAGES
+        value: "1500"
+      
+    # Use free tier for testing, upgrade to starter/standard for production
+    plan: free
+    
+    # Resource limits for free tier
+    dockerCommand: uvicorn api:app --host 0.0.0.0 --port $PORT --workers 1
+
+# Optional: Add a PostgreSQL database
+# databases:
+#   - name: nexa-postgres
+#     databaseName: nexadb
+#     user: nexaadmin
+#     plan: free
+#     postgresMajorVersion: 15
