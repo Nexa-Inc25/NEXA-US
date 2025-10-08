@@ -7,7 +7,8 @@ function SpecLibrary() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [uploadFile, setUploadFile] = useState(null);
+  const [uploadFiles, setUploadFiles] = useState([]);
+  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
 
   const ANALYZER_URL = process.env.REACT_APP_DOC_ANALYZER_URL || 'https://nexa-doc-analyzer-oct2025.onrender.com';
 
@@ -34,29 +35,51 @@ function SpecLibrary() {
   };
 
   const handleUpload = async () => {
-    if (!uploadFile) return;
+    if (!uploadFiles || uploadFiles.length === 0) return;
+    
     setUploading(true);
-    const formData = new FormData();
-    formData.append('file', uploadFile);
+    setError(null);
+    setUploadProgress({ current: 0, total: uploadFiles.length });
+    
+    const results = [];
+    
+    for (let i = 0; i < uploadFiles.length; i++) {
+      const file = uploadFiles[i];
+      setUploadProgress({ current: i + 1, total: uploadFiles.length });
+      
+      const formData = new FormData();
+      formData.append('file', file);
 
-    try {
-      const response = await fetch(`${ANALYZER_URL}/upload-spec-book`, {
-        method: 'POST',
-        body: formData
-      });
+      try {
+        const response = await fetch(`${ANALYZER_URL}/upload-spec-book`, {
+          method: 'POST',
+          body: formData
+        });
 
-      if (response.ok) {
-        setUploadFile(null);
-        fetchLibrary();
-      } else {
-        const data = await response.json();
-        setError(data.detail || 'Upload failed');
+        if (response.ok) {
+          const data = await response.json();
+          results.push({ file: file.name, success: true, chunks: data.chunks_learned });
+        } else {
+          const data = await response.json();
+          results.push({ file: file.name, success: false, error: data.detail });
+        }
+      } catch (err) {
+        results.push({ file: file.name, success: false, error: err.message });
       }
-    } catch (err) {
-      setError('Upload error: ' + err.message);
-    } finally {
-      setUploading(false);
     }
+    
+    // Show summary
+    const successful = results.filter(r => r.success).length;
+    const failed = results.filter(r => !r.success).length;
+    
+    if (failed > 0) {
+      setError(`Uploaded ${successful} files successfully, ${failed} failed`);
+    }
+    
+    setUploadFiles([]);
+    setUploadProgress({ current: 0, total: 0 });
+    setUploading(false);
+    fetchLibrary();
   };
 
   const formatFileSize = (bytes) => {
@@ -121,22 +144,44 @@ function SpecLibrary() {
       </div>
 
       <div className="upload-section">
-        <h2><Upload size={24} /> Upload New Spec</h2>
+        <h2><Upload size={24} /> Upload Specs (Multiple Files)</h2>
         <div className="upload-controls">
           <input
             type="file"
             id="spec-upload"
             accept=".pdf"
-            onChange={(e) => setUploadFile(e.target.files[0])}
+            multiple
+            onChange={(e) => setUploadFiles(Array.from(e.target.files))}
             disabled={uploading}
           />
           <label htmlFor="spec-upload" className="file-label">
-            {uploadFile ? uploadFile.name : 'Choose PDF'}
+            {uploadFiles.length > 0 ? `${uploadFiles.length} file(s) selected` : 'Choose PDF Files'}
           </label>
-          <button onClick={handleUpload} disabled={!uploadFile || uploading} className="btn btn-primary">
-            {uploading ? 'Uploading...' : 'Upload Spec'}
+          <button onClick={handleUpload} disabled={uploadFiles.length === 0 || uploading} className="btn btn-primary">
+            {uploading ? `Uploading ${uploadProgress.current}/${uploadProgress.total}...` : `Upload ${uploadFiles.length || ''} Spec${uploadFiles.length !== 1 ? 's' : ''}`}
           </button>
         </div>
+        {uploadFiles.length > 0 && !uploading && (
+          <div className="selected-files">
+            <p><strong>Selected files:</strong></p>
+            <ul>
+              {uploadFiles.map((file, idx) => (
+                <li key={idx}>{file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {uploading && (
+          <div className="upload-progress">
+            <div className="progress-bar">
+              <div 
+                className="progress-fill" 
+                style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
+              />
+            </div>
+            <p>Uploading {uploadProgress.current} of {uploadProgress.total} files...</p>
+          </div>
+        )}
       </div>
 
       {error && (
