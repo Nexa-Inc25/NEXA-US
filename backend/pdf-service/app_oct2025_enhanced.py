@@ -122,6 +122,7 @@ def get_file_hash(content: bytes) -> str:
 
 def load_spec_library() -> Dict[str, Any]:
     """Load existing spec library with metadata"""
+    # Default structure with all required fields
     library = {
         'chunks': [],
         'embeddings': [],
@@ -143,7 +144,16 @@ def load_spec_library() -> Dict[str, Any]:
                     library['chunks'] = chunks if isinstance(chunks, list) else []
                     library['embeddings'] = embeddings if hasattr(embeddings, '__len__') else []
                 elif isinstance(data, dict):
-                    library = data
+                    # Merge with default structure to ensure all keys exist
+                    if 'chunks' in data:
+                        library['chunks'] = data['chunks']
+                    if 'embeddings' in data:
+                        library['embeddings'] = data['embeddings']
+                    if 'metadata' in data and isinstance(data['metadata'], dict):
+                        # Ensure metadata has all required fields
+                        library['metadata'].update(data['metadata'])
+                        if 'files' not in library['metadata']:
+                            library['metadata']['files'] = []
                 else:
                     logger.warning(f"Unknown embeddings format: {type(data)}")
         except Exception as e:
@@ -154,9 +164,19 @@ def load_spec_library() -> Dict[str, Any]:
         try:
             with open(SPEC_METADATA_PATH, 'r') as f:
                 metadata = json.load(f)
-                library['metadata'] = metadata
+                # Ensure metadata has all required fields
+                if isinstance(metadata, dict):
+                    if 'files' not in metadata:
+                        metadata['files'] = []
+                    library['metadata'].update(metadata)
         except Exception as e:
             logger.warning(f"Could not load metadata: {e}")
+    
+    # Ensure metadata always has required fields
+    if 'files' not in library['metadata']:
+        library['metadata']['files'] = []
+    if 'total_chunks' not in library['metadata']:
+        library['metadata']['total_chunks'] = len(library.get('chunks', []))
     
     return library
 
@@ -377,15 +397,31 @@ async def health_check():
 @app.get("/spec-library", response_model=SpecLibrary)
 async def get_spec_library():
     """Get current spec library status"""
-    library = load_spec_library()
-    
-    return SpecLibrary(
-        total_files=len(library['metadata'].get('files', [])),
-        total_chunks=len(library['chunks']),
-        files=library['metadata'].get('files', []),
-        last_updated=library['metadata'].get('last_updated'),
-        storage_path=DATA_PATH
-    )
+    try:
+        library = load_spec_library()
+        
+        # Ensure all required fields exist
+        metadata = library.get('metadata', {})
+        files = metadata.get('files', [])
+        chunks = library.get('chunks', [])
+        
+        return SpecLibrary(
+            total_files=len(files),
+            total_chunks=len(chunks),
+            files=files,
+            last_updated=metadata.get('last_updated'),
+            storage_path=DATA_PATH
+        )
+    except Exception as e:
+        logger.error(f"Error loading spec library: {e}")
+        # Return empty library on error
+        return SpecLibrary(
+            total_files=0,
+            total_chunks=0,
+            files=[],
+            last_updated=None,
+            storage_path=DATA_PATH
+        )
 
 @app.post("/learn-spec/")
 async def learn_single_spec(file: UploadFile = File(...)):
