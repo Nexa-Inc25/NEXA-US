@@ -1,18 +1,58 @@
-FROM python:3.11-slim
+# Base from Python 3.10 for compatibility with latest transformers
+# Cache bust: 2025-10-07-v2
+FROM python:3.10-slim
 
-WORKDIR /app
-
-# Install system dependencies (removed PyMuPDF deps as we're using pypdf)
+# Install system dependencies (including Tesseract for OCR)
 RUN apt-get update && apt-get install -y \
-    gcc \
+    build-essential \
+    tesseract-ocr \
+    tesseract-ocr-eng \
+    libtesseract-dev \
+    libgl1 \
+    libglx-mesa0 \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgomp1 \
+    wget \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Create data directory as root and set permissions
+RUN mkdir -p /data && chmod 755 /data
 
-COPY app.py .
+# Create non-root user for security
+RUN useradd -m -u 1000 user && chown -R user:user /data
+USER user
+ENV HOME=/home/user \
+    PATH=/home/user/.local/bin:$PATH
 
+# CPU Performance optimization environment variables
+ENV PYTORCH_ENABLE_MPS_FALLBACK=1 \
+    KMP_AFFINITY=granularity=fine,compact,1,0 \
+    KMP_BLOCKTIME=0 \
+    DNNL_VERBOSE=0 \
+    MKL_DYNAMIC=FALSE
+
+# Set working directory
+WORKDIR $HOME/app
+
+# Install Python dependencies
+COPY --chown=user ./backend/pdf-service/requirements_oct2025.txt requirements.txt
+RUN pip install --no-cache-dir --upgrade pip wheel --user && \
+    pip install --no-cache-dir -r requirements.txt --user && \
+    python -c "import nltk; nltk.download('punkt', quiet=True)"
+
+# Copy app code
+COPY --chown=user ./backend/pdf-service/ $HOME/app
+
+# Expose Render default port
 EXPOSE 8000
 
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+# Health check for Render
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8000/health || exit 1
+
+# Run with uvicorn (single worker for memory efficiency)
+CMD ["uvicorn", "app_oct2025_enhanced:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
