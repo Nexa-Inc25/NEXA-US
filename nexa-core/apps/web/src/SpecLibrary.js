@@ -23,12 +23,15 @@ function SpecLibrary() {
       const response = await fetch(`${ANALYZER_URL}/spec-library`);
       if (response.ok) {
         const data = await response.json();
+        console.log('Library data received:', data); // Debug log
         setLibrary(data);
       } else {
-        throw new Error('Failed to fetch library');
+        const errorText = await response.text();
+        throw new Error(`Failed to fetch library: ${response.status} - ${errorText}`);
       }
     } catch (err) {
       setError(err.message);
+      console.error('Library fetch error:', err);
     } finally {
       setLoading(false);
     }
@@ -79,7 +82,11 @@ function SpecLibrary() {
     setUploadFiles([]);
     setUploadProgress({ current: 0, total: 0 });
     setUploading(false);
-    fetchLibrary();
+    
+    // Wait a moment for the server to finish processing, then refresh
+    setTimeout(() => {
+      fetchLibrary();
+    }, 1000);
   };
 
   const formatFileSize = (bytes) => {
