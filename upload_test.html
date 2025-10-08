@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXA Document Upload Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 40px;
+        }
+        .upload-section {
+            margin-bottom: 40px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px dashed #dee2e6;
+        }
+        .upload-section h2 {
+            color: #495057;
+            margin-bottom: 20px;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .file-label {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #667eea;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .file-label:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+        .upload-btn {
+            margin-left: 20px;
+            padding: 12px 30px;
+            background: #48bb78;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .upload-btn:hover {
+            background: #38a169;
+        }
+        .upload-btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+        }
+        .file-info {
+            margin-top: 15px;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }
+        .result.success {
+            background: #c6f6d5;
+            border: 1px solid #9ae6b4;
+            display: block;
+        }
+        .result.error {
+            background: #fed7d7;
+            border: 1px solid #fc8181;
+            display: block;
+        }
+        .result.loading {
+            background: #bee3f8;
+            border: 1px solid #90cdf4;
+            display: block;
+        }
+        .infraction {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 NEXA Document Upload Test</h1>
+        <p class="subtitle">Upload PG&E specs and QA audits for analysis</p>
+        
+        <!-- Spec Upload Section -->
+        <div class="upload-section">
+            <h2>📚 Upload Specification Document</h2>
+            <p>Upload a PG&E spec PDF for the AI to learn from</p>
+            <br>
+            <label for="spec-file" class="file-label">Choose Spec PDF</label>
+            <input type="file" id="spec-file" accept=".pdf">
+            <button class="upload-btn" id="upload-spec" disabled>Upload Spec</button>
+            <div class="file-info" id="spec-info"></div>
+            <div class="result" id="spec-result"></div>
+        </div>
+        
+        <!-- Audit Upload Section -->
+        <div class="upload-section">
+            <h2>🔍 Analyze Audit Document</h2>
+            <p>Upload a QA audit PDF to check for repealable infractions</p>
+            <br>
+            <label for="audit-file" class="file-label">Choose Audit PDF</label>
+            <input type="file" id="audit-file" accept=".pdf">
+            <button class="upload-btn" id="upload-audit" disabled>Analyze Audit</button>
+            <div class="file-info" id="audit-info"></div>
+            <div class="result" id="audit-result"></div>
+        </div>
+    </div>
+
+    <script>
+        const ANALYZER_URL = 'https://nexa-doc-analyzer-oct2025.onrender.com';
+        
+        // Spec upload handlers
+        document.getElementById('spec-file').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('spec-info').textContent = `Selected: ${file.name} (${(file.size/1024/1024).toFixed(2)} MB)`;
+                document.getElementById('upload-spec').disabled = false;
+            }
+        });
+        
+        document.getElementById('upload-spec').addEventListener('click', async function() {
+            const fileInput = document.getElementById('spec-file');
+            const file = fileInput.files[0];
+            if (!file) return;
+            
+            const resultDiv = document.getElementById('spec-result');
+            resultDiv.className = 'result loading';
+            resultDiv.innerHTML = '<div class="spinner"></div> Uploading and processing spec...';
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch(`${ANALYZER_URL}/learn-spec/`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <strong>✅ Spec uploaded successfully!</strong><br>
+                        Chunks created: ${data.chunks_created || 'N/A'}<br>
+                        Processing time: ${data.processing_time?.toFixed(2) || 'N/A'} seconds
+                    `;
+                } else {
+                    throw new Error(data.detail || 'Upload failed');
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<strong>❌ Error:</strong> ${error.message}`;
+            }
+        });
+        
+        // Audit upload handlers
+        document.getElementById('audit-file').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('audit-info').textContent = `Selected: ${file.name} (${(file.size/1024/1024).toFixed(2)} MB)`;
+                document.getElementById('upload-audit').disabled = false;
+            }
+        });
+        
+        document.getElementById('upload-audit').addEventListener('click', async function() {
+            const fileInput = document.getElementById('audit-file');
+            const file = fileInput.files[0];
+            if (!file) return;
+            
+            const resultDiv = document.getElementById('audit-result');
+            resultDiv.className = 'result loading';
+            resultDiv.innerHTML = '<div class="spinner"></div> Analyzing audit document...';
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch(`${ANALYZER_URL}/analyze-audit/`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    let html = '<strong>✅ Analysis Complete!</strong><br><br>';
+                    
+                    if (data.infractions && data.infractions.length > 0) {
+                        html += `<strong>Found ${data.infractions.length} infractions:</strong><br>`;
+                        data.infractions.forEach((inf, idx) => {
+                            html += `
+                                <div class="infraction">
+                                    <strong>${idx + 1}. ${inf.code || 'Unknown Code'}</strong><br>
+                                    Repealable: ${inf.is_repealable ? '✅ Yes' : '❌ No'}<br>
+                                    Confidence: ${(inf.confidence * 100).toFixed(0)}%<br>
+                                    Reason: ${inf.reason || 'N/A'}<br>
+                                    ${inf.spec_references?.length ? `References: ${inf.spec_references.join(', ')}` : ''}
+                                </div>
+                            `;
+                        });
+                    } else {
+                        html += 'No infractions found or spec not uploaded yet.';
+                    }
+                    
+                    resultDiv.innerHTML = html;
+                } else {
+                    throw new Error(data.detail || 'Analysis failed');
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<strong>❌ Error:</strong> ${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>

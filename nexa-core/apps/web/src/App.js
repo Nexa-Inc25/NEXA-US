@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import { Activity, Users, FileCheck, AlertTriangle, CheckCircle } from 'lucide-react';
+import UploadSection from './UploadSection';
 
 function App() {
   const [stats, setStats] = useState({
@@ -121,6 +122,11 @@ function App() {
             <span className="stat-change negative">-25% from last week</span>
           </div>
         </div>
+      </div>
+
+      {/* Upload Section - FUNCTIONAL! */}
+      <div style={{ maxWidth: '1400px', margin: '32px auto', padding: '0 24px' }}>
+        <UploadSection />
       </div>
 
       {/* Main Content */}
