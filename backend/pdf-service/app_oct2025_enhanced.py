@@ -709,21 +709,58 @@ async def analyze_audit(
     logger.info(f"Analyzing audit: {file.filename}")
     audit_text = extract_text_from_pdf(content, use_ocr=True)
     
-    # Extract infractions (simplified for this example)
+    # Extract infractions using multiple detection methods
     infractions = []
-    keywords = ["go-back", "go back", "goback", "infraction", "violation"]
     
-    lines = audit_text.split('\n')
-    for line in lines:
-        if any(kw in line.lower() for kw in keywords):
-            infractions.append(line.strip())
+    # Method 1: Look for structured INFRACTION patterns (e.g., "INFRACTION #1:", "INFRACTION #2:")
+    infraction_pattern = r'INFRACTION\s*#?\d+[:\.]?\s*(.*?)(?=INFRACTION\s*#?\d+|SUMMARY|$)'
+    matches = re.finditer(infraction_pattern, audit_text, re.IGNORECASE | re.DOTALL)
+    
+    for match in matches:
+        infraction_text = match.group(0).strip()
+        if len(infraction_text) > 20:  # Filter out very short matches
+            infractions.append(infraction_text)
+    
+    # Method 2: If no structured infractions found, look for keywords
+    if not infractions:
+        keywords = [
+            "go-back", "go back", "goback", 
+            "infraction", "violation", "deficiency",
+            "non-compliant", "non compliant", "noncompliant",
+            "correction required", "correction needed",
+            "does not meet", "fails to meet",
+            "not in compliance", "out of compliance"
+        ]
+        
+        lines = audit_text.split('\n')
+        current_block = []
+        
+        for i, line in enumerate(lines):
+            line_lower = line.lower()
+            if any(kw in line_lower for kw in keywords):
+                # Capture context (previous and next lines)
+                start = max(0, i-2)
+                end = min(len(lines), i+5)
+                block = '\n'.join(lines[start:end]).strip()
+                if block and block not in infractions:
+                    infractions.append(block)
     
     if not infractions:
-        return {"message": "No infractions found", "infractions": []}
+        logger.warning(f"No infractions detected in {file.filename}")
+        return {
+            "message": "No infractions found in this audit",
+            "infractions": [],
+            "audit_file": file.filename,
+            "note": "If this audit contains infractions, they may not match our detection patterns. Please check the audit format."
+        }
     
     # Analyze infractions against spec library
+    logger.info(f"Found {len(infractions)} infractions, analyzing against {len(library['chunks'])} spec chunks")
+    
     results = []
-    for infraction in infractions[:50]:  # Limit to 50
+    for i, infraction in enumerate(infractions[:50], 1):  # Limit to 50
+        logger.info(f"Analyzing infraction {i}/{min(len(infractions), 50)}")
+        
         # Get embedding
         inf_embedding = model.encode([infraction], normalize_embeddings=True)
         
@@ -731,36 +768,64 @@ async def analyze_audit(
         cos_scores = util.cos_sim(inf_embedding, library['embeddings'])[0]
         
         # Get top matches
-        top_k = 3
+        top_k = 5  # Increased from 3 to 5 for better coverage
         top_indices = cos_scores.argsort(descending=True)[:top_k]
         
         matches = []
         for idx in top_indices:
             score = cos_scores[idx].item()
-            if score > 0.5:  # Threshold
+            if score > 0.4:  # Lowered threshold from 0.5 to 0.4
                 chunk = library['chunks'][idx]
                 # Extract source file from chunk
                 source_match = re.search(r'\[Source: (.*?)\]', chunk)
                 source = source_match.group(1) if source_match else "Unknown"
                 
+                # Clean the chunk text (remove source tag)
+                clean_chunk = re.sub(r'\[Source:.*?\]\s*', '', chunk).strip()
+                
                 matches.append({
-                    "source": source,
-                    "score": round(score * 100, 1),
-                    "excerpt": chunk[:200] + "..." if len(chunk) > 200 else chunk
+                    "source_spec": source,
+                    "relevance_score": round(score * 100, 1),
+                    "spec_text": clean_chunk[:300] + "..." if len(clean_chunk) > 300 else clean_chunk
                 })
         
+        # Determine status based on match quality
+        if not matches:
+            status = "VALID"
+            confidence = "LOW"
+        elif matches[0]['relevance_score'] > 70:
+            status = "POTENTIALLY REPEALABLE"
+            confidence = "HIGH"
+        elif matches[0]['relevance_score'] > 55:
+            status = "POTENTIALLY REPEALABLE"
+            confidence = "MEDIUM"
+        else:
+            status = "VALID"
+            confidence = "MEDIUM"
+        
         results.append({
-            "infraction": infraction[:200] + "..." if len(infraction) > 200 else infraction,
-            "matches": matches,
-            "status": "REPEALABLE" if len(matches) >= 2 and matches[0]['score'] > 60 else "VALID"
+            "infraction_id": i,
+            "infraction_text": infraction[:500] + "..." if len(infraction) > 500 else infraction,
+            "spec_matches": matches,
+            "status": status,
+            "confidence": confidence,
+            "match_count": len(matches)
         })
+    
+    logger.info(f"Analysis complete: {len(results)} infractions analyzed")
     
     return {
         "audit_file": file.filename,
-        "spec_files": len(library['metadata'].get('files', [])),
+        "total_spec_files": len(library['metadata'].get('files', [])),
+        "total_spec_chunks": len(library['chunks']),
         "infractions_found": len(infractions),
         "infractions_analyzed": len(results),
-        "results": results
+        "analysis_results": results,
+        "summary": {
+            "potentially_repealable": sum(1 for r in results if "REPEALABLE" in r['status']),
+            "valid": sum(1 for r in results if r['status'] == "VALID"),
+            "high_confidence": sum(1 for r in results if r['confidence'] == "HIGH")
+        }
     }
 
 if __name__ == "__main__":
