@@ -14,3 +14,5 @@ pytesseract==0.3.13
 pillow==10.4.0
 # Database (only if using PostgreSQL)
 psycopg2-binary==2.9.9
+redis==5.0.1
+celery[redis]==5.3.4
