@@ -1,0 +1,36 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies for OCR and PDF processing
+RUN apt-get update && apt-get install -y \
+    tesseract-ocr \
+    tesseract-ocr-eng \
+    poppler-utils \
+    libpoppler-cpp-dev \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set environment variables for Python
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    OMP_NUM_THREADS=2 \
+    CELERY_WORKER=true
+
+# Copy requirements and install Python dependencies
+COPY requirements_oct2025.txt .
+RUN pip install --no-cache-dir -r requirements_oct2025.txt
+
+# Create data directory for persistent storage
+RUN mkdir -p /data
+
+# Copy all application code
+COPY . .
+
+# Health check for worker
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD celery -A celery_worker inspect ping || exit 1
+
+# Start Celery worker with production settings
+CMD ["celery", "-A", "celery_worker", "worker", "--loglevel=info", "--concurrency=2", "--max-tasks-per-child=50"]
