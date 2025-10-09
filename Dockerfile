@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Copy and install requirements first for better caching
-COPY backend/pdf-service/requirements.txt ./requirements.txt
+COPY backend/pdf-service/requirements_oct2025.txt ./requirements.txt
 
 # Upgrade pip and install Python dependencies
 RUN pip install --upgrade pip && \
@@ -25,8 +25,9 @@ RUN pip install --upgrade pip && \
 RUN python -c "import nltk; nltk.download('punkt', quiet=True)" || true
 
 # Copy application code (force rebuild with timestamp comment)
-# Updated: 2025-10-07 - Fixed to use Python API instead of Node.js
-COPY backend/pdf-service/api.py ./api.py
+# Updated: 2025-10-08 - Using app_oct2025_enhanced.py with QC Audit detection
+COPY backend/pdf-service/app_oct2025_enhanced.py ./app_oct2025_enhanced.py
+COPY backend/pdf-service/middleware.py ./middleware.py
 
 # Create temp directory for file uploads
 RUN mkdir -p /tmp
@@ -43,4 +44,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:${PORT:-8000}/health || exit 1
 
 # Use shell form to expand $PORT variable, single worker for stability
-CMD ["sh", "-c", "uvicorn api:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1"]
+CMD ["sh", "-c", "uvicorn app_oct2025_enhanced:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1"]
