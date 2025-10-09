@@ -32,8 +32,11 @@ COPY backend/pdf-service/middleware.py .
 # Create temp directory for file uploads
 RUN mkdir -p /tmp
 
+# Create data directory for persistent storage (BEFORE switching user)
+RUN mkdir -p /data && chmod 755 /data
+
 # Create non-root user for security
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app /tmp
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app /tmp /data
 USER appuser
 
 # The PORT environment variable is set by Render
