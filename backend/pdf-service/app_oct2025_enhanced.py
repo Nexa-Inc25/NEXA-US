@@ -901,6 +901,306 @@ async def analyze_audit(
         }
     }
 
+# ============================================
+# WEEK 2 ASYNC ENDPOINTS - Celery Integration
+# ============================================
+
+try:
+    from celery.result import AsyncResult
+    from celery_worker import app as celery_app, analyze_audit_async as celery_analyze
+    import uuid
+    CELERY_AVAILABLE = True
+except ImportError:
+    CELERY_AVAILABLE = False
+    logger.warning("Celery not available - async endpoints disabled")
+
+@app.post("/analyze-audit-async")
+async def analyze_audit_async_endpoint(
+    file: UploadFile = File(..., description="QA audit PDF to analyze")
+):
+    """
+    Queue audit for async analysis with full infraction detection and repeal recommendations
+    Returns job_id immediately for polling
+    """
+    if not CELERY_AVAILABLE:
+        raise HTTPException(503, "Async processing not available")
+    
+    try:
+        # Validate file
+        if not file.filename.lower().endswith('.pdf'):
+            raise HTTPException(400, "Only PDF files are allowed")
+        
+        # Read content
+        content = await file.read()
+        
+        if len(content) > 100 * 1024 * 1024:  # 100MB limit
+            raise HTTPException(413, "File too large (max 100MB)")
+        
+        # Queue async task
+        task = celery_analyze.delay(content, file.filename)
+        
+        logger.info(f"Queued async audit analysis: {task.id}")
+        
+        return {
+            "job_id": task.id,
+            "status": "queued",
+            "message": f"Analysis queued for {file.filename}",
+            "poll_url": f"/job-result/{task.id}"
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to queue audit: {e}")
+        raise HTTPException(500, f"Failed to start analysis: {str(e)}")
+
+@app.get("/job-result/{job_id}")
+async def get_job_result(job_id: str):
+    """
+    Get async job results with infraction analysis and repeal recommendations
+    """
+    if not CELERY_AVAILABLE:
+        raise HTTPException(503, "Async processing not available")
+    
+    try:
+        result = AsyncResult(job_id, app=celery_app)
+        
+        if result.state == 'PENDING':
+            return {
+                "job_id": job_id,
+                "status": "pending",
+                "message": "Job is queued, waiting for worker..."
+            }
+        
+        elif result.state == 'FAILURE':
+            return {
+                "job_id": job_id,
+                "status": "failed",
+                "error": str(result.info) if result.info else "Unknown error"
+            }
+        
+        elif result.state in ['EXTRACTING', 'LOADING', 'ANALYZING', 'FINALIZING']:
+            # Progress updates from worker
+            meta = result.info or {}
+            return {
+                "job_id": job_id,
+                "status": "processing",
+                "state": result.state.lower(),
+                "progress": meta.get('progress', 0),
+                "message": meta.get('status', 'Processing...')
+            }
+        
+        elif result.state == 'SUCCESS':
+            # Complete with results
+            analysis = result.result
+            
+            # Format for easy consumption
+            if analysis.get('status') == 'success':
+                infractions = analysis.get('infractions', [])
+                
+                # Separate by confidence
+                high_confidence = [i for i in infractions if i.get('confidence', 0) > 80]
+                needs_review = [i for i in infractions if i.get('confidence', 0) <= 80]
+                
+                return {
+                    "job_id": job_id,
+                    "status": "complete",
+                    "summary": {
+                        "total_infractions": len(infractions),
+                        "auto_repealable": len(high_confidence),
+                        "needs_review": len(needs_review),
+                        "avg_confidence": sum(i.get('confidence', 0) for i in infractions) / max(1, len(infractions))
+                    },
+                    "repeals": [
+                        {
+                            "infraction_id": i['item'],
+                            "confidence": i['confidence'],
+                            "reasons": [i['reason']],
+                            "spec_reference": i.get('source', 'Unknown'),
+                            "recommendation": "AUTO_REPEAL" if i['confidence'] > 90 else "REVIEW_RECOMMENDED"
+                        }
+                        for i in high_confidence
+                    ],
+                    "review_items": needs_review,
+                    "raw_result": analysis
+                }
+            else:
+                return {
+                    "job_id": job_id,
+                    "status": "failed",
+                    "error": analysis.get('error', 'Analysis failed')
+                }
+        
+        else:
+            return {
+                "job_id": job_id,
+                "status": "unknown",
+                "state": result.state
+            }
+            
+    except Exception as e:
+        logger.error(f"Error checking job {job_id}: {e}")
+        return {
+            "job_id": job_id,
+            "status": "error",
+            "error": str(e)
+        }
+
+@app.get("/queue-status")
+async def get_queue_status():
+    """
+    Check Celery worker status and queue health
+    """
+    if not CELERY_AVAILABLE:
+        return {
+            "workers": {"available": False, "error": "Celery not configured"},
+            "status": "disabled"
+        }
+    
+    try:
+        inspect = celery_app.control.inspect()
+        
+        # Ping workers
+        active_workers = inspect.ping()
+        
+        # Get active tasks
+        active_tasks = inspect.active()
+        active_count = sum(len(tasks) for tasks in active_tasks.values()) if active_tasks else 0
+        
+        # Get queue stats
+        stats = inspect.stats()
+        
+        return {
+            "workers": {
+                "available": bool(active_workers),
+                "count": len(active_workers) if active_workers else 0,
+                "ping": active_workers
+            },
+            "queue": {
+                "active_tasks": active_count
+            },
+            "stats": stats if stats else {},
+            "status": "healthy" if active_workers else "no_workers"
+        }
+        
+    except Exception as e:
+        logger.error(f"Queue status error: {e}")
+        return {
+            "workers": {"available": False, "error": str(e)},
+            "status": "error"
+        }
+
+@app.post("/batch-analyze")
+async def batch_analyze_audits(
+    files: List[UploadFile] = File(..., description="Multiple audit PDFs")
+):
+    """
+    Queue multiple audits for parallel processing
+    """
+    if not CELERY_AVAILABLE:
+        raise HTTPException(503, "Async processing not available")
+    
+    if len(files) > 20:
+        raise HTTPException(400, "Maximum 20 files per batch")
+    
+    jobs = []
+    
+    for file in files:
+        if not file.filename.lower().endswith('.pdf'):
+            jobs.append({
+                "filename": file.filename,
+                "status": "skipped",
+                "error": "Not a PDF"
+            })
+            continue
+        
+        try:
+            content = await file.read()
+            
+            # Queue task
+            task = celery_analyze.delay(content, file.filename)
+            
+            jobs.append({
+                "filename": file.filename,
+                "job_id": task.id,
+                "status": "queued",
+                "poll_url": f"/job-result/{task.id}"
+            })
+            
+        except Exception as e:
+            jobs.append({
+                "filename": file.filename,
+                "status": "failed",
+                "error": str(e)
+            })
+    
+    return {
+        "batch_id": str(uuid.uuid4())[:8],
+        "total": len(files),
+        "queued": sum(1 for j in jobs if j['status'] == 'queued'),
+        "jobs": jobs
+    }
+
+@app.get("/cache-stats")
+async def get_cache_stats():
+    """
+    Get Redis cache statistics and performance metrics
+    """
+    try:
+        # Check if Redis is available
+        import redis
+        import os
+        
+        redis_url = os.getenv('REDIS_URL')
+        if not redis_url:
+            return {
+                "status": "disabled",
+                "message": "Redis not configured"
+            }
+        
+        # Connect to Redis
+        r = redis.from_url(redis_url)
+        
+        # Get info
+        info = r.info()
+        
+        # Get cache keys
+        cache_keys = r.keys('cache:*')
+        spec_keys = r.keys('spec:*')
+        job_keys = r.keys('celery-task-meta-*')
+        
+        return {
+            "status": "active",
+            "memory": {
+                "used_memory": info.get('used_memory_human', 'N/A'),
+                "used_memory_peak": info.get('used_memory_peak_human', 'N/A'),
+                "memory_usage": f"{info.get('used_memory_rss', 0) / (1024*1024):.2f} MB"
+            },
+            "keys": {
+                "total": info.get('db0', {}).get('keys', 0) if 'db0' in info else len(cache_keys + spec_keys + job_keys),
+                "cache_entries": len(cache_keys),
+                "spec_entries": len(spec_keys),
+                "job_results": len(job_keys)
+            },
+            "performance": {
+                "hits": info.get('keyspace_hits', 0),
+                "misses": info.get('keyspace_misses', 0),
+                "hit_rate": f"{(info.get('keyspace_hits', 0) / max(1, info.get('keyspace_hits', 0) + info.get('keyspace_misses', 0))) * 100:.2f}%",
+                "evicted_keys": info.get('evicted_keys', 0)
+            },
+            "uptime": info.get('uptime_in_seconds', 0)
+        }
+        
+    except ImportError:
+        return {
+            "status": "disabled",
+            "message": "Redis client not installed"
+        }
+    except Exception as e:
+        logger.error(f"Cache stats error: {e}")
+        return {
+            "status": "error",
+            "error": str(e)
+        }
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
