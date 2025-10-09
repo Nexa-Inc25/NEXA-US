@@ -24,6 +24,7 @@ from PIL import Image
 import logging
 import time
 from multiprocessing import Pool, cpu_count
+from functools import lru_cache  # Week 1: Added for caching spec lookups
 from middleware import ValidationMiddleware, ErrorHandlingMiddleware, RateLimitMiddleware
 import hashlib
 
@@ -56,7 +57,7 @@ app = FastAPI(
 )
 
 # Add middleware - ORDER MATTERS! CORS must be last
-app.add_middleware(RateLimitMiddleware, calls=100, period=60)
+app.add_middleware(RateLimitMiddleware, calls=200, period=60)  # Week 1: Increased for 30 users
 app.add_middleware(ErrorHandlingMiddleware)
 app.add_middleware(ValidationMiddleware)
 
@@ -208,8 +209,8 @@ def save_spec_library(library: Dict[str, Any]):
     with open(SPEC_METADATA_PATH, 'w') as f:
         json.dump(library['metadata'], f, indent=2)
 
-def extract_text_chunks(pdf_content: bytes, filename: str, chunk_size: int = 1100) -> List[str]:
-    """Extract and chunk text from PDF with OCR cleaning"""
+def extract_text_chunks(pdf_content: bytes, filename: str, chunk_size: int = 400) -> List[str]:
+    """Extract and chunk text from PDF with OCR cleaning - Week 1: Optimized chunk size"""
     try:
         pdf_reader = PdfReader(io.BytesIO(pdf_content))
         chunks = []
