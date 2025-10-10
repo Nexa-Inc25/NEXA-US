@@ -117,25 +117,26 @@ class PoleVisionDetector:
             project = rf.workspace("unstructured").project("utility-pole-detection-birhf")
             dataset = project.version(1).download("yolov8", location=f"{self.data_path}/roboflow_dataset")
             
-            # Load the downloaded model
-            model_path = f"{dataset.location}/weights/best.pt"
-            if os.path.exists(model_path):
-                import shutil
-                shutil.copy(model_path, self.model_path)
-                logger.info(f"Downloaded Roboflow utility-pole-detection-birhf model (1310 images)")
+            # Check for pre-trained model uploaded by user
+            logger.info("Roboflow dataset downloaded successfully")
+            logger.info("Training disabled to save memory (uses >2GB RAM on Render)")
+            
+            # Look for trained model at /data/yolo_pole.pt (upload from local training)
+            trained_model_path = f"{self.data_path}/yolo_pole.pt"
+            if os.path.exists(trained_model_path):
+                logger.info(f"✅ Loading trained model from {trained_model_path}")
+                self.model = YOLO(trained_model_path)
             else:
-                # Train if weights not included
-                logger.info("Skipping training to save memory - use /vision/train-on-specs endpoint instead")
-                model = YOLO("yolov8n.pt")  # Start with nano
-#                 model.train(
-#                    data=f"{dataset.location}/data.yaml",
-#                    epochs=10,
-#                    imgsz=640,
-#                    device='cpu',
-#                    project=self.data_path,
-#                    name='roboflow_pole'
-#                )  # DISABLED - Training uses >2GB RAM on Render
-#                model.save(self.model_path)
+                # Check if Roboflow included pre-trained weights
+                model_path = f"{dataset.location}/weights/best.pt"
+                if os.path.exists(model_path):
+                    import shutil
+                    shutil.copy(model_path, self.model_path)
+                    logger.info(f"✅ Downloaded Roboflow pre-trained model (1310 images)")
+                    self.model = YOLO(self.model_path)
+                else:
+                    logger.info("ℹ️ No trained model found - using base YOLOv8")
+                    logger.info("   Upload trained model to /data/yolo_pole.pt or use /vision/train-on-specs")
                 
         except Exception as e:
             logger.error(f"Error downloading Roboflow model: {e}")
@@ -470,7 +471,7 @@ class PoleVisionDetector:
                 yaml.dump(dataset_yaml, f)
             
             # Fine-tune model
-#             self.model.train(
+            self.model.train(
                 data=yaml_path,
                 epochs=10,  # Quick fine-tuning
                 imgsz=640,
@@ -478,7 +479,7 @@ class PoleVisionDetector:
                 device='cpu',  # Use CPU for Render
                 project=self.data_path,
                 name='pole_finetuned'
-            )  # DISABLED - Training uses >2GB RAM on Render
+            )
             
             # Update model path to fine-tuned version
             self.model_path = f'{self.data_path}/pole_finetuned/weights/best.pt'
