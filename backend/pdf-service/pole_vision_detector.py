@@ -128,14 +128,14 @@ class PoleVisionDetector:
                 logger.info("Skipping training to save memory - use /vision/train-on-specs endpoint instead")
                 model = YOLO("yolov8n.pt")  # Start with nano
 #                 model.train(
-                    data=f"{dataset.location}/data.yaml",
-                    epochs=10,
-                    imgsz=640,
-                    device='cpu',
-                    project=self.data_path,
-                    name='roboflow_pole'
-                )  # DISABLED - Training uses >2GB RAM on Render
-                model.save(self.model_path)
+#                    data=f"{dataset.location}/data.yaml",
+#                    epochs=10,
+#                    imgsz=640,
+#                    device='cpu',
+#                    project=self.data_path,
+#                    name='roboflow_pole'
+#                )  # DISABLED - Training uses >2GB RAM on Render
+#                model.save(self.model_path)
                 
         except Exception as e:
             logger.error(f"Error downloading Roboflow model: {e}")
