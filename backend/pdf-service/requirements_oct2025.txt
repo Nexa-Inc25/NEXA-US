@@ -13,6 +13,8 @@ nltk==3.8.1
 pypdf==3.17.0
 pytesseract==0.3.10
 Pillow==10.1.0
+# Data processing for pricing integration
+pandas==2.0.3
 # Database (only if using PostgreSQL)
 psycopg2-binary==2.9.9
 # Celery with Redis support (includes compatible redis version)

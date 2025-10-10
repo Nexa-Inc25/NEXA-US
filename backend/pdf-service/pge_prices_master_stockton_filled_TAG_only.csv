@@ -1,0 +1,31 @@
+program_code,ref_code,unit_type,unit_description,unit_of_measure,price_type,rate,percent,notes
+TAG,TAG-1,2AA Tag,2AA Capital OH Replacement – Accessible,Per Tag,per_unit,4416.58,,
+TAG,TAG-2,2AA Tag,2AA Capital OH Replacement – Inaccessible,Per Tag,per_unit,7644.81,,
+TAG,TAG-3,2AA Pole,Pole Replacement (Use 07 Units),Per Tag,per_unit,,,Pricing usually references 07 pole units
+TAG,TAG-4,KAA Tag,KAA OH Maintenance – Accessible,Per Tag,per_unit,2910.00,,
+TAG,TAG-5,KAA Tag,KAA OH Maintenance – Inaccessible,Per Tag,per_unit,5038.00,,
+TAG,TAG-6.1,Cancel – Adder,Work Found Complete Upon Arrival,Per Order Number,per_order,300,,
+TAG,TAG-10,Electric Crew Rate,2 Man Electric Crew with Equipment,Hourly,per_hour,471.42,,
+TAG,TAG-11,Prem. Time Dif. – Adder,2 Man Electric Crew – Premium Time Differential,Hourly,per_hour,178.77,,
+TAG,TAG-12,Electric Crew Rate,4 Man Electric Crew with Equipment,Hourly,per_hour,1049.10,,
+TAG,TAG-13,Prem. Time Dif. – Adder,4 Man Electric Crew – Premium Time Differential,Hourly,per_hour,366.95,,
+TAG,TAG-14.1,Restoration – Adder,Restoration – Concrete / Asphalt / Other,Lump Sum,percent_cost_plus,,5,Fill percent from sheet (often 5%)
+TAG,TAG-15,Access – Adder,Specialty Equipment – Helicopter LZ / Crane / Tracked Equipment / Other,Cost Plus,percent_cost_plus,,5,Fill percent from sheet (often 5%)
+TAG,TAG-16,Fire Watch – Adder,R5 and R4 Energized Only Working Fire Watch,Per Day,per_day,2160.19,,
+07D,07-1,Pole,Pole Replacement – Type 1,Each,per_unit,,,
+07D,07-2,Pole,Pole Replacement – Type 2,Each,per_unit,,,
+07D,07-3,Pole,Pole Replacement – Type 3,Each,per_unit,,,
+07D,07-4,Pole,Pole Replacement – Type 4,Each,per_unit,,,
+07D,07-5,Pole,Pole Replacement – Type 5,Each,per_unit,,,
+07D,07-8,Access – Adder,Specialty Equipment – Helicopter LZ / Crane / Tracked Equipment / Other,Lump Sum or NTE,percent_cost_plus,,,Sheet indicates Cost Plus or Lump Sum
+07D,07-9,Electric Crew Rate,2 Man Electric Crew with Equipment,Hourly,per_hour,,,
+07D,07-10,Electric Crew Rate,3 Man Electric Crew with Equipment,Hourly,per_hour,,,
+07D,07-11,Electric Crew Rate,4 Man Electric Crew with Equipment,Hourly,per_hour,,,
+07D,07-12,Electric Crew Rate,5 Man Electric Crew with Equipment,Hourly,per_hour,,,
+07D,07-21,Prem. Time Dif. – Adder,2 Man Electric Crew – Premium Time Differential,Hourly,per_hour,,,
+07D,07-24,Prem. Time Dif. – Adder,3 Man Electric Crew – Premium Time Differential,Hourly,per_hour,,,
+07D,07-26,Prem. Time Dif. – Adder,4 Man Electric Crew – Premium Time Differential,Hourly,per_hour,,,
+07D,07-28,Prem. Time Dif. – Adder,5 Man Electric Crew – Premium Time Differential,Hourly,per_hour,,,
+07D,07-29,Fire Watch – Adder,R5 and R4 Energized Only Working Fire Watch,Per Day,per_day,,,
+07D,07-30,TCON – Adder,Traffic Control,Lump Sum / Cost Plus,percent_cost_plus,,,Fill percent or lump per local rules
+07D,07-31,Cancel – Adder,Work Found Complete Upon Arrival,Per Order Number,per_order,,,

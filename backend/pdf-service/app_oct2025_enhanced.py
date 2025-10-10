@@ -42,6 +42,17 @@ except ImportError as e:
     logger.warning(f"Vision detection not available: {e}")
     vision_router = None
 
+# Pricing integration for cost impact analysis
+try:
+    from pricing_endpoints import pricing_router, init_pricing_analyzer
+    from pricing_integration import enhance_infraction_with_pricing, PricingAnalyzer
+    PRICING_ENABLED = True
+    logger.info("💰 Pricing integration enabled")
+except ImportError as e:
+    PRICING_ENABLED = False
+    logger.warning(f"Pricing integration not available: {e}")
+    pricing_router = None
+
 # === CPU PERFORMANCE OPTIMIZATION ===
 num_cores = int(os.environ.get('RENDER_CORES', len(os.sched_getaffinity(0)) if hasattr(os, 'sched_getaffinity') else cpu_count()))
 optimal_threads = max(1, num_cores // 2)
@@ -96,10 +107,21 @@ os.makedirs(DATA_PATH, exist_ok=True)
 
 logger.info(f"💾 Data storage path: {DATA_PATH}")
 
+# Initialize pricing analyzer if available
+pricing_analyzer = None
+if PRICING_ENABLED:
+    pricing_analyzer = init_pricing_analyzer(model, DATA_PATH)
+    logger.info("💰 Pricing analyzer initialized")
+
 # Include vision router if available
 if VISION_ENABLED and vision_router:
     app.include_router(vision_router)
     logger.info("Vision endpoints registered at /vision/*")
+
+# Include pricing router if available
+if PRICING_ENABLED and pricing_router:
+    app.include_router(pricing_router, prefix="/pricing", tags=["Pricing"])
+    logger.info("💰 Pricing endpoints registered at /pricing/*")
 
 # === MODELS ===
 class SpecFile(BaseModel):
@@ -879,6 +901,16 @@ async def analyze_audit(
         })
     
     logger.info(f"Analysis complete: {len(results)} infractions analyzed")
+    
+    # Enhance with pricing if available
+    if PRICING_ENABLED and pricing_analyzer:
+        for result in results:
+            if result['status'] == 'POTENTIALLY REPEALABLE':
+                try:
+                    result = enhance_infraction_with_pricing(result, pricing_analyzer)
+                except Exception as e:
+                    logger.warning(f"Failed to add pricing for infraction {result['infraction_id']}: {e}")
+        logger.info("💰 Pricing enhancement complete")
     
     # Transform to frontend-compatible format (for backwards compatibility)
     infractions_frontend = []
