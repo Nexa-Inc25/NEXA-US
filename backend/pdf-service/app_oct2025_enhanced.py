@@ -28,6 +28,16 @@ from functools import lru_cache  # Week 1: Added for caching spec lookups
 from middleware import ValidationMiddleware, ErrorHandlingMiddleware, RateLimitMiddleware
 import hashlib
 
+# Computer Vision for pole detection (if available)
+try:
+    from vision_endpoints import vision_router
+    VISION_ENABLED = True
+    logger.info("Vision detection enabled with Roboflow model")
+except ImportError as e:
+    VISION_ENABLED = False
+    logger.warning(f"Vision detection not available: {e}")
+    vision_router = None
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -85,6 +95,11 @@ SPEC_METADATA_PATH = os.path.join(DATA_PATH, 'spec_metadata.json')
 os.makedirs(DATA_PATH, exist_ok=True)
 
 logger.info(f"💾 Data storage path: {DATA_PATH}")
+
+# Include vision router if available
+if VISION_ENABLED and vision_router:
+    app.include_router(vision_router)
+    logger.info("Vision endpoints registered at /vision/*")
 
 # === MODELS ===
 class SpecFile(BaseModel):
@@ -1200,6 +1215,31 @@ async def get_cache_stats():
             "status": "error",
             "error": str(e)
         }
+
+@app.on_event("startup")
+async def startup_vision():
+    """Pre-load Roboflow model on startup"""
+    if VISION_ENABLED:
+        try:
+            # Check for Roboflow API key
+            if not os.getenv('ROBOFLOW_API_KEY'):
+                logger.warning("ROBOFLOW_API_KEY not set - vision will use base YOLOv8")
+            else:
+                logger.info("Roboflow API key found, will download utility-pole-detection-birhf model")
+            
+            # Pre-initialize detector to download model
+            from pole_vision_detector import PoleVisionDetector
+            detector = PoleVisionDetector()
+            logger.info("Vision model pre-loaded successfully")
+            
+            # Test model status
+            if os.path.exists('/data/yolo_pole.pt'):
+                logger.info("✅ Roboflow model ready at /data/yolo_pole.pt")
+            else:
+                logger.info("⏳ Model will download on first use")
+                
+        except Exception as e:
+            logger.error(f"Could not pre-load vision model: {e}")
 
 if __name__ == "__main__":
     import uvicorn

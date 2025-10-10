@@ -3,14 +3,22 @@ Integration endpoints for app_oct2025_enhanced.py
 Add these imports and endpoints to your main app
 """
 
-# Add these imports to app_oct2025_enhanced.py:
-from celery.result import AsyncResult
-from celery_worker import app as celery_app, analyze_audit_async
+# Add these imports to app_oct2025_enhanced.py
+# PDF manipulation
+from PyPDF2 import PdfReader
+import pytesseract
+from PIL import Image
+
+# Computer Vision for pole detection (if available)
+try:
+    from vision_endpoints import vision_router
+    VISION_ENABLED = True
+except ImportError:
+    VISION_ENABLED = False
+    logger.warning("Vision endpoints not available - install ultralytics and roboflow")
+
+import app as celery_app, analyze_audit_async
 import uuid
-
-# Add these endpoints to app_oct2025_enhanced.py:
-
-@app.post("/analyze-audit-async")
 async def analyze_audit_async_endpoint(
     file: UploadFile = File(..., description="QA audit PDF to analyze")
 ):
