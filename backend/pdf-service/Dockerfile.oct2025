@@ -47,7 +47,7 @@ RUN pip install --no-cache-dir --upgrade pip wheel --user && \
 # Copy app code
 COPY --chown=user ./backend/pdf-service/ $HOME/app
 
-# Switch back to root to copy model to /data
+# Switch back to root to copy model and CSVs to /data
 USER root
 RUN if [ -f /home/user/app/pole_training/utility_pole_v1/weights/best.pt ]; then \
         cp /home/user/app/pole_training/utility_pole_v1/weights/best.pt /data/yolo_pole.pt && \
@@ -55,6 +55,16 @@ RUN if [ -f /home/user/app/pole_training/utility_pole_v1/weights/best.pt ]; then
         echo "✅ Trained model (93.2% mAP) copied to /data/yolo_pole.pt"; \
     else \
         echo "⚠️ Trained model not found, will use base model"; \
+    fi
+
+# Copy pricing CSVs to /data
+RUN if [ -f /home/user/app/ibew1245_labor_rates_2025.csv ]; then \
+        cp /home/user/app/ibew1245_labor_rates_2025.csv /data/ && \
+        cp /home/user/app/pge_equipment_rates_2025.csv /data/ && \
+        chown user:user /data/*.csv && \
+        echo "✅ Pricing CSVs copied to /data/"; \
+    else \
+        echo "⚠️ Pricing CSVs not found"; \
     fi
 # Switch back to non-root user
 USER user
