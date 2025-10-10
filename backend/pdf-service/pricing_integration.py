@@ -523,7 +523,22 @@ class PricingAnalyzer:
     
     def get_pricing_summary(self) -> Dict:
         """Get summary of loaded pricing data"""
+        # Check labor/equipment CSVs
+        labor_count = len(self.labor_df) if self.labor_df is not None else 0
+        equip_count = len(self.equip_df) if self.equip_df is not None else 0
+        
+        # Check pricing index
         if not self.pricing_metadata:
+            # If we have CSVs but no index
+            if labor_count > 0 or equip_count > 0:
+                return {
+                    'status': 'partial',
+                    'message': 'Labor/equipment CSVs loaded but pricing index not built',
+                    'labor_rates': labor_count,
+                    'equipment_rates': equip_count,
+                    'pricing_index': False,
+                    'action_needed': 'Upload pricing master CSV to /learn-pricing endpoint'
+                }
             return {
                 'status': 'empty',
                 'message': 'No pricing data loaded'
@@ -541,6 +556,8 @@ class PricingAnalyzer:
             'status': 'loaded',
             'total_entries': len(self.pricing_metadata),
             'programs': programs,
+            'labor_rates': labor_count,
+            'equipment_rates': equip_count,
             'storage_path': self.data_path,
             'threshold': self.pricing_threshold
         }
