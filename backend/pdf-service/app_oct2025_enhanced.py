@@ -28,6 +28,10 @@ from functools import lru_cache  # Week 1: Added for caching spec lookups
 from middleware import ValidationMiddleware, ErrorHandlingMiddleware, RateLimitMiddleware
 import hashlib
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # Computer Vision for pole detection (if available)
 try:
     from vision_endpoints import vision_router
@@ -37,10 +41,6 @@ except ImportError as e:
     VISION_ENABLED = False
     logger.warning(f"Vision detection not available: {e}")
     vision_router = None
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 # === CPU PERFORMANCE OPTIMIZATION ===
 num_cores = int(os.environ.get('RENDER_CORES', len(os.sched_getaffinity(0)) if hasattr(os, 'sched_getaffinity') else cpu_count()))
