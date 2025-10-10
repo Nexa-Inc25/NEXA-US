@@ -22,7 +22,7 @@ reportlab==4.0.7
 PyPDF2==3.0.1
 # Computer vision for pole detection
 ultralytics==8.0.200  # YOLOv8 for object detection
-opencv-python-headless==4.8.1.78  # Required by ultralytics, headless for server
+opencv-python-headless==4.8.0.74  # Required by roboflow, headless for server
 roboflow==1.1.9  # Roboflow SDK for pre-trained models
 # Already included with sentence-transformers but explicitly listing:
 # numpy (for pole classification calculations)
