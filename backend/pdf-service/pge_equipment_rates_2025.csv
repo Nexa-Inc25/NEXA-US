@@ -1,0 +1,6 @@
+equip_no,description,rate_usd_per_hr,qty_for_crew_1,qty_for_crew_2,qty_for_crew_3,qty_for_crew_4,notes
+57,Pickup 4x4,30.00,1.5,2.0,1.5,,Caltrans light truck 4WD avg.
+31,Digger Derrick 4045,40.00,1,1,1,,Caltrans auger truck avg. est.
+15,Bucket Truck 55 ft,50.00,1,1,1,,Caltrans boom lift 25-50ft est.
+85,Trailer-Pole Dolly,25.00,1,1,1,,Caltrans low bed trailer avg.
+14,Bucket Truck 38 ft (Squirt),40.00,1,1,1,,Caltrans boom lift est.

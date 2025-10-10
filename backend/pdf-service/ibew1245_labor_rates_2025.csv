@@ -1,0 +1,16 @@
+classification,straight_rate_usd_per_hr,doubletime_rate_usd_per_hr,notes
+Journeyman Lineman,73.78,147.56,Base for apprentices; end rate from IBEW 1245 Physical Agreement 2025
+General Foreman,79.04,158.08,End rate (Electric Crew Foreman equivalent)
+Cable Splicer Foreman,70.00,140.00,End rate from agreement
+Foreman,79.04,158.08,Electric Crew Foreman end rate (1 yr)
+Underground Foreman,79.04,158.08,End rate; +$50/wk if applicable
+Cable Splicer,67.58,135.16,Full rate from agreement
+Line Equipment Man,59.02,118.04,T&D Equipment Operator end rate (6 mo)
+Groundman,49.39,98.78,Electric Line Assistant end rate (18 mo)
+Apprentice 1st Period - 60% of J/L,44.27,88.54,~60% of Journeyman Lineman base
+Apprentice 2nd Period - 65% of J/L,47.96,95.92,~65% of J/L
+Apprentice 3rd Period - 70% of J/L,51.65,103.30,~70% of J/L
+Apprentice 4th Period - 75% of J/L,55.34,110.68,~75% of J/L
+Apprentice 5th Period - 80% of J/L,59.02,118.04,~80% of J/L
+Apprentice 6th Period - 85% of J/L,62.71,125.42,~85% of J/L
+Apprentice 7th Period - 90% of J/L,66.40,132.80,~90% of J/L

@@ -49,7 +49,12 @@ class PricingAnalyzer:
         self.pricing_index = None
         self.pricing_metadata = []
         
+        # Labor and equipment data
+        self.labor_df = None
+        self.equip_df = None
+        
         self._load_pricing_data()
+        self._load_labor_equipment_data()
     
     def _load_pricing_data(self):
         """Load pricing index and metadata from disk"""
@@ -67,6 +72,36 @@ class PricingAnalyzer:
                 logger.info("ℹ️ No pricing data found - use /learn-pricing to upload")
         except Exception as e:
             logger.error(f"Error loading pricing data: {e}")
+    
+    def _load_labor_equipment_data(self):
+        """Load labor and equipment rate data from CSVs"""
+        try:
+            # Try to load labor rates
+            labor_path = os.path.join(self.data_path, 'ibew1245_labor_rates_2025.csv')
+            if not os.path.exists(labor_path):
+                # Try local path for development
+                labor_path = 'ibew1245_labor_rates_2025.csv'
+            
+            if os.path.exists(labor_path):
+                self.labor_df = pd.read_csv(labor_path)
+                logger.info(f"✅ Loaded labor rates: {len(self.labor_df)} classifications")
+            else:
+                logger.warning("⚠️ Labor rates CSV not found")
+            
+            # Try to load equipment rates
+            equip_path = os.path.join(self.data_path, 'pge_equipment_rates_2025.csv')
+            if not os.path.exists(equip_path):
+                # Try local path for development
+                equip_path = 'pge_equipment_rates_2025.csv'
+            
+            if os.path.exists(equip_path):
+                self.equip_df = pd.read_csv(equip_path)
+                logger.info(f"✅ Loaded equipment rates: {len(self.equip_df)} items")
+            else:
+                logger.warning("⚠️ Equipment rates CSV not found")
+                
+        except Exception as e:
+            logger.error(f"Error loading labor/equipment data: {e}")
     
     def learn_pricing(self, csv_path: str, region: str = "Stockton") -> Dict:
         """
@@ -187,6 +222,150 @@ class PricingAnalyzer:
             logger.error(f"Error finding pricing: {e}")
             return []
     
+    def detect_crew_from_text(self, text: str) -> Tuple[int, float, bool]:
+        """
+        Detect crew size, hours, and premium time from infraction text
+        
+        Args:
+            text: Infraction text to analyze
+        
+        Returns:
+            Tuple of (crew_size, hours, is_premium)
+        """
+        # Regex for crew size
+        crew_match = re.search(r'(\d+)-man\s+crew', text, re.IGNORECASE)
+        crew_size = int(crew_match.group(1)) if crew_match else 0
+        
+        # Regex for hours
+        hours_match = re.search(r'(\d+)\s+(hours?|hrs?)', text, re.IGNORECASE)
+        hours = float(hours_match.group(1)) if hours_match else 8.0  # Default 8 hours
+        
+        # Check for premium/double time
+        is_premium = bool(re.search(r'(premium\s+time|double\s+time|overtime)', text, re.IGNORECASE))
+        
+        return crew_size, hours, is_premium
+    
+    def calculate_labor_cost(self, crew_size: int, hours: float, is_premium: bool = False) -> Tuple[float, List[Dict]]:
+        """
+        Calculate labor cost for a crew
+        
+        Args:
+            crew_size: Number of workers in crew
+            hours: Hours worked
+            is_premium: Whether premium/double time applies
+        
+        Returns:
+            Tuple of (total_labor_cost, labor_breakdown)
+        """
+        if crew_size == 0 or self.labor_df is None:
+            return 0.0, []
+        
+        rate_column = 'doubletime_rate_usd_per_hr' if is_premium else 'straight_rate_usd_per_hr'
+        
+        # Get rates
+        try:
+            foreman_rate = self.labor_df.loc[
+                self.labor_df['classification'] == 'Foreman', 
+                rate_column
+            ].values[0]
+            
+            journeyman_rate = self.labor_df.loc[
+                self.labor_df['classification'] == 'Journeyman Lineman', 
+                rate_column
+            ].values[0]
+        except (IndexError, KeyError) as e:
+            logger.warning(f"Could not find labor rates: {e}")
+            return 0.0, []
+        
+        labor_breakdown = []
+        
+        # 1 Foreman + (crew_size - 1) Journeymen
+        foreman_cost = foreman_rate * hours
+        labor_breakdown.append({
+            'classification': 'Foreman',
+            'rate': round(foreman_rate, 2),
+            'hours': hours,
+            'total': round(foreman_cost, 2)
+        })
+        
+        for i in range(crew_size - 1):
+            journeyman_cost = journeyman_rate * hours
+            labor_breakdown.append({
+                'classification': 'Journeyman Lineman',
+                'rate': round(journeyman_rate, 2),
+                'hours': hours,
+                'total': round(journeyman_cost, 2)
+            })
+        
+        total_labor = sum(item['total'] for item in labor_breakdown)
+        
+        return round(total_labor, 2), labor_breakdown
+    
+    def select_and_calculate_equipment(self, job_type: str, crew_size: int, hours: float) -> Tuple[float, List[Dict]]:
+        """
+        Auto-select and calculate equipment costs based on job type
+        
+        Args:
+            job_type: Type of job (extracted from infraction text)
+            crew_size: Size of crew (affects equipment quantity)
+            hours: Hours worked
+        
+        Returns:
+            Tuple of (total_equipment_cost, equipment_breakdown)
+        """
+        if self.equip_df is None:
+            return 0.0, []
+        
+        # Auto-select equipment based on job type keywords
+        equip_codes = []
+        
+        if re.search(r'pole', job_type, re.IGNORECASE):
+            # Pole jobs need: Digger Derrick, Bucket Truck, Pickup, Trailer
+            equip_codes = ['31', '15', '57', '85']
+        elif re.search(r'(overhead|oh|cable)', job_type, re.IGNORECASE):
+            # Overhead work: Bucket Truck, Pickup
+            equip_codes = ['15', '57']
+        elif re.search(r'underground', job_type, re.IGNORECASE):
+            # Underground: Digger, Pickup, Trailer
+            equip_codes = ['31', '57', '85']
+        else:
+            # Default: Basic truck
+            equip_codes = ['57']
+        
+        equipment_breakdown = []
+        total_equipment = 0.0
+        
+        for code in equip_codes:
+            try:
+                row = self.equip_df[self.equip_df['equip_no'].astype(str) == str(code)]
+                if row.empty:
+                    continue
+                
+                rate = float(row['rate_usd_per_hr'].values[0])
+                
+                # Determine quantity based on crew size
+                qty_col = f'qty_for_crew_{min(crew_size, 4)}' if crew_size > 0 else 'qty_for_crew_1'
+                qty = float(row[qty_col].values[0]) if qty_col in row.columns and pd.notna(row[qty_col].values[0]) else 1.0
+                
+                item_total = rate * hours * qty
+                
+                equipment_breakdown.append({
+                    'description': row['description'].values[0],
+                    'equip_no': code,
+                    'rate': round(rate, 2),
+                    'quantity': qty,
+                    'hours': hours,
+                    'total': round(item_total, 2)
+                })
+                
+                total_equipment += item_total
+                
+            except Exception as e:
+                logger.warning(f"Could not calculate equipment {code}: {e}")
+                continue
+        
+        return round(total_equipment, 2), equipment_breakdown
+    
     def calculate_cost_impact(self, 
                              infraction_text: str,
                              pricing_matches: List[Dict],
@@ -263,11 +442,43 @@ class PricingAnalyzer:
                 
                 cost_impact['adders'].append(adder)
         
-        # Calculate total
+        # Detect crew, hours, and premium time from infraction text
+        crew_size, hours, is_premium = self.detect_crew_from_text(infraction_text)
+        
+        # Calculate labor costs if crew detected
+        labor_total, labor_breakdown = self.calculate_labor_cost(crew_size, hours, is_premium)
+        if labor_total > 0:
+            cost_impact['labor'] = {
+                'total': labor_total,
+                'breakdown': labor_breakdown,
+                'crew_size': crew_size,
+                'hours': hours,
+                'premium_time': is_premium
+            }
+            cost_impact['notes'].append(f"{crew_size}-man crew, {hours} hours" + (" (premium time)" if is_premium else ""))
+        
+        # Calculate equipment costs if crew detected
+        equipment_total, equipment_breakdown = self.select_and_calculate_equipment(
+            infraction_text, 
+            crew_size, 
+            hours
+        )
+        if equipment_total > 0:
+            cost_impact['equipment'] = {
+                'total': equipment_total,
+                'breakdown': equipment_breakdown
+            }
+        
+        # Calculate total savings
         total = cost_impact['base_cost']
         for adder in cost_impact['adders']:
             if 'estimated' in adder:
                 total += adder['estimated']
+        
+        if labor_total > 0:
+            total += labor_total
+        if equipment_total > 0:
+            total += equipment_total
         
         cost_impact['total_savings'] = round(total, 2)
         
