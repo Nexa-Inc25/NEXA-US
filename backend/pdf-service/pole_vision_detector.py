@@ -125,16 +125,16 @@ class PoleVisionDetector:
                 logger.info(f"Downloaded Roboflow utility-pole-detection-birhf model (1310 images)")
             else:
                 # Train if weights not included
-                logger.info("Training model on Roboflow dataset...")
+                logger.info("Skipping training to save memory - use /vision/train-on-specs endpoint instead")
                 model = YOLO("yolov8n.pt")  # Start with nano
-                model.train(
+#                 model.train(
                     data=f"{dataset.location}/data.yaml",
                     epochs=10,
                     imgsz=640,
                     device='cpu',
                     project=self.data_path,
                     name='roboflow_pole'
-                )
+                )  # DISABLED - Training uses >2GB RAM on Render
                 model.save(self.model_path)
                 
         except Exception as e:
@@ -470,7 +470,7 @@ class PoleVisionDetector:
                 yaml.dump(dataset_yaml, f)
             
             # Fine-tune model
-            self.model.train(
+#             self.model.train(
                 data=yaml_path,
                 epochs=10,  # Quick fine-tuning
                 imgsz=640,
@@ -478,7 +478,7 @@ class PoleVisionDetector:
                 device='cpu',  # Use CPU for Render
                 project=self.data_path,
                 name='pole_finetuned'
-            )
+            )  # DISABLED - Training uses >2GB RAM on Render
             
             # Update model path to fine-tuned version
             self.model_path = f'{self.data_path}/pole_finetuned/weights/best.pt'
