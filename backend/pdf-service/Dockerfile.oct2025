@@ -47,6 +47,9 @@ RUN pip install --no-cache-dir --upgrade pip wheel --user && \
 # Copy app code
 COPY --chown=user ./backend/pdf-service/ $HOME/app
 
+# Copy trained YOLOv8 model to persistent data directory
+COPY --chown=user ./backend/pdf-service/pole_training/utility_pole_v1/weights/best.pt /data/yolo_pole.pt
+
 # Expose Render default port
 EXPOSE 8000
 
