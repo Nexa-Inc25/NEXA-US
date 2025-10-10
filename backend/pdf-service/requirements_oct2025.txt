@@ -5,6 +5,7 @@ uvicorn[standard]==0.24.0
 pydantic==2.4.2
 python-multipart==0.0.6
 # ML and NLP
+numpy==1.24.3  # Pin first to ensure binary compatibility
 sentence-transformers==2.2.2
 torch==2.5.1  # Pinned to avoid weights_only issue with YOLOv8
 transformers==4.35.0
@@ -14,7 +15,7 @@ pypdf==3.17.0
 pytesseract==0.3.10
 Pillow==10.1.0
 # Data processing for pricing integration
-pandas==2.0.3
+pandas==2.0.3  # Compatible with numpy 1.24.3
 # Database (only if using PostgreSQL)
 psycopg2-binary==2.9.9
 # Celery with Redis support (includes compatible redis version)
