@@ -1,5 +1,5 @@
 # Base from Python 3.10 for compatibility with latest transformers
-# Cache bust: 2025-10-07-v2
+# Cache bust: 2025-10-10-numpy-fix
 FROM python:3.10-slim
 
 # Install system dependencies (including Tesseract for OCR)
