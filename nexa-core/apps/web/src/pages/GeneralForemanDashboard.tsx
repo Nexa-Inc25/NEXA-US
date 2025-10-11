@@ -327,37 +327,42 @@ const GeneralForemanDashboard: React.FC = () => {
             <div className="charts-grid">
               <div className="chart-card">
                 <h3>Crew Progress</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={chartData.crewPerformance}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="progress" fill="#1e3a8a" />
-                  </BarChart>
-                </ResponsiveContainer>
+                <div style={{ width: '100%', height: 300 }}>
+                  <ResponsiveContainer>
+                    <BarChart data={chartData.crewPerformance}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="progress" fill="#1e3a8a" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
 
               <div className="chart-card">
                 <h3>Job Status Distribution</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={chartData.jobDistribution}
-                      dataKey="value"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={100}
-                    >
-                      {chartData.jobDistribution.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
+                <div style={{ width: '100%', height: 300 }}>
+                  <ResponsiveContainer>
+                    <PieChart>
+                      <Pie
+                        data={chartData.jobDistribution}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        fill="#8884d8"
+                      >
+                        {chartData.jobDistribution.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             </div>
           </div>
@@ -505,17 +510,19 @@ const GeneralForemanDashboard: React.FC = () => {
             <div className="analytics-grid">
               <div className="chart-card full-width">
                 <h3>Weekly Completion Trend</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={chartData.weeklyTrend}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="day" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey="completed" stroke="#4CAF50" name="Jobs Completed" />
-                    <Line type="monotone" dataKey="infractions" stroke="#ff6b6b" name="Infractions" />
-                  </LineChart>
-                </ResponsiveContainer>
+                <div style={{ width: '100%', height: 300 }}>
+                  <ResponsiveContainer>
+                    <LineChart data={chartData.weeklyTrend}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="day" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="completed" stroke="#4CAF50" name="Jobs Completed" />
+                      <Line type="monotone" dataKey="infractions" stroke="#ff6b6b" name="Infractions" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
 
               <div className="stat-cards">

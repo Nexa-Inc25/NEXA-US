@@ -24,7 +24,7 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, role }) => {
     return <Navigate to="/login" replace />;
   }
 
-  return <>{children}</>;
+  return children as React.ReactElement;
 };
 
 export default PrivateRoute;
