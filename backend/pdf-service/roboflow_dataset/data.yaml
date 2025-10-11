@@ -1,0 +1,12 @@
+names:
+- pole
+nc: 1
+roboflow:
+  license: CC BY 4.0
+  project: utility-pole-detection-birhf
+  url: https://universe.roboflow.com/unstructured/utility-pole-detection-birhf/dataset/1
+  version: 1
+  workspace: unstructured
+test: ../test/images
+train: ../train/images
+val: ../valid/images

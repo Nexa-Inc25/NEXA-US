@@ -1,0 +1,74 @@
+name: CI Checks and Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  lint_and_typecheck:
+    type: generic
+    name: Lint and Type Check
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: npm
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run ESLint
+        run: npm run lint --if-present
+        
+      - name: Run TypeScript check
+        run: npm run typecheck --if-present
+        
+  test:
+    type: generic
+    name: Run Tests
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: npm
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run tests
+        run: npm test --if-present
+        
+  check_as_built_api:
+    type: generic
+    name: Verify As-Built API
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Test PDF generation endpoint
+        run: |
+          echo "Testing As-Built PDF generation API..."
+          # Add curl or API test here when backend is deployed
+          
+  build_check:
+    type: build
+    name: Test Build (Development)
+    depends_on:
+      - lint_and_typecheck
+      - test
+    params:
+      platform: all
+      profile: development
+    env:
+      EXPO_PUBLIC_ENV: development

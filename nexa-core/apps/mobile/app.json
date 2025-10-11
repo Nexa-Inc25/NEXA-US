@@ -1,48 +1,26 @@
 {
   "expo": {
-    "name": "Nexa Core Mobile",
-    "slug": "nexa-core-mobile",
-    "version": "1.0.0",
+    "name": "NEXA Foreman",
+    "slug": "nexa-mobile",
+    "scheme": "nexaapp",
+    "version": "0.1.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#007AFF"
-    },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.nexa.core.mobile"
+      "supportsTablet": true
     },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#007AFF"
-      },
-      "package": "com.nexa.core.mobile",
-      "permissions": [
-        "CAMERA",
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
-      ]
-    },
+    "android": {},
     "web": {
-      "favicon": "./assets/favicon.png"
+      "bundler": "metro"
+    },
+    "extra": {
+      "AUTH0_DOMAIN": "dev-4klipkgroc7grk1q.us.auth0.com",
+      "AUTH0_CLIENT_ID": "Hvh8vpuouK1Ooeslc10ZZg8bNAnU5VJs",
+      "AUTH0_AUDIENCE": "https://api.nexa.local",
+      "API_BASE_URL": "http://192.168.1.176:4000",
+      "REDIRECT_SCHEME": "nexaapp"
     },
     "plugins": [
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "Allow Nexa Core to access your photos to attach to as-built submissions",
-          "cameraPermission": "Allow Nexa Core to access your camera to capture photos for as-built submissions"
-        }
-      ]
+      "expo-secure-store"
     ]
   }
 }

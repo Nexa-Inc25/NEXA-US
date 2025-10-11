@@ -1,0 +1,69 @@
+name: Production Release Pipeline
+
+on:
+  push:
+    tags:
+      - v*.*.*
+  workflow_dispatch:
+    inputs:
+      submit_to_stores:
+        description: 'Submit to app stores after build'
+        type: boolean
+        default: false
+
+jobs:
+  # Build for both platforms
+  build_production_ios:
+    type: build
+    name: Build iOS Production
+    params:
+      platform: ios
+      profile: production
+    env:
+      EXPO_PUBLIC_ENV: production
+      
+  build_production_android:
+    type: build
+    name: Build Android Production
+    params:
+      platform: android
+      profile: production
+    env:
+      EXPO_PUBLIC_ENV: production
+      
+  # Submit to App Store
+  submit_ios_app_store:
+    type: submit
+    name: Submit to App Store
+    depends_on:
+      - build_production_ios
+    if: ${{ github.event.inputs.submit_to_stores == 'true' }}
+    params:
+      platform: ios
+      profile: production
+      
+  # Submit to Google Play Store
+  submit_android_play_store:
+    type: submit
+    name: Submit to Google Play
+    depends_on:
+      - build_production_android
+    if: ${{ github.event.inputs.submit_to_stores == 'true' }}
+    params:
+      platform: android
+      profile: production
+      track: internal # or 'production' for full release
+      
+  # Notification job
+  notify_team:
+    type: generic
+    name: Notify Team
+    depends_on:
+      - build_production_ios
+      - build_production_android
+    steps:
+      - name: Send notification
+        run: |
+          echo "Production builds completed successfully!"
+          echo "iOS Build: ${{ jobs.build_production_ios.outputs.buildUrl }}"
+          echo "Android Build: ${{ jobs.build_production_android.outputs.buildUrl }}"

@@ -64,19 +64,16 @@ os.environ.setdefault('OMP_NUM_THREADS', str(optimal_threads))
 os.environ.setdefault('MKL_NUM_THREADS', str(optimal_threads))
 os.environ.setdefault('PYTORCH_ENABLE_MPS_FALLBACK', '1')
 
-logger.info(f"⚡ CPU Optimization: {num_cores} cores detected, using {optimal_threads} threads")
-
 # Download NLTK data
 nltk.download('punkt', quiet=True)
 
 app = FastAPI(
-    title="NEXA AI Document Analyzer - Multi-Spec",
-    description="Enterprise-grade document analysis with multi-spec file support",
-    version="2.0.0 (Multi-Spec Enhanced)",
+    title="NEXA Field Management System",
+    version="3.0.0",
+    description="Complete field management with document analysis, crew tracking, and real-time updates",
     docs_url="/docs",
     redoc_url="/redoc"
 )
-
 # Add middleware - ORDER MATTERS! CORS must be last
 app.add_middleware(RateLimitMiddleware, calls=200, period=60)  # Week 1: Increased for 30 users
 app.add_middleware(ErrorHandlingMiddleware)

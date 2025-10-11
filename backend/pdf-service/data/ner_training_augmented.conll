@@ -1,0 +1,234 @@
+Load NNP O
+capacity NN B-TEST
+tested VBN I-TEST
+to TO O
+500A CD B-MEASURE
+minimum JJ O
+. . O
+
+Pull NN B-TEST
+strength NN I-TEST
+verified VBN O
+at IN O
+10,000 CD B-MEASURE
+lbs NNS I-MEASURE
+. . O
+
+Voltage NN B-TEST
+drop NN I-TEST
+measured VBN O
+under IN O
+full JJ O
+load NN O
+. . O
+
+Dielectric JJ B-TEST
+strength NN I-TEST
+test NN I-TEST
+passed VBN O
+at IN O
+15kV CD B-MEASURE
+. . O
+
+Insulation NN O
+resistance NN B-TEST
+tested VBN O
+monthly RB O
+. . O
+
+Equipment NN B-EQUIPMENT
+shall MD O
+be VB O
+pole-mounted JJ B-INSTALLATION
+with IN O
+brackets NNS B-EQUIPMENT
+. . O
+
+Cables NNS B-EQUIPMENT
+installed VBN B-INSTALLATION
+underground JJ I-INSTALLATION
+in IN O
+conduit NN B-EQUIPMENT
+. . O
+
+Transformers NNS B-EQUIPMENT
+pad-mounted JJ B-INSTALLATION
+on IN O
+concrete NN B-MATERIAL
+base NN O
+. . O
+
+Direct-buried JJ B-INSTALLATION
+conductors NNS B-EQUIPMENT
+require VB O
+warning NN O
+tape NN B-MATERIAL
+. . O
+
+Surface-mounted JJ B-INSTALLATION
+raceways NNS B-EQUIPMENT
+in IN O
+control NN B-LOCATION
+rooms NNS I-LOCATION
+. . O
+
+Circuit NN B-EQUIPMENT
+breakers NNS I-EQUIPMENT
+with IN O
+shunt NN B-EQUIPMENT
+trips NNS I-EQUIPMENT
+. . O
+
+Surge NN B-EQUIPMENT
+arrestors NNS I-EQUIPMENT
+on IN O
+all DT O
+phases NNS O
+. . O
+
+Disconnect NN B-EQUIPMENT
+switches NNS I-EQUIPMENT
+rated VBN O
+600A CD B-MEASURE
+. . O
+
+Power NN B-EQUIPMENT
+transformers NNS I-EQUIPMENT
+oil-filled JJ B-SPECIFICATION
+type NN O
+. . O
+
+Guy NN B-EQUIPMENT
+wires NNS I-EQUIPMENT
+and CC O
+anchors NNS B-EQUIPMENT
+galvanized VBN B-MATERIAL
+. . O
+
+Use VB O
+compression NN B-SPECIFICATION
+fittings NNS I-SPECIFICATION
+only RB O
+. . O
+
+All DT O
+equipment NN B-EQUIPMENT
+weatherproof JJ B-SPECIFICATION
+rated VBN O
+. . O
+
+Lockable JJ B-SPECIFICATION
+in IN O
+open JJ O
+position NN O
+required VBN O
+. . O
+
+Pre-formed JJ B-SPECIFICATION
+grips NNS B-EQUIPMENT
+for IN O
+conductors NNS B-EQUIPMENT
+. . O
+
+Color-coded JJ B-SPECIFICATION
+by IN O
+phase NN O
+and CC O
+voltage NN O
+. . O
+
+Section NNP O
+9.2.4 CD B-SECTION
+: : O
+Pad-mounted JJ B-INSTALLATION
+transformers NNS B-EQUIPMENT
+require VB O
+oil-containment JJ B-SPECIFICATION
+systems NNS B-EQUIPMENT
+tested VBN B-TEST
+annually RB O
+. . O
+
+All DT O
+underground JJ B-INSTALLATION
+cables NNS B-EQUIPMENT
+in IN O
+Zone NN B-ZONE
+A NNP I-ZONE
+must MD O
+pass VB O
+insulation NN B-TEST
+resistance NN I-TEST
+test NN I-TEST
+. . O
+
+NESC NN B-STANDARD
+requires VBZ O
+guy NN B-EQUIPMENT
+anchors NNS I-EQUIPMENT
+pull NN B-TEST
+tested VBN I-TEST
+to TO O
+safety NN O
+factor NN O
+of IN O
+4 CD B-MEASURE
+. . O
+
+Switchgear NN B-EQUIPMENT
+installed VBN B-INSTALLATION
+in IN O
+substations NNS B-LOCATION
+with IN O
+SF6 NN B-MATERIAL
+insulation NN O
+tested VBN B-TEST
+quarterly RB O
+. . O
+
+Infraction NN O
+51 CD O
+: : O
+Pull NN B-TEST
+test NN I-TEST
+failed VBN O
+at IN O
+7,500 CD B-MEASURE
+lbs NNS I-MEASURE
+. . O
+
+Infraction NN O
+52 CD O
+: : O
+Equipment NN B-EQUIPMENT
+not RB O
+properly RB O
+grounded VBN B-INSTALLATION
+. . O
+
+Infraction NN O
+53 CD O
+: : O
+Missing VBG O
+weatherproof JJ B-SPECIFICATION
+seals NNS B-EQUIPMENT
+. . O
+
+Infraction NN O
+54 CD O
+: : O
+Voltage NN B-TEST
+drop NN I-TEST
+exceeds VBZ O
+5% CD B-MEASURE
+limit NN O
+. . O
+
+Infraction NN O
+55 CD O
+: : O
+Surface-mounted JJ B-INSTALLATION
+instead RB O
+of IN O
+flush-mounted JJ B-INSTALLATION
+. . O

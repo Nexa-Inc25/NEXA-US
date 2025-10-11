@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NEXA Backend Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        h1 { color: #2563eb; }
+        .section { margin: 20px 0; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px; }
+        button { background: #2563eb; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #1d4ed8; }
+        .result { margin-top: 10px; padding: 10px; background: #f3f4f6; border-radius: 4px; white-space: pre-wrap; }
+        .success { background: #d1fae5; color: #065f46; }
+        .error { background: #fee2e2; color: #991b1b; }
+        input[type="file"] { margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔧 NEXA Backend Test</h1>
+    
+    <div class="section">
+        <h2>1. Health Check</h2>
+        <button onclick="checkHealth()">Test Health</button>
+        <div id="healthResult" class="result"></div>
+    </div>
+    
+    <div class="section">
+        <h2>2. Spec Library Status</h2>
+        <button onclick="checkSpecs()">Check Specs</button>
+        <div id="specsResult" class="result"></div>
+    </div>
+    
+    <div class="section">
+        <h2>3. Pricing Status</h2>
+        <button onclick="checkPricing()">Check Pricing</button>
+        <div id="pricingResult" class="result"></div>
+    </div>
+    
+    <div class="section">
+        <h2>4. Upload & Analyze PDF</h2>
+        <input type="file" id="pdfFile" accept=".pdf">
+        <button onclick="analyzePDF()">Analyze PDF</button>
+        <div id="analyzeResult" class="result"></div>
+    </div>
+
+    <script>
+        const API_URL = 'https://nexa-doc-analyzer-oct2025.onrender.com';
+        
+        async function checkHealth() {
+            const result = document.getElementById('healthResult');
+            try {
+                const response = await fetch(`${API_URL}/health`);
+                const data = await response.json();
+                result.className = 'result success';
+                result.textContent = `✅ Backend is ${data.status}\nTimestamp: ${new Date(data.timestamp * 1000).toLocaleString()}`;
+            } catch (error) {
+                result.className = 'result error';
+                result.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+        
+        async function checkSpecs() {
+            const result = document.getElementById('specsResult');
+            try {
+                const response = await fetch(`${API_URL}/spec-library`);
+                const data = await response.json();
+                result.className = 'result success';
+                result.textContent = `✅ Spec Library:\n- Total Files: ${data.total_files}\n- Total Chunks: ${data.total_chunks}\n- Last Updated: ${data.last_updated}`;
+            } catch (error) {
+                result.className = 'result error';
+                result.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+        
+        async function checkPricing() {
+            const result = document.getElementById('pricingResult');
+            try {
+                const response = await fetch(`${API_URL}/pricing/pricing-status`);
+                const data = await response.json();
+                result.className = data.status === 'loaded' ? 'result success' : 'result';
+                result.textContent = `Status: ${data.status}\n${data.total_entries ? `Entries: ${data.total_entries}` : data.message}`;
+            } catch (error) {
+                result.className = 'result error';
+                result.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+        
+        async function analyzePDF() {
+            const result = document.getElementById('analyzeResult');
+            const fileInput = document.getElementById('pdfFile');
+            
+            if (!fileInput.files[0]) {
+                result.className = 'result error';
+                result.textContent = '❌ Please select a PDF file';
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);  // Changed from 'job_package' to 'file'
+            
+            result.className = 'result';
+            result.textContent = '⏳ Analyzing PDF...';
+            
+            try {
+                const response = await fetch(`${API_URL}/analyze-audit`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                console.log('Response status:', response.status);
+                console.log('Response data:', data);
+                
+                // Check if response is actually successful (status 200)
+                if (response.status === 200) {
+                    result.className = 'result success';
+                    result.textContent = `✅ Analysis Complete!\n\n`;
+                    
+                    // Display the analysis results
+                    result.textContent += `📄 File: ${data.audit_file || 'N/A'}\n`;
+                    result.textContent += `📚 Spec Library: ${data.total_spec_files || 0} files (${data.total_spec_chunks || 0} chunks)\n`;
+                    result.textContent += `🔍 Infractions Found: ${data.infractions_found || 0}\n`;
+                    result.textContent += `⚡ Infractions Analyzed: ${data.infractions_analyzed || 0}\n`;
+                    
+                    if (data.processing_time) {
+                        result.textContent += `⏱️ Processing Time: ${data.processing_time}\n`;
+                    }
+                    
+                    // Show summary if available
+                    if (data.summary) {
+                        result.textContent += '\n📊 Summary:\n';
+                        result.textContent += `   Valid Infractions: ${data.summary.valid || 0}\n`;
+                        result.textContent += `   Potentially Repealable: ${data.summary.potentially_repealable || 0}\n`;
+                        result.textContent += `   High Confidence: ${data.summary.high_confidence || 0}\n`;
+                    }
+                    
+                    // Show the infractions if available
+                    if (data.infractions && data.infractions.length > 0) {
+                        result.textContent += '\n📋 Infractions Details:\n';
+                        data.infractions.forEach((item, i) => {
+                            result.textContent += `\n${i+1}. ${item.text?.substring(0, 100) || 'No text'}...\n`;
+                            result.textContent += `   Page: ${item.page || 'N/A'}\n`;
+                            result.textContent += `   Status: ${item.status || 'N/A'}\n`;
+                            result.textContent += `   Confidence: ${((item.confidence || 0) * 100).toFixed(0)}%\n`;
+                        });
+                    }
+                    
+                    // Show analysis results if available
+                    if (data.analysis_results && data.analysis_results.length > 0) {
+                        result.textContent += '\n🔍 Analysis Results:\n';
+                        data.analysis_results.forEach((item, i) => {
+                            result.textContent += `\n${i+1}. Infraction: "${item.infraction?.substring(0, 80) || 'N/A'}..."\n`;
+                            result.textContent += `   Status: ${item.status || 'N/A'}\n`;
+                            result.textContent += `   Confidence: ${((item.confidence || 0) * 100).toFixed(0)}%\n`;
+                            if (item.matches && item.matches.length > 0) {
+                                const match = item.matches[0];
+                                result.textContent += `   Best Match: "${match.text?.substring(0, 60)}..." (${(match.score * 100).toFixed(0)}%)\n`;
+                                result.textContent += `   From Spec: ${match.source || 'Unknown'}\n`;
+                            }
+                        });
+                    } else if (data.infractions_found === 0) {
+                        result.textContent += '\n✅ No infractions detected - Job package is compliant!';
+                    }
+                } else {
+                    result.className = 'result error';
+                    result.textContent = `❌ Error ${response.status}: ${JSON.stringify(data)}`;
+                }
+            } catch (error) {
+                result.className = 'result error';
+                result.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+        
+        // Auto-check health on load
+        window.onload = () => checkHealth();
+    </script>
+</body>
+</html>
