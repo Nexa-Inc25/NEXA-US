@@ -9,6 +9,10 @@ yarn-error.log*
 .env.local
 .env.production
 
+# Allow web dashboard env files
+!apps/web/.env.local
+!apps/web/.env.development
+
 # Logs
 logs/
 *.log

@@ -1,14 +1,15 @@
 #!/bin/bash
-# Build script for Render deployment
+# Build script for NEXA Dashboard
 
-echo "🚀 Starting dashboard build..."
+echo "Building NEXA Dashboard..."
 
-# Install dependencies (without running parent postinstall)
-echo "📦 Installing dependencies..."
-npm ci --only=production 2>/dev/null || npm install
+# Clean install dependencies
+rm -rf node_modules package-lock.json
+npm install --production=false
 
 # Build the React app
-echo "🔨 Building React app..."
 npm run build
 
+echo "Build complete!"
+echo "Output in ./build directory"
 echo "✅ Build complete!"
