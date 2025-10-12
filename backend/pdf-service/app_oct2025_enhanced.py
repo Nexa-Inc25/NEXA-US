@@ -386,14 +386,13 @@ if UNIVERSAL_STANDARDS_ENABLED and integrate_universal_endpoints:
     integrate_universal_endpoints(app)
     logger.info("✅ Universal Standards endpoints registered - /api/utilities/*")
 
-# Authentication System - Import and integrate with prefix
+# Authentication System - Import and integrate
 try:
-    from modules.auth_system import create_auth_router, get_current_user
-    auth_router = create_auth_router()
-    app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
+    from modules.auth_system import integrate_auth, get_current_user
     AUTH_ENABLED = True
-    logger.info("Authentication system enabled and integrated at /auth/*")
-    logger.info("   Test with: POST /auth/login {email: 'admin@nexa.com', password: 'admin123'}")
+    # Note: integrate_auth will add the /auth prefix internally
+    integrate_auth(app)
+    logger.info("Authentication system loaded")
 except Exception as e:
     AUTH_ENABLED = False
     logger.warning(f"Authentication system not available: {e}")

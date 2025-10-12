@@ -274,7 +274,7 @@ def create_auth_router() -> APIRouter:
 def integrate_auth(app):
     """Integrate authentication into FastAPI app"""
     router = create_auth_router()
-    app.include_router(router)
-    logger.info("🔐 Authentication endpoints registered at /auth/*")
+    app.include_router(router, prefix="/auth", tags=["Authentication"])
+    logger.info("Authentication endpoints registered at /auth/*")
     logger.info("   Default users: admin@nexa.com (admin123), gf@nexa.com (gf123), qa@nexa.com (qa123)")
     return router
