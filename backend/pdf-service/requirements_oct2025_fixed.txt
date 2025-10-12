@@ -27,7 +27,7 @@ evaluate==0.4.1
 seqeval==1.2.2
 
 # Vector search
-faiss-cpu==1.7.4  # More stable version
+faiss-cpu==1.8.0  # Minimum available version
 
 # PDF processing
 pypdf==3.17.4
