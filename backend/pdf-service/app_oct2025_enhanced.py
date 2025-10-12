@@ -374,6 +374,21 @@ if UNIVERSAL_STANDARDS_ENABLED and integrate_universal_endpoints:
     integrate_universal_endpoints(app)
     logger.info("✅ Universal Standards endpoints registered - /api/utilities/*")
 
+# Authentication System
+try:
+    from modules.auth_system import integrate_auth, get_current_user
+    AUTH_ENABLED = True
+    logger.info("🔐 Authentication system enabled")
+except ImportError as e:
+    AUTH_ENABLED = False
+    logger.warning(f"Authentication system not available: {e}")
+    integrate_auth = None
+    get_current_user = None
+
+if AUTH_ENABLED and integrate_auth:
+    integrate_auth(app)
+    logger.info("✅ Authentication endpoints registered - /auth/*")
+
 # Roboflow Dataset Integration
 try:
     from modules.roboflow_dataset_integrator import integrate_roboflow_datasets
@@ -486,6 +501,29 @@ def load_spec_library() -> Dict[str, Any]:
         library['metadata']['files'] = []
     if 'total_chunks' not in library['metadata']:
         library['metadata']['total_chunks'] = len(library.get('chunks', []))
+    
+    # Initialize with default spec if empty (for testing)
+    if len(library['chunks']) == 0:
+        logger.info("🎯 Initializing with default PG&E spec sample for testing")
+        default_chunks = [
+            "PG&E Document 045786: Capacitor spacing shall be 36 inches minimum in urban zones.",
+            "PG&E Document 035986: Single-phase taps require FuseSaver protection devices.",
+            "PG&E Document 072136: Pole top clearance must maintain 12 feet from energized conductors.",
+            "Overhead line clearances per GO-95 Rule 35: 18 feet minimum over roadways.",
+            "Underground conduit specifications: 4-inch minimum for primary voltage."
+        ]
+        library['chunks'] = default_chunks
+        # Generate mock embeddings using the global model
+        library['embeddings'] = model.encode(default_chunks, convert_to_tensor=False)
+        library['metadata']['files'] = [{
+            'filename': 'default_pge_spec.pdf',
+            'upload_time': datetime.now().isoformat(),
+            'file_hash': 'default_mock_spec',
+            'chunk_count': len(default_chunks),
+            'file_size': 1000
+        }]
+        library['metadata']['total_chunks'] = len(default_chunks)
+        logger.info(f"✅ Loaded {len(default_chunks)} default spec chunks")
     
     return library
 

@@ -10,6 +10,12 @@ uvicorn[standard]==0.24.0
 pydantic==2.4.2
 python-multipart==0.0.6
 
+# Authentication
+passlib[bcrypt]==1.7.4
+bcrypt==4.1.2
+pyjwt==2.8.0
+python-jose[cryptography]==3.3.0
+
 # Machine Learning - Core (compatible versions)
 numpy==1.26.4
 torch==2.2.2  # Compatible with Python 3.12
@@ -39,6 +45,14 @@ pytesseract==0.3.10
 Pillow==10.1.0
 pypdfium2>=4.18.0
 
+# Payment & Communication
+stripe==6.5.0
+twilio==8.9.1
+sendgrid==6.10.0
+
+# Universal Standards Platform
+asyncpg==0.27.0
+
 # NLP
 nltk==3.8.1
 
@@ -65,7 +79,7 @@ celery[redis]==5.3.4
 redis==4.6.0  # Compatible with celery[redis] 5.3.4 (needs <5.0.0)
 
 # Computer vision
-ultralytics==8.0.200
+ultralytics==8.0.196  # Fixed: Compatible with DFLoss in your weights
 opencv-python-headless>=4.8.0.74,<4.9.0  # Range allows roboflow compatibility
 roboflow==1.1.11
 

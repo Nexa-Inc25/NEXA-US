@@ -70,3 +70,12 @@ temp/
 mobile/assets/sample/
 mobile/assets/PGE*/
 nexa-ai-document-analyzer/
+
+# Model caches and data files
+backend/pdf-service/cache/
+backend/pdf-service/data/
+*.pkl
+*.pt
+*.pth
+*.onnx
+*.safetensors

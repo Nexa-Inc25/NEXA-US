@@ -1,11 +1,14 @@
 """
 Universal Standards Engine for NEXA
-Multi-utility support with GPS detection and spec ingestion
+Multi-utility support with GPS detection and cross-reference
 """
-import json
 import os
-from typing import Dict, List, Optional, Tuple, Any
-from datetime import datetime
+import json
+import math
+import hashlib
+from datetime import datetime, timedelta
+from typing import Dict, List, Any, Optional
+from pathlib import Path
 import hashlib
 import logging
 from dataclasses import dataclass, asdict
@@ -335,12 +338,17 @@ def integrate_universal_endpoints(app):
     
     # Try to import auth dependencies
     auth_dependency = None
+    optional_auth = None
     try:
-        from modules.auth_system import get_current_user
+        from modules.auth_system import get_current_user, optional_current_user
         auth_dependency = get_current_user
+        optional_auth = optional_current_user
         logger.info("🔐 Auth system detected, endpoints will be protected")
     except ImportError:
         logger.warning("⚠️ Auth system not found, endpoints will be unprotected")
+        # Create dummy dependency that returns None
+        async def optional_auth():
+            return None
     
     class GPSLocation(BaseModel):
         lat: float
@@ -361,7 +369,7 @@ def integrate_universal_endpoints(app):
     @router.post("/detect")
     async def detect_utility(
         location: GPSLocation,
-        current_user: Optional[Dict] = Depends(auth_dependency) if auth_dependency else None
+        current_user: Optional[Dict] = Depends(optional_auth)
     ):
         """Detect utility based on GPS coordinates"""
         try:
@@ -384,7 +392,7 @@ def integrate_universal_endpoints(app):
     async def ingest_specs(
         utility_id: str,
         file: UploadFile = File(...),
-        current_user: Optional[Dict] = Depends(auth_dependency) if auth_dependency else None
+        current_user: Optional[Dict] = Depends(optional_auth)
     ):
         """Ingest utility-specific specification PDF"""
         try:
@@ -410,7 +418,7 @@ def integrate_universal_endpoints(app):
     
     @router.get("/list")
     async def list_utilities(
-        current_user: Optional[Dict] = Depends(auth_dependency) if auth_dependency else None
+        current_user: Optional[Dict] = Depends(optional_auth)
     ):
         """List all supported utilities"""
         engine = get_universal_engine()
@@ -425,7 +433,7 @@ def integrate_universal_endpoints(app):
     @router.post("/jobs/create")
     async def create_job(
         request: JobCreateRequest,
-        current_user: Optional[Dict] = Depends(auth_dependency) if auth_dependency else None
+        current_user: Optional[Dict] = Depends(optional_auth)
     ):
         """Create a job with auto-detected utility"""
         try:
@@ -448,7 +456,7 @@ def integrate_universal_endpoints(app):
     async def populate_form(
         utility_id: str,
         request: FormPopulateRequest,
-        current_user: Optional[Dict] = Depends(auth_dependency) if auth_dependency else None
+        current_user: Optional[Dict] = Depends(optional_auth)
     ):
         """Populate utility-specific form from universal data"""
         try:
@@ -469,7 +477,7 @@ def integrate_universal_endpoints(app):
     @router.post("/standards/cross-reference")
     async def cross_reference(
         request: CrossReferenceRequest,
-        current_user: Optional[Dict] = Depends(auth_dependency) if auth_dependency else None
+        current_user: Optional[Dict] = Depends(optional_auth)
     ):
         """Cross-reference a requirement across all utilities"""
         engine = get_universal_engine()
