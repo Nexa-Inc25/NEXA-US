@@ -171,7 +171,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="NEXA Universal Standards Platform",
     description="AI-powered universal utility standards analyzer",
-    version="3.0"
+    version="3.0",
+    lifespan=lifespan
 )
 # Add middleware - ORDER MATTERS! CORS must be last
 app.add_middleware(RateLimitMiddleware, calls=200, period=60)  # Week 1: Increased for 30 users
@@ -374,20 +375,16 @@ if UNIVERSAL_STANDARDS_ENABLED and integrate_universal_endpoints:
     integrate_universal_endpoints(app)
     logger.info("✅ Universal Standards endpoints registered - /api/utilities/*")
 
-# Authentication System
+# Authentication System - Import and integrate early
 try:
     from modules.auth_system import integrate_auth, get_current_user
     AUTH_ENABLED = True
-    logger.info("🔐 Authentication system enabled")
-except ImportError as e:
+    integrate_auth(app)  # Integrate immediately
+    logger.info("🔐 Authentication system enabled and integrated at /auth/*")
+except Exception as e:
     AUTH_ENABLED = False
     logger.warning(f"Authentication system not available: {e}")
-    integrate_auth = None
     get_current_user = None
-
-if AUTH_ENABLED and integrate_auth:
-    integrate_auth(app)
-    logger.info("✅ Authentication endpoints registered - /auth/*")
 
 # Roboflow Dataset Integration
 try:
@@ -523,7 +520,9 @@ def load_spec_library() -> Dict[str, Any]:
             'file_size': 1000
         }]
         library['metadata']['total_chunks'] = len(default_chunks)
-        logger.info(f"✅ Loaded {len(default_chunks)} default spec chunks")
+        # Save the default library immediately
+        save_spec_library(library)
+        logger.info(f"✅ Loaded and saved {len(default_chunks)} default spec chunks")
     
     return library
 
