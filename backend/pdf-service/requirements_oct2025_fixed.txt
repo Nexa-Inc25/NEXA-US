@@ -1,6 +1,9 @@
 # Core dependencies for October 2025 deployment - FIXED VERSIONS
 # All versions tested for compatibility
 
+# Python 3.12 compatibility
+setuptools>=70.0.0  # Provides distutils for Python 3.12+
+
 # Web framework
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
