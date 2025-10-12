@@ -51,7 +51,7 @@ twilio==8.9.1
 sendgrid==6.10.0
 
 # Universal Standards Platform
-asyncpg==0.27.0
+# asyncpg==0.27.0  # Removed - not compatible with Python 3.12, not needed for mock DB
 
 # NLP
 nltk==3.8.1
