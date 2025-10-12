@@ -37,6 +37,8 @@ export const PhotosQAScreen: React.FC<PhotosQAScreenProps> = ({ navigation }) =>
   
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isOnline, setIsOnline] = useState(true);
+  const [capturedPhotos, setCapturedPhotos] = useState<any[]>([]);
+  const [currentJob, setCurrentJob] = useState<any>(null);
 
   // Request camera permissions on mount
   useEffect(() => {
@@ -185,6 +187,57 @@ export const PhotosQAScreen: React.FC<PhotosQAScreenProps> = ({ navigation }) =>
     
     dispatch(addToQueue(queueItem));
     await offlineQueue.saveQueue([...queueItems, queueItem]);
+  };
+
+  // Submit as-built with all captured photos
+  const handleSubmitAsBuilt = async () => {
+    if (capturedPhotos.length === 0) {
+      Alert.alert('No Photos', 'Please take photos before submitting as-built');
+      return;
+    }
+
+    if (!currentJob) {
+      Alert.alert('No Job', 'Please scan a job QR code first');
+      return;
+    }
+
+    dispatch(setLoading(true));
+    try {
+      const formData = new FormData();
+      formData.append('job_id', currentJob.id);
+      formData.append('pm_number', currentJob.pm_number || '');
+      formData.append('location', currentJob.location || '');
+      formData.append('foreman_name', currentJob.foreman_name || 'John Smith');
+      formData.append('crew_number', currentJob.crew_number || 'CREW-001');
+      
+      capturedPhotos.forEach((photo, index) => {
+        formData.append('photos', {
+          uri: photo.uri,
+          name: `photo_${index}.jpg`,
+          type: 'image/jpeg'
+        } as any);
+      });
+
+      const response = await apiService.fillAsBuilt(formData);
+      
+      Alert.alert(
+        'As-Built Filled!', 
+        `PDF: ${response.pdf_url}\nGo-backs: ${response.go_backs.length}\nReady for QA: ${response.ready_for_qa ? 'Yes' : 'No'}`,
+        [
+          { text: 'View Results', onPress: () => {
+            dispatch(setCurrentResult(response));
+            navigation.navigate('Results');
+            setCapturedPhotos([]); // Clear photos after submission
+          }},
+          { text: 'OK', style: 'cancel' }
+        ]
+      );
+    } catch (err: any) {
+      dispatch(setError(err.message || 'Failed to fill as-built'));
+      Alert.alert('Error', 'Failed to fill as-built. Please try again.');
+    } finally {
+      dispatch(setLoading(false));
+    }
   };
 
   const pendingCount = queueItems.filter(i => i.status === 'pending').length;

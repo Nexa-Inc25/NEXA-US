@@ -100,9 +100,20 @@ nltk.download('punkt', quiet=True)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Modern lifespan handler for startup and shutdown events"""
+    """Lifespan context manager for startup/shutdown events"""
     # Startup code
     logger.info("Starting NEXA Field Management System...")
+    
+    # Initialize default specs for testing
+    try:
+        spec_lib = load_spec_library()
+        if spec_lib['metadata']['total_chunks'] == 0:
+            logger.info("Initializing default spec library...")
+            # The load_spec_library function already handles initialization
+        else:
+            logger.info(f"Spec library loaded: {spec_lib['metadata']['total_chunks']} chunks")
+    except Exception as e:
+        logger.error(f"Failed to initialize spec library: {e}")
     
     # Pre-load vision model if enabled
     if VISION_ENABLED:
@@ -375,15 +386,19 @@ if UNIVERSAL_STANDARDS_ENABLED and integrate_universal_endpoints:
     integrate_universal_endpoints(app)
     logger.info("✅ Universal Standards endpoints registered - /api/utilities/*")
 
-# Authentication System - Import and integrate early
+# Authentication System - Import and integrate with prefix
 try:
-    from modules.auth_system import integrate_auth, get_current_user
+    from modules.auth_system import create_auth_router, get_current_user
+    auth_router = create_auth_router()
+    app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
     AUTH_ENABLED = True
-    integrate_auth(app)  # Integrate immediately
-    logger.info("🔐 Authentication system enabled and integrated at /auth/*")
+    logger.info("Authentication system enabled and integrated at /auth/*")
+    logger.info("   Test with: POST /auth/login {email: 'admin@nexa.com', password: 'admin123'}")
 except Exception as e:
     AUTH_ENABLED = False
     logger.warning(f"Authentication system not available: {e}")
+    import traceback
+    traceback.print_exc()
     get_current_user = None
 
 # Roboflow Dataset Integration

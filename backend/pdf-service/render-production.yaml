@@ -1,0 +1,141 @@
+services:
+  # NEXA Document Analyzer - Production Service
+  - type: web
+    name: nexa-doc-analyzer-prod
+    runtime: docker
+    dockerfilePath: ./backend/pdf-service/Dockerfile.oct2025
+    dockerContext: ./backend/pdf-service
+    branch: main
+    healthCheckPath: /health
+    
+    # Persistent disk for embeddings and data
+    disk:
+      name: nexa-data
+      mountPath: /data
+      sizeGB: 10  # 10GB for production
+    
+    # Environment variables
+    envVars:
+      # Security (Generate new values!)
+      - key: ENCRYPTION_KEY
+        generateValue: true  # Render will generate
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: AUTH_ENABLED
+        value: "true"
+      
+      # ML Configuration
+      - key: FORCE_CPU
+        value: "false"
+      - key: GRADIENT_ACCUMULATION_STEPS
+        value: "4"
+      - key: ENABLE_MIXED_PRECISION
+        value: "false"
+      - key: EMBEDDING_MODEL
+        value: all-MiniLM-L6-v2
+      
+      # Service Configuration
+      - key: MAX_UPLOAD_SIZE_MB
+        value: "200"
+      - key: RATE_LIMIT_PER_MINUTE
+        value: "100"
+      - key: CHUNK_SIZE
+        value: "400"
+      - key: ENVIRONMENT
+        value: production
+      
+      # Storage
+      - key: DATA_DIR
+        value: /data
+      - key: SECURE_STORAGE_PATH
+        value: /data/secure_uploads
+      - key: AUDIT_LOG_PATH
+        value: /data/audit_logs
+      
+      # Database (auto-attached)
+      - key: DATABASE_URL
+        fromDatabase:
+          name: nexa-postgres
+          property: connectionString
+      
+      # Redis (if using)
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: nexa-redis
+          property: connectionString
+      
+      # API Configuration
+      - key: API_HOST
+        value: 0.0.0.0
+      - key: API_PORT
+        value: "$PORT"  # Render provides this
+      - key: LOG_LEVEL
+        value: INFO
+      - key: CORS_ORIGINS
+        value: https://nexa-dashboard.onrender.com,https://nexa.com
+    
+    # Instance type
+    plan: pro  # $85/month for production
+    
+    # Scaling
+    numInstances: 1  # Start with 1, scale as needed
+    
+  # Redis Cache Service (Optional but recommended)
+  - type: redis
+    name: nexa-redis
+    plan: starter  # $7/month
+    maxmemoryPolicy: allkeys-lru
+    
+  # Background Worker for Async Processing (Optional)
+  - type: worker
+    name: nexa-worker
+    runtime: docker
+    dockerfilePath: ./backend/pdf-service/Dockerfile.worker
+    dockerContext: ./backend/pdf-service
+    branch: main
+    
+    envVars:
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: nexa-redis
+          property: connectionString
+      - key: DATABASE_URL
+        fromDatabase:
+          name: nexa-postgres
+          property: connectionString
+      - key: DATA_DIR
+        value: /data
+      - key: LOG_LEVEL
+        value: INFO
+    
+    plan: starter  # $7/month
+    
+databases:
+  # PostgreSQL with pgvector extension
+  - name: nexa-postgres
+    databaseName: nexa_production
+    user: nexa_admin
+    plan: pro  # $35/month for 4GB RAM, 40GB storage
+    postgresMajorVersion: 15
+    
+    # Enable extensions
+    extensions:
+      - pgvector
+      - pg_stat_statements
+      - pg_trgm
+    
+    # IP allowlist (empty = allow from Render services only)
+    ipAllowList: []
+    
+# Build configuration
+buildFilter:
+  paths:
+    - backend/pdf-service/**
+  ignoredPaths:
+    - backend/pdf-service/tests/**
+    - backend/pdf-service/archive/**
+    - backend/pdf-service/*.md

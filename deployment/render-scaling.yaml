@@ -1,0 +1,137 @@
+# Render.com Scaling Configuration for ML Document Analyzer
+# Optimized for NER/Embeddings workloads with auto-scaling
+
+services:
+  # Main Web Service with ML inference
+  - type: web
+    name: nexa-ml-analyzer
+    runtime: docker
+    dockerfilePath: ./Dockerfile.production
+    dockerContext: .
+    
+    # Instance configuration (vertical scaling)
+    plan: standard  # Start with Standard (1 CPU, 1GB RAM, ~$25/mo)
+    # Options: free | starter | standard | pro | pro-plus | pro-max | pro-ultra
+    
+    # Horizontal scaling configuration
+    scaling:
+      minInstances: 1
+      maxInstances: 10
+      targetMemoryPercent: 70  # Scale when memory > 70%
+      targetCPUPercent: 60     # Scale when CPU > 60% (ML workloads)
+    
+    # Health check for auto-scaling
+    healthCheckPath: /health
+    
+    # Environment variables
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.10"
+      - key: MODEL_PATH
+        value: "/data/fine_tuned_ner"
+      - key: EMBEDDINGS_PATH
+        value: "/data/spec_embeddings.pkl"
+      - key: BATCH_SIZE
+        value: "32"  # For batch inference
+      - key: MAX_WORKERS
+        value: "4"   # Thread pool for concurrent requests
+      - key: CACHE_EMBEDDINGS
+        value: "true"
+      - key: INFERENCE_TIMEOUT
+        value: "30"  # seconds
+    
+    # Persistent disk for model/embeddings storage
+    disk:
+      name: ml-data
+      mountPath: /data
+      sizeGB: 20  # Start with 20GB, scale to 100GB as needed
+    
+    # Auto-deploy from GitHub
+    autoDeploy: true
+    
+    # Build configuration
+    buildFilter:
+      paths:
+        - backend/**
+        - requirements*.txt
+        - Dockerfile*
+
+  # Background Worker for Heavy ML Tasks
+  - type: worker
+    name: ml-processor
+    runtime: docker
+    dockerfilePath: ./Dockerfile.worker
+    dockerContext: .
+    
+    # Larger instance for ML processing
+    plan: pro  # 2 CPU, 4GB RAM (~$85/mo)
+    
+    # Scaling for workers
+    scaling:
+      minInstances: 0  # Scale to 0 when idle
+      maxInstances: 5
+    
+    envVars:
+      - key: WORKER_TYPE
+        value: "ml_processor"
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: task-queue
+          property: connectionString
+      - key: MAX_MEMORY_PER_TASK
+        value: "3000"  # MB
+      - key: TASK_TIME_LIMIT
+        value: "600"   # 10 minutes for large PDFs
+    
+    # Share disk with web service
+    disk:
+      name: ml-data
+      mountPath: /data
+      sizeGB: 20
+
+  # Redis for Task Queue and Caching
+  - type: redis
+    name: task-queue
+    plan: starter  # 256MB RAM (~$7/mo)
+    maxmemoryPolicy: allkeys-lru  # LRU eviction for caching
+    
+    # Redis configuration for ML workloads
+    ipAllowList: []  # Allow internal connections
+
+# Cron Jobs for Model Updates
+cronJobs:
+  - name: model-optimizer
+    schedule: "0 2 * * 0"  # Weekly at 2 AM Sunday
+    buildCommand: pip install -r requirements.txt
+    command: python backend/pdf-service/optimize_model.py
+    
+  - name: embeddings-refresh
+    schedule: "0 3 * * *"  # Daily at 3 AM
+    command: python backend/pdf-service/refresh_embeddings.py
+
+# Database for Analysis Results (optional)
+databases:
+  - name: analysis-db
+    plan: starter  # 256MB RAM, 1GB storage (~$7/mo)
+    databaseName: ml_analyzer
+    user: analyzer_user
+    
+    # Enable extensions for vector similarity
+    postgreSQL:
+      extensions:
+        - pgvector  # For embedding storage/search
+
+# Preview Environments for Testing
+previewsEnabled: true
+previewsExpireAfterDays: 3
+
+# Notifications for Scaling Events
+notifications:
+  - type: email
+    email: alerts@nexa.com
+    events:
+      - instanceScaleUp
+      - instanceScaleDown
+      - outOfMemory
+      - highCPU

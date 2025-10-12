@@ -1,0 +1,74 @@
+# Production Dockerfile optimized for ML workloads on Render
+FROM python:3.10-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    tesseract-ocr \
+    tesseract-ocr-eng \
+    poppler-utils \
+    gcc \
+    g++ \
+    curl \
+    htop \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy requirements and install Python dependencies
+COPY backend/pdf-service/requirements_oct2025.txt requirements.txt
+
+# Install with optimizations for production
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt && \
+    # Pre-download models to reduce cold start
+    python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
+
+# Create data directory
+RUN mkdir -p /data && chmod 755 /data
+
+# Copy pre-trained models if they exist (wildcards require trailing slash)
+COPY backend/pdf-service/*.pt /data/models/
+COPY backend/pdf-service/*.pkl /data/
+
+# Copy fine-tuned NER model (F1>0.9 target) 
+COPY backend/pdf-service/data/fine_tuned_ner_deep/ /data/fine_tuned_ner_deep/
+
+# Copy application code
+COPY backend/pdf-service/*.py ./
+
+# Create training data directory
+RUN mkdir -p ./data/training
+# Note: Training data will be created at runtime or downloaded separately
+# If you have training data, uncomment the following line:
+# COPY backend/pdf-service/data/training/*.json ./data/training/
+
+# Optimize Python for production
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONHASHSEED=random
+ENV PYTHONIOENCODING=utf-8
+
+# ML-specific optimizations
+ENV OMP_NUM_THREADS=4
+ENV MKL_NUM_THREADS=4
+ENV TORCH_NUM_THREADS=4
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:${PORT:-8001}/health || exit 1
+
+EXPOSE ${PORT:-8001}
+
+# Use gunicorn for production (better concurrency than uvicorn alone)
+CMD ["gunicorn", "app_oct2025_enhanced:app", \
+     "--worker-class", "uvicorn.workers.UvicornWorker", \
+     "--workers", "4", \
+     "--threads", "2", \
+     "--worker-connections", "1000", \
+     "--max-requests", "1000", \
+     "--max-requests-jitter", "50", \
+     "--timeout", "60", \
+     "--bind", "0.0.0.0:${PORT:-8001}", \
+     "--log-level", "info", \
+     "--access-logfile", "-", \
+     "--error-logfile", "-"]

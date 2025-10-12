@@ -153,6 +153,27 @@ export const analyzePhoto = async (
 };
 
 /**
+ * Fill as-built from photos using YOLO detection and spec cross-reference
+ */
+export const fillAsBuilt = async (formData: FormData): Promise<any> => {
+  try {
+    const response = await api.post('/fill-as-built', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      timeout: 120000, // 2 minutes for processing multiple photos
+    });
+    
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data?.detail || 'Failed to fill as-built');
+    }
+    throw error;
+  }
+};
+
+/**
  * Upload and analyze audit with retry logic
  */
 export const analyzeAuditWithRetry = async (
@@ -229,6 +250,7 @@ export const healthCheck = async (): Promise<boolean> => {
 export const apiService = {
   analyzeAudit,
   analyzePhoto,
+  fillAsBuilt,
   analyzeAuditWithRetry,
   getSpecLibraryStatus,
   getPricingStatus,

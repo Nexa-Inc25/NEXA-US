@@ -1,0 +1,35 @@
+# ML-Enhanced Dockerfile Extension Reference (NOT A DOCKERFILE - DOCUMENTATION ONLY)
+# This is a REFERENCE DOCUMENT for extending Dockerfile.oct2025 with ML optimizations
+# Copy relevant sections into your actual Dockerfile.oct2025
+
+# Additional build arguments for ML flexibility
+ARG TORCH_INDEX=cpu
+
+# Additional ML system dependencies to add to apt-get install
+# libgl1-mesa-glx libglib2.0-0 libsm6 libxext6 libxrender-dev libgomp1
+
+# ML Requirements installation with torch index
+# After base requirements:
+# RUN if [ "$TORCH_INDEX" = "cpu" ]; then \
+#         pip install --no-cache-dir -r requirements_ml.txt --index-url https://download.pytorch.org/whl/cpu; \
+#     elif [ "$TORCH_INDEX" = "cu118" ]; then \
+#         pip install --no-cache-dir -r requirements_ml.txt --index-url https://download.pytorch.org/whl/cu118; \
+#     else \
+#         pip install --no-cache-dir -r requirements_ml.txt; \
+#     fi
+
+# Pre-download models during build (add to Dockerfile.oct2025):
+# RUN python -c "from sentence_transformers import SentenceTransformer; \
+#     model = SentenceTransformer('all-MiniLM-L6-v2'); \
+#     print('Sentence transformer pre-loaded')"
+
+# Environment variables for ML optimization:
+ENV FORCE_CPU=${FORCE_CPU:-false}
+ENV ENABLE_MIXED_PRECISION=${ENABLE_MIXED_PRECISION:-false}
+ENV CUDA_MEMORY_FRACTION=${CUDA_MEMORY_FRACTION:-0.8}
+ENV OMP_NUM_THREADS=1
+ENV TOKENIZERS_PARALLELISM=false
+
+# Health check for ML readiness:
+# HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+#     CMD python -c "import torch; import modules.ml_device_utils; print('ML ready')" || exit 1

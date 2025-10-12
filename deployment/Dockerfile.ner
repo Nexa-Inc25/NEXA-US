@@ -1,0 +1,56 @@
+# Production Dockerfile for NER-Enhanced Document Analyzer
+FROM python:3.10-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    tesseract-ocr \
+    tesseract-ocr-eng \
+    poppler-utils \
+    gcc \
+    g++ \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements first for better caching
+COPY backend/pdf-service/requirements_oct2025.txt requirements.txt
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir \
+    peft==0.11.1 \
+    datasets==2.14.0 \
+    seqeval==1.2.2 \
+    evaluate==0.4.0
+
+# Create data directory with proper permissions
+RUN mkdir -p /data && \
+    mkdir -p /data/training && \
+    mkdir -p /data/backups && \
+    chmod -R 755 /data
+
+# Copy application code
+COPY backend/pdf-service/*.py ./
+COPY backend/pdf-service/data/training/*.json ./data/training/
+
+# Copy main application
+COPY backend/pdf-service/app_oct2025_enhanced.py ./app.py
+
+# Train model if not exists (optional - can be done at runtime)
+ARG TRAIN_ON_BUILD=false
+RUN if [ "$TRAIN_ON_BUILD" = "true" ]; then \
+    python train_ner.py && \
+    echo "Model trained during build"; \
+    fi
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:${PORT:-8001}/health || exit 1
+
+# Expose port
+EXPOSE ${PORT:-8001}
+
+# Run the application
+CMD ["python", "app.py"]

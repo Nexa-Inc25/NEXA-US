@@ -1,0 +1,136 @@
+# ML Enhancement Additions for existing render.yaml
+# Merge these settings into the main render.yaml
+
+# Add to existing service environment variables:
+envVars:
+  # ML Configuration - Add these to existing web service
+  - key: TORCH_INDEX
+    value: cpu  # Change to cu118 for GPU instances
+    
+  - key: FORCE_CPU
+    value: false
+    
+  - key: ENABLE_MIXED_PRECISION
+    value: false  # Set true for GPU instances
+    
+  - key: CUDA_MEMORY_FRACTION
+    value: 0.8
+    
+  - key: MODEL_CACHE_DIR
+    value: /data/models
+    
+  - key: TRAINING_DATA_DIR
+    value: /data/training
+    
+  - key: MAX_BATCH_SIZE
+    value: 16
+    
+  # GPU Memory Optimization
+  - key: PYTORCH_CUDA_ALLOC_CONF
+    value: expandable_segments:True,garbage_collection_threshold:0.8,max_split_size_mb:512
+    
+  - key: PYTORCH_NO_CUDA_MEMORY_CACHING
+    value: 0  # Keep caching enabled for performance
+    
+  - key: CUDA_LAUNCH_BLOCKING
+    value: 0  # Set to 1 only for debugging
+    
+  # Accelerate Configuration
+  - key: ACCELERATE_CONFIG_FILE
+    value: deployment/accelerate_config.yaml
+    
+  - key: ACCELERATE_MIXED_PRECISION
+    value: fp16  # fp16 for GPU, no for CPU
+    
+  - key: GRADIENT_ACCUMULATION_STEPS
+    value: 4  # Accumulate gradients for effective larger batch
+    
+  - key: ACCELERATE_GRADIENT_CHECKPOINTING
+    value: true  # Enable for 50% memory savings
+    
+  - key: ACCELERATE_LOG_LEVEL
+    value: INFO
+    
+  - key: SEED
+    value: 42  # For reproducibility
+    
+  # DeepSpeed Configuration
+  - key: USE_DEEPSPEED
+    value: false  # Set to true for ZeRO optimization
+    
+  - key: DEEPSPEED_CONFIG_FILE
+    value: deployment/deepspeed_config.json
+    
+  - key: DEEPSPEED_ZERO_STAGE
+    value: 3  # 0=disabled, 1=optimizer, 2=+gradients, 3=+parameters
+    
+  - key: DEEPSPEED_OFFLOAD_OPTIMIZER
+    value: cpu  # Offload optimizer to CPU for memory savings
+    
+  - key: DEEPSPEED_OFFLOAD_PARAM
+    value: cpu  # Offload parameters to CPU
+    
+  - key: DEEPSPEED_CPU_CHECKPOINTING
+    value: true  # CPU activation checkpointing
+    
+  - key: DEEPSPEED_NVME_PATH
+    value: /data/nvme_offload  # NVMe offload path (future)
+    
+  # Security Configuration (NERC CIP Compliant)
+  - key: JWT_SECRET
+    generateValue: true  # Auto-generate secure secret
+    
+  - key: ENCRYPTION_KEY
+    generateValue: true  # AES-256 encryption key
+    
+  - key: SECURE_UPLOAD_ENABLED
+    value: true
+    
+  - key: SECURE_STORAGE_PATH
+    value: /data/secure_uploads
+    
+  - key: QUARANTINE_PATH
+    value: /data/quarantine
+    
+  - key: AUDIT_LOG_PATH
+    value: /data/audit_logs
+    
+  - key: MFA_ENABLED
+    value: false  # Enable when ready
+    
+  - key: NERC_CIP_MODE
+    value: production
+    
+  - key: PASSWORD_MIN_LENGTH
+    value: 12
+    
+  - key: PASSWORD_MAX_AGE_DAYS
+    value: 90
+    
+  - key: MAX_LOGIN_ATTEMPTS
+    value: 5
+    
+  - key: LOCKOUT_DURATION_MINUTES
+    value: 30
+    
+  - key: SESSION_TIMEOUT_MINUTES
+    value: 15
+    
+  - key: MAX_FILE_SIZE_MB
+    value: 100
+
+# Build command modification:
+# Change from:
+#   docker build -f Dockerfile.oct2025 .
+# To:
+#   docker build -f Dockerfile.oct2025 --build-arg TORCH_INDEX=${TORCH_INDEX:-cpu} .
+
+# Instance scaling guide:
+# - Free/Starter: Use TORCH_INDEX=cpu, FORCE_CPU=true
+# - Pro: Use TORCH_INDEX=cpu, ENABLE_MIXED_PRECISION=false
+# - Pro Plus (GPU): Use TORCH_INDEX=cu118, ENABLE_MIXED_PRECISION=true
+
+# Health check enhancement:
+healthCheckPath: /health
+# Optional: Add ML health endpoint
+# healthCheckPath: /ml-monitor/status  # If monitoring router integrated

@@ -1,0 +1,73 @@
+# Production Dockerfile for Render.com deployment
+# Addresses all deployment requirements from the analysis
+
+FROM python:3.11-slim
+
+# Install system dependencies for PDF processing, OCR, and computer vision
+RUN apt-get update && apt-get install -y \
+    # PDF and OCR
+    tesseract-ocr \
+    tesseract-ocr-eng \
+    poppler-utils \
+    # Computer vision dependencies
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgomp1 \
+    libglib2.0-dev \
+    # Build tools
+    gcc \
+    g++ \
+    # Utilities
+    wget \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements first for better caching
+COPY backend/pdf-service/requirements_oct2025.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements_oct2025.txt
+
+# Download NLTK data
+RUN python -m nltk.downloader punkt
+
+# Copy application code
+COPY backend/pdf-service/*.py ./
+
+# Create data directory for persistent storage
+RUN mkdir -p /data/specs /data/job_packages /data/models
+
+# Optional: Copy pre-trained models and embeddings if they exist
+# These files are optional and will be created at runtime if not present
+# Uncomment the following lines only if you have pre-trained models to include:
+# COPY backend/pdf-service/yolo_pole_trained.pt /data/yolo_pole.pt
+# COPY backend/pdf-service/data/spec_embeddings.pkl /data/spec_embeddings.pkl
+# COPY backend/pdf-service/data/spec_index.faiss /data/spec_index.faiss
+
+# Create placeholder files to avoid missing file errors at runtime
+RUN touch /data/yolo_pole.pt.placeholder \
+    && touch /data/spec_embeddings.pkl.placeholder \
+    && touch /data/spec_index.faiss.placeholder
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
+ENV DATA_DIR=/data
+ENV LOG_LEVEL=INFO
+
+# Health check endpoint
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:${PORT:-8000}/docs || exit 1
+
+# Expose port (Render will override with $PORT)
+EXPOSE 8000
+
+# Start command - uses PORT environment variable from Render
+CMD ["sh", "-c", "uvicorn app_oct2025_enhanced:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1"]

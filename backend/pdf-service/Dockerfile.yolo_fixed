@@ -1,0 +1,80 @@
+# YOLO-Fixed Dockerfile for Render deployment
+# Handles model compatibility issues
+FROM python:3.12-slim
+
+# Set working directory
+WORKDIR /home/user/app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    build-essential \
+    tesseract-ocr \
+    poppler-utils \
+    libpoppler-cpp-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create data directory with proper permissions
+RUN mkdir -p /data && chmod 777 /data
+
+# Create non-root user
+RUN useradd -m -u 1000 user && \
+    chown -R user:user /home/user/app && \
+    chown -R user:user /data
+
+# Copy requirements and install as root (for system packages)
+COPY requirements_oct2025_fixed.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements_oct2025_fixed.txt
+
+# Copy application code
+COPY --chown=user . /home/user/app
+
+# Copy the fixed detector to modules directory
+RUN mkdir -p /home/user/app/modules && \
+    cp /home/user/app/modules/pole_vision_detector_fixed.py /home/user/app/modules/pole_vision_detector.py && \
+    chown -R user:user /home/user/app/modules
+
+# Apply the YOLO fix to the app
+RUN python apply_yolo_fix.py || true
+
+# Copy trained model if exists
+RUN if [ -f /home/user/app/pole_training/utility_pole_v1/weights/best.pt ]; then \
+        cp /home/user/app/pole_training/utility_pole_v1/weights/best.pt /data/yolo_pole.pt && \
+        chown user:user /data/yolo_pole.pt && \
+        echo "✅ Trained model copied to /data/yolo_pole.pt"; \
+    elif [ -f /home/user/app/yolo_pole.pt ]; then \
+        cp /home/user/app/yolo_pole.pt /data/yolo_pole.pt && \
+        chown user:user /data/yolo_pole.pt && \
+        echo "✅ Model copied from root to /data/yolo_pole.pt"; \
+    else \
+        echo "⚠️ No trained model found, will use base model"; \
+    fi
+
+# Copy pricing CSVs if they exist
+RUN if [ -f /home/user/app/ibew1245_labor_rates_2025.csv ]; then \
+        cp /home/user/app/ibew1245_labor_rates_2025.csv /data/ && \
+        cp /home/user/app/pge_equipment_rates_2025.csv /data/ && \
+        chown user:user /data/*.csv && \
+        echo "✅ Pricing CSVs copied to /data/"; \
+    else \
+        echo "⚠️ Pricing CSVs not found"; \
+    fi
+
+# Switch to non-root user
+USER user
+
+# Set environment variables for YOLO compatibility
+ENV PYTORCH_ENABLE_MPS_FALLBACK=1
+ENV CUDA_VISIBLE_DEVICES=""
+ENV OMP_NUM_THREADS=1
+
+# Expose port
+EXPOSE 10000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:10000/health || exit 1
+
+# Start the application
+CMD ["sh", "-c", "uvicorn app_oct2025_enhanced:app --host 0.0.0.0 --port ${PORT:-10000} --workers 1"]

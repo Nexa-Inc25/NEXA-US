@@ -1,0 +1,10 @@
+{"tokens": ["Install", "12kV", "deadend", "insulator", "at", "pole", "top", "with", "minimum", "clearance", "of", "8", "feet"], "ner_tags": [5, 1, 13, 13, 0, 11, 11, 0, 0, 3, 0, 3, 4]}
+{"tokens": ["Replace", "existing", "4/0", "ACSR", "conductor", "with", "336.4", "MCM", "AAC", "per", "GO", "95", "Rule", "31.2"], "ner_tags": [5, 0, 1, 1, 2, 0, 1, 2, 2, 0, 9, 10, 9, 10]}
+{"tokens": ["Trench", "depth", "shall", "be", "48", "inches", "for", "underground", "conduit", "per", "Document", "093412"], "ner_tags": [11, 3, 0, 0, 3, 4, 0, 11, 13, 0, 9, 10]}
+{"tokens": ["Mount", "FuseSaver", "device", "on", "8-foot", "crossarm", "with", "single-phase", "tap", "requirement"], "ner_tags": [5, 13, 13, 0, 3, 13, 0, 7, 8, 8]}
+{"tokens": ["Apply", "fireproof", "coating", "to", "all", "exposed", "steel", "members", "in", "Zone", "4", "high-fire", "area"], "ner_tags": [5, 1, 2, 0, 0, 0, 1, 2, 0, 19, 20, 11, 12]}
+{"tokens": ["Install", "bird", "guard", "protection", "on", "all", "energized", "equipment", "above", "15kV", "per", "ANSI", "C37.60"], "ner_tags": [5, 13, 13, 14, 0, 0, 0, 13, 0, 3, 0, 9, 10]}
+{"tokens": ["Grade", "B", "construction", "required", "for", "crossings", "over", "highways", "per", "CPUC", "General", "Order", "95"], "ner_tags": [17, 18, 0, 0, 0, 11, 0, 11, 0, 9, 9, 9, 10]}
+{"tokens": ["Perform", "Megger", "test", "at", "5000V", "for", "cable", "insulation", "before", "energization"], "ner_tags": [5, 21, 22, 0, 3, 0, 13, 14, 0, 0]}
+{"tokens": ["Install", "vibration", "dampers", "at", "intervals", "not", "exceeding", "150", "feet", "on", "ACSR", "conductor"], "ner_tags": [5, 13, 14, 0, 0, 0, 0, 3, 4, 0, 1, 2]}
+{"tokens": ["Apply", "RUS", "Bulletin", "1728F-803", "for", "guy", "wire", "installation", "with", "minimum", "safety", "factor", "of", "2.0"], "ner_tags": [5, 9, 9, 10, 0, 13, 13, 6, 0, 0, 3, 4, 0, 3]}

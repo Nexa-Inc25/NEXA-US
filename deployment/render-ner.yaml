@@ -1,0 +1,79 @@
+# Render.com deployment configuration for NER-enhanced analyzer
+# Production-ready with persistent storage for models
+
+services:
+  # Main API Service with NER
+  - type: web
+    name: nexa-analyzer-ner
+    runtime: docker
+    dockerfilePath: ./Dockerfile.ner
+    dockerContext: .
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.10"
+      - key: FINE_TUNING_ENABLED
+        value: "true"
+      - key: NER_MODEL_PATH
+        value: "/data/fine_tuned_ner"
+      - key: SPEC_EMBEDDINGS_PATH
+        value: "/data/spec_embeddings.pkl"
+      - key: CONFIDENCE_THRESHOLD
+        value: "0.85"
+    disk:
+      name: ner-data
+      mountPath: /data
+      sizeGB: 10
+    healthCheckPath: /health
+    autoDeploy: true
+    plan: starter # $7/month with persistent disk
+
+  # Optional: Background worker for retraining
+  - type: worker
+    name: ner-trainer
+    runtime: docker
+    dockerfilePath: ./Dockerfile.ner
+    dockerContext: .
+    envVars:
+      - key: WORKER_TYPE
+        value: "trainer"
+      - key: TRAINING_SCHEDULE
+        value: "0 2 * * 0" # Weekly at 2 AM Sunday
+    disk:
+      name: ner-data
+      mountPath: /data
+      sizeGB: 10
+    plan: starter
+
+# Cron job for periodic model evaluation
+cronJobs:
+  - name: model-evaluation
+    schedule: "0 0 * * 1" # Weekly on Monday
+    buildCommand: pip install -r requirements.txt
+    command: python backend/pdf-service/evaluate_model.py
+    
+  - name: backup-models
+    schedule: "0 3 * * *" # Daily at 3 AM
+    command: tar -czf /data/backups/models-$(date +%Y%m%d).tar.gz /data/fine_tuned_ner /data/spec_embeddings.pkl
+
+# Database for storing analysis results (optional)
+databases:
+  - name: analyzer-db
+    databaseName: nexa_analyzer
+    user: nexa_user
+    plan: starter # $7/month
+    ipAllowList: [] # Allow connections from services
+
+# Environment groups for shared config
+envVarGroups:
+  - name: ner-config
+    envVars:
+      - key: LOG_LEVEL
+        value: INFO
+      - key: MAX_WORKERS
+        value: "4"
+      - key: BATCH_SIZE
+        value: "8"
+      - key: LEARNING_RATE
+        value: "2e-4"
+      - key: NUM_EPOCHS
+        value: "20"

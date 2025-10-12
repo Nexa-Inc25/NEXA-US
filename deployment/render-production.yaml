@@ -1,0 +1,107 @@
+# Render.com Production Configuration for NEXA
+# Optimized for October 2025 deployment with all fixes
+
+services:
+  # Main NEXA API Service
+  - type: web
+    name: nexa-doc-analyzer-oct2025
+    runtime: docker
+    dockerfilePath: ./Dockerfile.render
+    branch: main
+    region: oregon  # or your preferred region
+    plan: starter   # $7/month
+    healthCheckPath: /docs
+    
+    # Persistent disk for embeddings and models
+    disk:
+      name: nexa-data
+      mountPath: /data
+      sizeGB: 10  # Adjust based on needs (10GB should be sufficient)
+    
+    # Environment variables
+    envVars:
+      # Core configuration
+      - key: PORT
+        generateValue: true  # Render will provide this
+      - key: LOG_LEVEL
+        value: INFO
+      - key: DATA_DIR
+        value: /data
+      
+      # API keys (optional but recommended)
+      - key: ROBOFLOW_API_KEY
+        sync: false  # Set in dashboard for security
+      
+      # Redis for caching (optional)
+      - key: REDIS_URL
+        sync: false  # Set if using Redis
+      
+      # Performance tuning
+      - key: RENDER_CORES
+        value: "1"  # Starter plan has 0.5 CPU
+      - key: MAX_WORKERS
+        value: "1"
+      
+      # Feature flags
+      - key: VISION_ENABLED
+        value: "true"
+      - key: PRICING_ENABLED
+        value: "true"
+      - key: TRAINING_ENABLED
+        value: "true"
+      - key: SPEC_LEARNING_ENABLED
+        value: "true"
+    
+    # Build configuration
+    buildFilter:
+      paths:
+        - backend/**
+        - requirements_oct2025.txt
+        - Dockerfile.render
+    
+    # Auto-deploy from GitHub
+    autoDeploy: true
+    
+    # Scaling (manual for starter plan)
+    numInstances: 1
+
+  # Optional: Dashboard UI (if deploying React dashboard)
+  - type: web
+    name: nexa-dashboard
+    runtime: node
+    branch: main
+    plan: starter  # $7/month
+    buildCommand: cd nexa-core/apps/web && npm install && npm run build
+    startCommand: cd nexa-core/apps/web && npm start
+    healthCheckPath: /
+    
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://nexa-doc-analyzer-oct2025.onrender.com
+      - key: NODE_ENV
+        value: production
+    
+    buildFilter:
+      paths:
+        - nexa-core/apps/web/**
+    
+    autoDeploy: true
+
+# Optional: PostgreSQL Database (if needed for job tracking)
+# databases:
+#   - name: nexa-db
+#     plan: starter  # $7/month, 256MB RAM
+#     databaseName: nexa
+#     user: nexa
+#     postgresMajorVersion: "15"
+#     ipAllowList: []  # Open to all IPs (configure for production)
+
+# Optional: Redis for caching and Celery
+# Note: Render doesn't offer managed Redis, use external service like RedisLabs
+
+# Deployment notes:
+# 1. Total cost: $7/month (API) + $7/month (Dashboard) = $14/month
+# 2. With database: +$7/month = $21/month total
+# 3. Disk storage: First 100GB free, then $0.25/GB/month
+# 4. Bandwidth: 100GB free/month
+# 5. SSL: Automatic with *.onrender.com domain

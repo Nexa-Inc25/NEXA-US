@@ -1,0 +1,100 @@
+# Enhanced YOLO Dataset Configuration
+# Optimized for Crossarm Detection (addressing zero recall issue)
+
+# Dataset paths (relative or absolute)
+path: ./datasets/merged  # Root directory
+train: 
+  - ../pole_training/train/images  # Original dataset
+  - roboflow_utility/train/images  # Roboflow utility poles
+  - augmented/train/images  # Augmented crossarm-heavy images
+  - dataset_ninja/train/images  # Dataset Ninja poles
+val: ../pole_training/valid/images  # Validation set
+test: test_crossarms  # Test images
+
+# Number of classes
+nc: 11
+
+# Class names (order matters - must match label indices)
+names:
+  0: pole_type1  # Wood/concrete/steel poles
+  1: crossarm  # SINGLE crossarm (FOCUS CLASS - currently 0 recall)
+  2: double_crossarm  # Double crossarms
+  3: insulator  # Insulators on poles/crossarms
+  4: transformer  # Pad/pole-mounted transformers
+  5: cutout  # Cutout switches
+  6: lightning_arrester  # Lightning protection
+  7: splice_case  # Wire splice cases
+  8: street_light  # Street lighting on poles
+  9: vegetation  # Vegetation encroachment
+  10: wire  # Overhead wires/conductors
+
+# Class weights for imbalanced data (boost crossarm)
+class_weights:
+  0: 1.0   # pole_type1 (baseline)
+  1: 3.0   # crossarm (3x weight due to low instances)
+  2: 2.5   # double_crossarm (also rare)
+  3: 1.2   # insulator
+  4: 1.5   # transformer
+  5: 1.5   # cutout
+  6: 1.5   # lightning_arrester
+  7: 1.5   # splice_case
+  8: 1.0   # street_light
+  9: 1.0   # vegetation
+  10: 0.8  # wire (common, reduce weight)
+
+# Augmentation settings optimized for crossarms
+augmentation:
+  hsv_h: 0.02  # Hue variation
+  hsv_s: 0.8   # Saturation (high for varied lighting)
+  hsv_v: 0.5   # Value/brightness
+  degrees: 30  # Rotation (crossarms at angles)
+  translate: 0.2  # Translation
+  scale: 0.7   # Scale (crossarms vary in distance)
+  shear: 10    # Shear transformation
+  perspective: 0.001  # Perspective changes
+  flipud: 0.5  # Vertical flip (50% chance)
+  fliplr: 0.5  # Horizontal flip (50% chance)
+  mosaic: 1.0  # Mosaic augmentation (always on)
+  mixup: 0.2   # MixUp augmentation
+  copy_paste: 0.1  # Copy-paste augmentation
+
+# Training hyperparameters
+hyperparameters:
+  epochs: 200  # More epochs for better learning
+  patience: 50  # Don't stop early
+  batch: 16  # Batch size (adjust for memory)
+  imgsz: 640  # Image size
+  optimizer: AdamW  # Optimizer
+  lr0: 0.01  # Initial learning rate
+  lrf: 0.01  # Final learning rate
+  momentum: 0.937  # SGD momentum
+  weight_decay: 0.0005  # Weight decay
+  warmup_epochs: 3.0  # Warmup epochs
+  warmup_momentum: 0.8  # Warmup momentum
+  warmup_bias_lr: 0.1  # Warmup bias lr
+  box: 7.5  # Box loss gain
+  cls: 0.5  # Classification loss gain
+  dfl: 1.5  # DFL loss gain
+  fl_gamma: 2.0  # Focal loss gamma for rare classes
+  anchor_t: 4.0  # Anchor threshold
+  label_smoothing: 0.1  # Label smoothing
+  nbs: 64  # Nominal batch size
+  close_mosaic: 10  # Disable mosaic last N epochs
+
+# Model configuration
+model:
+  size: m  # Use YOLOv8m (medium) for better small object detection
+  pretrained: true  # Use pretrained weights
+  freeze: 0  # Don't freeze any layers
+
+# Expected improvements with this config:
+# - Crossarm recall: 0.0 → 0.5-0.8
+# - Overall mAP50: 0.85 → 0.90+
+# - Processing time: <2 seconds per image (CPU)
+
+# Notes:
+# 1. Crossarm class (1) has 3x weight to address zero recall
+# 2. Mosaic augmentation helps mix crossarms with other objects
+# 3. Scale augmentation (0.7) important for varying crossarm sizes
+# 4. YOLOv8m model better for small objects than YOLOv8n
+# 5. 200 epochs with patience=50 ensures full training
