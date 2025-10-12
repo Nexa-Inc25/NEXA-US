@@ -40,9 +40,8 @@ ENV PYTORCH_ENABLE_MPS_FALLBACK=1 \
 WORKDIR $HOME/app
 
 # Install Python dependencies (context is already backend/pdf-service)
-COPY --chown=user requirements_oct2025.txt requirements.txt
-RUN pip install --no-cache-dir --upgrade pip wheel --user && \
-    pip install --no-cache-dir -r requirements.txt --user && \
+COPY requirements_oct2025_fixed.txt .
+RUN pip install --no-cache-dir -r requirements_oct2025_fixed.txt --user && \
     python -c "import nltk; nltk.download('punkt', quiet=True)" && \
     python -c "import nltk; nltk.download('punkt_tab', quiet=True)" || true
 
