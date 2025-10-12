@@ -9,8 +9,8 @@ python-multipart==0.0.6
 
 # Machine Learning - Core (compatible versions)
 numpy==1.26.4
-torch==2.1.2  # Stable version with good compatibility
-torchvision==0.16.2  # Matches torch 2.1.2
+torch==2.2.2  # Compatible with Python 3.12
+torchvision==0.17.2  # Matches torch 2.2.2
 
 # NLP and Transformers (compatible set)
 transformers==4.36.2  # Updated for compatibility
