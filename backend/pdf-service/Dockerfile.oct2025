@@ -1,6 +1,5 @@
-# Base from Python 3.10 for compatibility with latest transformers
-# Cache bust: 2025-10-10-faiss-fix
-FROM python:3.10-slim
+# Use Python 3.12-slim for consistency with local environment
+FROM python:3.12-slim
 
 # Install system dependencies (including Tesseract for OCR)
 RUN apt-get update && apt-get install -y \
@@ -9,7 +8,6 @@ RUN apt-get update && apt-get install -y \
     tesseract-ocr-eng \
     libtesseract-dev \
     libgl1 \
-    libglx-mesa0 \
     libglib2.0-0 \
     libsm6 \
     libxext6 \
@@ -17,10 +15,13 @@ RUN apt-get update && apt-get install -y \
     libgomp1 \
     wget \
     curl \
+    libopenblas-dev \
+    libjpeg-dev \
+    zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Create data directory as root and set permissions
-RUN mkdir -p /data && chmod 755 /data
+RUN mkdir -p /data/secure_uploads /data/quarantine /data/audit_logs && chmod -R 755 /data
 
 # Create non-root user for security
 RUN useradd -m -u 1000 user && chown -R user:user /data
@@ -38,14 +39,15 @@ ENV PYTORCH_ENABLE_MPS_FALLBACK=1 \
 # Set working directory
 WORKDIR $HOME/app
 
-# Install Python dependencies
-COPY --chown=user ./backend/pdf-service/requirements_oct2025.txt requirements.txt
+# Install Python dependencies (context is already backend/pdf-service)
+COPY --chown=user requirements_oct2025.txt requirements.txt
 RUN pip install --no-cache-dir --upgrade pip wheel --user && \
     pip install --no-cache-dir -r requirements.txt --user && \
-    python -c "import nltk; nltk.download('punkt', quiet=True)"
+    python -c "import nltk; nltk.download('punkt', quiet=True)" && \
+    python -c "import nltk; nltk.download('punkt_tab', quiet=True)" || true
 
-# Copy app code
-COPY --chown=user ./backend/pdf-service/ $HOME/app
+# Copy app code (all files from context)
+COPY --chown=user . $HOME/app
 
 # Switch back to root to copy model and CSVs to /data
 USER root
@@ -76,5 +78,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:8000/health || exit 1
 
-# Run with uvicorn (single worker for memory efficiency)
-CMD ["uvicorn", "app_oct2025_enhanced:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+# Run with uvicorn using Render's PORT environment variable
+CMD sh -c "uvicorn app_oct2025_enhanced:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1"
