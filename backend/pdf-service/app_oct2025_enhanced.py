@@ -7,8 +7,9 @@ import io
 import pickle
 import json
 from datetime import datetime
-from fastapi import FastAPI, UploadFile, File, HTTPException, Form
-from fastapi.responses import JSONResponse, FileResponse
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, File, UploadFile, HTTPException, Depends, Query, Form
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sentence_transformers import SentenceTransformer, util
@@ -34,7 +35,7 @@ logger = logging.getLogger(__name__)
 
 # Computer Vision for pole detection (if available)
 try:
-    from vision_endpoints import vision_router
+    from modules.vision_endpoints import vision_router
     VISION_ENABLED = True
     logger.info("Vision detection enabled with Roboflow model")
 except ImportError as e:
@@ -44,14 +45,44 @@ except ImportError as e:
 
 # Pricing integration for cost impact analysis
 try:
-    from pricing_endpoints import pricing_router, init_pricing_analyzer
-    from pricing_integration import enhance_infraction_with_pricing, PricingAnalyzer
+    from modules.pricing_endpoints import pricing_router, init_pricing_analyzer
+    from modules.pricing_integration import enhance_infraction_with_pricing, PricingAnalyzer
     PRICING_ENABLED = True
     logger.info("💰 Pricing integration enabled")
 except ImportError as e:
     PRICING_ENABLED = False
     logger.warning(f"Pricing integration not available: {e}")
     pricing_router = None
+
+# Job Package Training integration
+try:
+    from modules.job_package_training_api import add_training_endpoints
+    TRAINING_ENABLED = True
+    logger.info("📚 Job package training enabled - NEXA can learn to fill packages!")
+except ImportError as e:
+    TRAINING_ENABLED = False
+    logger.warning(f"Job package training not available: {e}")
+    add_training_endpoints = None
+
+# Enhanced Spec Analyzer with Fine-Tuned NER
+try:
+    from modules.enhanced_spec_analyzer import integrate_with_app as add_enhanced_analyzer
+    ENHANCED_ANALYZER_ENABLED = True
+    logger.info("🎯 Enhanced analyzer with poles/underground NER enabled!")
+except ImportError as e:
+    ENHANCED_ANALYZER_ENABLED = False
+    logger.warning(f"Enhanced analyzer not available: {e}")
+    add_enhanced_analyzer = None
+
+# Spec Learning System
+try:
+    from modules.spec_learning_endpoints import integrate_spec_learning
+    SPEC_LEARNING_ENABLED = True
+    logger.info("📚 Spec learning system enabled - Upload PG&E PDFs!")
+except ImportError as e:
+    SPEC_LEARNING_ENABLED = False
+    logger.warning(f"Spec learning not available: {e}")
+    integrate_spec_learning = None
 
 # === CPU PERFORMANCE OPTIMIZATION ===
 num_cores = int(os.environ.get('RENDER_CORES', len(os.sched_getaffinity(0)) if hasattr(os, 'sched_getaffinity') else cpu_count()))
@@ -67,12 +98,80 @@ os.environ.setdefault('PYTORCH_ENABLE_MPS_FALLBACK', '1')
 # Download NLTK data
 nltk.download('punkt', quiet=True)
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Modern lifespan handler for startup and shutdown events"""
+    # Startup code
+    logger.info("Starting NEXA Field Management System...")
+    
+    # Pre-load vision model if enabled
+    if VISION_ENABLED:
+        try:
+            # Check for Roboflow API key
+            if not os.getenv('ROBOFLOW_API_KEY'):
+                logger.warning("ROBOFLOW_API_KEY not set - vision will use base YOLOv8")
+            else:
+                logger.info("Roboflow API key found, will download utility-pole-detection-birhf model")
+            
+            # Pre-initialize detector to download model
+            from modules.pole_vision_detector import PoleVisionDetector
+            detector = PoleVisionDetector()
+            logger.info("Vision model pre-loaded successfully")
+            
+            # Test model status
+            if os.path.exists('/data/yolo_pole.pt'):
+                logger.info("✅ Roboflow model ready at /data/yolo_pole.pt")
+            else:
+                logger.info("⏳ Model will download on first use")
+                
+        except Exception as e:
+            logger.error(f"Could not pre-load vision model: {e}")
+    
+    # Check for fine-tuned NER model
+    ner_model_path = '/data/fine_tuned_ner_deep'
+    if os.path.exists(ner_model_path):
+        try:
+            # Load fine-tuned NER with F1=0.87
+            from transformers import AutoModelForTokenClassification, AutoTokenizer, pipeline
+            ner_model = AutoModelForTokenClassification.from_pretrained(ner_model_path)
+            ner_tokenizer = AutoTokenizer.from_pretrained(ner_model_path)
+            
+            # Create NER pipeline for easy inference
+            ner_pipeline = pipeline(
+                "token-classification",
+                model=ner_model,
+                tokenizer=ner_tokenizer,
+                aggregation_strategy="simple"
+            )
+            
+            logger.info("✅ Fine-tuned NER model loaded (F1=0.87) from /data/fine_tuned_ner_deep")
+            NER_AVAILABLE = True
+        except Exception as e:
+            logger.warning(f"Could not load fine-tuned NER: {e}")
+            NER_AVAILABLE = False
+            ner_pipeline = None
+    else:
+        logger.warning("Fine-tuned NER model not found - using pattern fallback")
+        NER_AVAILABLE = False
+        ner_pipeline = None
+    
+    # Initialize pricing if enabled
+    if PRICING_ENABLED:
+        try:
+            init_pricing_analyzer(app)
+            logger.info("💰 Pricing analyzer initialized")
+        except Exception as e:
+            logger.warning(f"Pricing analyzer initialization failed: {e}")
+    
+    yield  # Server is running
+    
+    # Shutdown code
+    logger.info("Shutting down NEXA Field Management System...")
+
 app = FastAPI(
-    title="NEXA Field Management System",
-    version="3.0.0",
-    description="Complete field management with document analysis, crew tracking, and real-time updates",
-    docs_url="/docs",
-    redoc_url="/redoc"
+    title="NEXA Universal Standards Platform",
+    description="AI-powered universal utility standards analyzer",
+    version="3.0"
 )
 # Add middleware - ORDER MATTERS! CORS must be last
 app.add_middleware(RateLimitMiddleware, calls=200, period=60)  # Week 1: Increased for 30 users
@@ -119,6 +218,175 @@ if VISION_ENABLED and vision_router:
 if PRICING_ENABLED and pricing_router:
     app.include_router(pricing_router, prefix="/pricing", tags=["Pricing"])
     logger.info("💰 Pricing endpoints registered at /pricing/*")
+
+# Include training endpoints if available
+if TRAINING_ENABLED and add_training_endpoints:
+    add_training_endpoints(app)
+    logger.info("📚 Training endpoints registered - /train-job-package, /train-as-built, /batch-train-packages")
+
+# Include enhanced analyzer if available
+if ENHANCED_ANALYZER_ENABLED and add_enhanced_analyzer:
+    add_enhanced_analyzer(app)
+    logger.info("🎯 Enhanced analyzer endpoints registered - /analyze-go-back, /batch-analyze-go-backs")
+
+# Include spec learning system if available
+if SPEC_LEARNING_ENABLED and integrate_spec_learning:
+    integrate_spec_learning(app)
+    logger.info("📚 Spec learning endpoints registered - /spec-learning/learn-spec, /spec-learning/search-specs")
+
+# Mega Bundle Analysis System
+try:
+    from modules.mega_bundle_endpoints import integrate_mega_bundle_endpoints
+    MEGA_BUNDLE_ENABLED = True
+    logger.info("📦 Mega bundle analysis enabled - Process 3500+ jobs!")
+except ImportError as e:
+    MEGA_BUNDLE_ENABLED = False
+    logger.warning(f"Mega bundle analysis not available: {e}")
+    integrate_mega_bundle_endpoints = None
+
+if MEGA_BUNDLE_ENABLED and integrate_mega_bundle_endpoints:
+    integrate_mega_bundle_endpoints(app)
+    logger.info("✅ Mega bundle endpoints registered - /mega-bundle/upload, /mega-bundle/status")
+
+# Spec-Based Hour Estimation System
+try:
+    from modules.spec_based_hour_estimator import integrate_spec_hour_estimation
+    HOUR_ESTIMATION_ENABLED = True
+    logger.info("⏰ Spec-based hour estimation enabled - More accurate profitability!")
+except ImportError as e:
+    HOUR_ESTIMATION_ENABLED = False
+    logger.warning(f"Hour estimation not available: {e}")
+    integrate_spec_hour_estimation = None
+
+if HOUR_ESTIMATION_ENABLED and integrate_spec_hour_estimation:
+    integrate_spec_hour_estimation(app)
+    logger.info("✅ Hour estimation endpoints registered - /hour-estimation/estimate")
+
+# Model Fine-Tuning System
+try:
+    from modules.model_fine_tuner import integrate_fine_tuning_endpoints
+    FINE_TUNING_ENABLED = True
+    logger.info("🎯 Model fine-tuning enabled - Improve NER/YOLO/embeddings!")
+except ImportError as e:
+    FINE_TUNING_ENABLED = False
+    logger.warning(f"Fine-tuning not available: {e}")
+    integrate_fine_tuning_endpoints = None
+
+if FINE_TUNING_ENABLED and integrate_fine_tuning_endpoints:
+    integrate_fine_tuning_endpoints(app)
+    logger.info("✅ Fine-tuning endpoints registered - /fine-tune/start, /fine-tune/progress")
+
+# Conduit NER Fine-Tuning System
+try:
+    from modules.conduit_ner_fine_tuner import integrate_conduit_ner_endpoints
+    CONDUIT_NER_ENABLED = True
+    logger.info("🚇 Conduit NER fine-tuning enabled - Improve underground analysis!")
+except ImportError as e:
+    CONDUIT_NER_ENABLED = False
+    logger.warning(f"Conduit NER fine-tuning not available: {e}")
+    integrate_conduit_ner_endpoints = None
+
+if CONDUIT_NER_ENABLED and integrate_conduit_ner_endpoints:
+    integrate_conduit_ner_endpoints(app)
+    logger.info("✅ Conduit NER endpoints registered - /fine-tune-conduits/start")
+
+# Enhanced Conduit Analyzer
+try:
+    from modules.conduit_enhanced_analyzer import integrate_enhanced_analyzer
+    CONDUIT_ANALYZER_ENABLED = True
+    logger.info("🔍 Enhanced conduit analyzer enabled - >90% go-back confidence!")
+except ImportError as e:
+    CONDUIT_ANALYZER_ENABLED = False
+    logger.warning(f"Enhanced conduit analyzer not available: {e}")
+    integrate_enhanced_analyzer = None
+
+if CONDUIT_ANALYZER_ENABLED and integrate_enhanced_analyzer:
+    integrate_enhanced_analyzer(app)
+    logger.info("✅ Conduit analyzer endpoints registered - /conduit-analysis/*")
+
+# Overhead Lines NER Fine-Tuning System
+try:
+    from modules.overhead_ner_fine_tuner import integrate_overhead_ner_endpoints
+    OVERHEAD_NER_ENABLED = True
+    logger.info("⚡ Overhead NER fine-tuning enabled - Improve conductor/insulator analysis!")
+except ImportError as e:
+    OVERHEAD_NER_ENABLED = False
+    logger.warning(f"Overhead NER fine-tuning not available: {e}")
+    integrate_overhead_ner_endpoints = None
+
+if OVERHEAD_NER_ENABLED and integrate_overhead_ner_endpoints:
+    integrate_overhead_ner_endpoints(app)
+    logger.info("✅ Overhead NER endpoints registered - /fine-tune-overhead/*")
+
+# Enhanced Overhead Analyzer
+try:
+    from modules.overhead_enhanced_analyzer import integrate_overhead_analyzer
+    OVERHEAD_ANALYZER_ENABLED = True
+    logger.info("📡 Enhanced overhead analyzer enabled - >85% go-back confidence!")
+except ImportError as e:
+    OVERHEAD_ANALYZER_ENABLED = False
+    logger.warning(f"Enhanced overhead analyzer not available: {e}")
+    integrate_overhead_analyzer = None
+
+if OVERHEAD_ANALYZER_ENABLED and integrate_overhead_analyzer:
+    integrate_overhead_analyzer(app)
+    logger.info("✅ Overhead analyzer endpoints registered - /overhead-analysis/*")
+
+# Clearance-Enhanced NER Fine-Tuning System  
+try:
+    from modules.clearance_enhanced_fine_tuner import integrate_clearance_fine_tuning_endpoints
+    CLEARANCE_FINETUNE_ENABLED = True
+    logger.info("🚂 Clearance NER fine-tuning enabled - Target F1 >0.9!")
+except ImportError as e:
+    CLEARANCE_FINETUNE_ENABLED = False
+    logger.warning(f"Clearance fine-tuning not available: {e}")
+    integrate_clearance_fine_tuning_endpoints = None
+
+if CLEARANCE_FINETUNE_ENABLED and integrate_clearance_fine_tuning_endpoints:
+    integrate_clearance_fine_tuning_endpoints(app)
+    logger.info("✅ Clearance fine-tuning endpoints registered - /fine-tune-clearances/*")
+
+# Clearance Analyzer
+try:
+    from modules.clearance_analyzer import integrate_clearance_analyzer
+    CLEARANCE_ANALYZER_ENABLED = True
+    logger.info("📏 Clearance analyzer enabled - Railroad/ground clearance analysis!")
+except ImportError as e:
+    CLEARANCE_ANALYZER_ENABLED = False
+    logger.warning(f"Clearance analyzer not available: {e}")
+    integrate_clearance_analyzer = None
+
+if CLEARANCE_ANALYZER_ENABLED and integrate_clearance_analyzer:
+    integrate_clearance_analyzer(app)
+    logger.info("✅ Clearance analyzer endpoints registered - /clearance-analysis/*")
+
+# Universal Standards Engine
+try:
+    from modules.universal_standards import integrate_universal_endpoints
+    UNIVERSAL_STANDARDS_ENABLED = True
+    logger.info("🌍 Universal Standards Engine enabled - Multi-utility support!")
+except ImportError as e:
+    UNIVERSAL_STANDARDS_ENABLED = False
+    logger.warning(f"Universal Standards Engine not available: {e}")
+    integrate_universal_endpoints = None
+
+if UNIVERSAL_STANDARDS_ENABLED and integrate_universal_endpoints:
+    integrate_universal_endpoints(app)
+    logger.info("✅ Universal Standards endpoints registered - /api/utilities/*")
+
+# Roboflow Dataset Integration
+try:
+    from modules.roboflow_dataset_integrator import integrate_roboflow_datasets
+    ROBOFLOW_ENABLED = True
+    logger.info("🖼️ Roboflow integration enabled - Fix crossarm detection!")
+except ImportError as e:
+    ROBOFLOW_ENABLED = False
+    logger.warning(f"Roboflow integration not available: {e}")
+    integrate_roboflow_datasets = None
+
+if ROBOFLOW_ENABLED and integrate_roboflow_datasets:
+    integrate_roboflow_datasets(app)
+    logger.info("✅ Roboflow endpoints registered - /roboflow/download-datasets, /roboflow/merge-and-train")
 
 # === MODELS ===
 class SpecFile(BaseModel):
@@ -434,6 +702,61 @@ async def root():
 async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "timestamp": time.time()}
+
+@app.get("/status")
+async def status():
+    """Comprehensive system status endpoint"""
+    try:
+        # Check model status
+        model_loaded = model is not None
+        
+        # Check spec library
+        spec_loaded = False
+        total_specs = 0
+        if os.path.exists(SPEC_METADATA_PATH):
+            try:
+                with open(SPEC_METADATA_PATH, 'r') as f:
+                    metadata = json.load(f)
+                    total_specs = len(metadata.get('specs', []))
+                    spec_loaded = total_specs > 0
+            except:
+                pass
+        
+        # Check feature availability
+        features = {
+            "vision": VISION_ENABLED,
+            "pricing": PRICING_ENABLED,
+            "training": TRAINING_ENABLED,
+            "enhanced_analyzer": ENHANCED_ANALYZER_ENABLED,
+            "spec_learning": SPEC_LEARNING_ENABLED,
+            "mega_bundle": MEGA_BUNDLE_ENABLED,
+            "hour_estimation": HOUR_ESTIMATION_ENABLED,
+            "fine_tuning": FINE_TUNING_ENABLED,
+            "conduit_ner": CONDUIT_NER_ENABLED
+        }
+        
+        # System info
+        return {
+            "status": "operational",
+            "model_loaded": model_loaded,
+            "spec_loaded": spec_loaded,
+            "total_specs": total_specs,
+            "features_enabled": features,
+            "data_path": DATA_PATH,
+            "device": device,
+            "embeddings_exist": os.path.exists(EMBEDDINGS_PATH),
+            "timestamp": datetime.now().isoformat(),
+            "version": "oct2025_enhanced",
+            "cpu_cores": num_cores,
+            "torch_threads": optimal_threads
+        }
+    except Exception as e:
+        logger.error(f"Error in /status endpoint: {e}")
+        return {
+            "status": "error",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }
 
 @app.get("/spec-library", response_model=SpecLibrary)
 async def get_spec_library():
@@ -1245,31 +1568,11 @@ async def get_cache_stats():
             "error": str(e)
         }
 
-@app.on_event("startup")
-async def startup_vision():
-    """Pre-load Roboflow model on startup"""
-    if VISION_ENABLED:
-        try:
-            # Check for Roboflow API key
-            if not os.getenv('ROBOFLOW_API_KEY'):
-                logger.warning("ROBOFLOW_API_KEY not set - vision will use base YOLOv8")
-            else:
-                logger.info("Roboflow API key found, will download utility-pole-detection-birhf model")
-            
-            # Pre-initialize detector to download model
-            from pole_vision_detector import PoleVisionDetector
-            detector = PoleVisionDetector()
-            logger.info("Vision model pre-loaded successfully")
-            
-            # Test model status
-            if os.path.exists('/data/yolo_pole.pt'):
-                logger.info("✅ Roboflow model ready at /data/yolo_pole.pt")
-            else:
-                logger.info("⏳ Model will download on first use")
-                
-        except Exception as e:
-            logger.error(f"Could not pre-load vision model: {e}")
+# Startup event has been moved to the lifespan handler above
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    import os
+    port = int(os.environ.get("PORT", 8001))
+    uvicorn.run(app, host="0.0.0.0", port=port)
+    logger.info(f"Server running on port {port}")
