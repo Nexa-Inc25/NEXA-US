@@ -63,7 +63,7 @@ redis==5.0.1  # Explicit compatible version
 
 # Computer vision
 ultralytics==8.0.200
-opencv-python-headless==4.8.1.78
+opencv-python-headless>=4.8.0.74,<4.9.0  # Range allows roboflow compatibility
 roboflow==1.1.11
 
 # AWS
