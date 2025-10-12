@@ -206,7 +206,7 @@ def optional_current_user(credentials: Optional[HTTPAuthorizationCredentials] = 
 
 def create_auth_router() -> APIRouter:
     """Create authentication router with endpoints"""
-    router = APIRouter(prefix="/auth", tags=["Authentication"])
+    router = APIRouter(tags=["Authentication"])
     
     @router.post("/login", response_model=Token)
     async def login(request: LoginRequest):
