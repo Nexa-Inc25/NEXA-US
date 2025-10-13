@@ -1,0 +1,43 @@
+FROM python:3.11-slim
+
+# Install build essentials 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    g++ \
+    postgresql-client \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy and install requirements
+COPY backend/pdf-service/requirements_oct2025.txt ./requirements.txt
+
+# Install Python dependencies
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copy application code from backend/pdf-service
+COPY backend/pdf-service/field_crew_workflow.py ./
+COPY backend/pdf-service/app_oct2025_enhanced.py ./
+COPY backend/pdf-service/middleware.py ./
+COPY backend/pdf-service/modules ./modules
+
+# Create directories
+RUN mkdir -p /tmp /data
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PATH="/usr/local/bin:$PATH"
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:${PORT:-8000}/health || exit 1
+
+# Run the security implementation
+CMD ["sh", "-c", "uvicorn field_crew_workflow:api --host 0.0.0.0 --port ${PORT:-8000} --workers 1"]
