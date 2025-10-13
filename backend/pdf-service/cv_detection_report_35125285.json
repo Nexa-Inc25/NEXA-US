@@ -1,0 +1,22 @@
+{
+  "total_changes": 0,
+  "red_lining_required": false,
+  "overall_confidence": 0.7001368210458352,
+  "changes": [
+    {
+      "type": "no_change",
+      "description": "Guy wire remains sagging",
+      "marking": "No red-lining required",
+      "reference": "Page 25: Mark 'Built as designed' if no changes",
+      "confidence": 0.7001368210458352,
+      "photo_pair": 1
+    }
+  ],
+  "spec_compliance": {
+    "status": "COMPLIANT",
+    "score": 1.0,
+    "notes": [
+      "No red-lining required - built as designed per Page 25"
+    ]
+  }
+}
