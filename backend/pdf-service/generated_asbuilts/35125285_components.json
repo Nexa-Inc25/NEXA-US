@@ -1,0 +1,129 @@
+{
+  "pm_number": "35125285",
+  "compliance_score": 1.0,
+  "ec_tag": {
+    "pm_number": "35125285",
+    "location": "2195 Summit Level Rd, Rail Road Flat, CA",
+    "gps": {
+      "lat": 38.337308,
+      "lng": -120.483566
+    },
+    "crew_lead": "John Smith",
+    "date_completed": "2025-10-12",
+    "construction_status": "BUILT AS DESIGNED",
+    "fda": "N/A - No damaged equipment (Page 25)",
+    "signature": {
+      "type": "Digital",
+      "lan_id": "JSMITH01",
+      "reference": "Digital signatures acceptable per Section 4"
+    }
+  },
+  "construction_drawing": {
+    "type": "Ad Hoc Map",
+    "red_lines": {
+      "status": "NO RED-LINES - BUILT AS DESIGNED",
+      "reference": "Page 25"
+    },
+    "pole_location": {
+      "lat": 38.337308,
+      "lng": -120.483566
+    }
+  },
+  "materials_list": {
+    "items": [
+      {
+        "name": "Wood Pole Class 1",
+        "quantity": 1,
+        "cost": 1200
+      },
+      {
+        "name": "Guy Wire",
+        "quantity": 100,
+        "cost": 250
+      },
+      {
+        "name": "3-bolt clamp",
+        "quantity": 2,
+        "cost": 45
+      },
+      {
+        "name": "Hardware kit",
+        "quantity": 1,
+        "cost": 150
+      }
+    ],
+    "pole_specs": {
+      "class": "Class 1",
+      "height": "45 ft",
+      "guy_wires": "Yes - Clamped"
+    }
+  },
+  "photos_section": {
+    "before_photos": [
+      {
+        "filename": "before_1.jpg",
+        "timestamp": "2025-10-12T08:00:00",
+        "gps": {
+          "lat": 38.337308,
+          "lng": -120.483566
+        },
+        "description": "Existing site conditions"
+      },
+      {
+        "filename": "before_2.jpg",
+        "timestamp": "2025-10-12T08:05:00",
+        "gps": {
+          "lat": 38.337308,
+          "lng": -120.483566
+        },
+        "description": "Old pole to be replaced"
+      },
+      {
+        "filename": "before_3.jpg",
+        "timestamp": "2025-10-12T08:10:00",
+        "gps": {
+          "lat": 38.337308,
+          "lng": -120.483566
+        },
+        "description": "Clearance measurements"
+      }
+    ],
+    "after_photos": [
+      {
+        "filename": "after_1.jpg",
+        "timestamp": "2025-10-12T14:00:00",
+        "gps": {
+          "lat": 38.337308,
+          "lng": -120.483566
+        },
+        "description": "New pole installed"
+      },
+      {
+        "filename": "after_2.jpg",
+        "timestamp": "2025-10-12T14:05:00",
+        "gps": {
+          "lat": 38.337308,
+          "lng": -120.483566
+        },
+        "description": "Guy wires properly clamped"
+      },
+      {
+        "filename": "after_3.jpg",
+        "timestamp": "2025-10-12T14:10:00",
+        "gps": {
+          "lat": 38.337308,
+          "lng": -120.483566
+        },
+        "description": "Clearances verified"
+      }
+    ],
+    "compliance": {
+      "before_count": 3,
+      "after_count": 3,
+      "meets_minimum": true
+    }
+  },
+  "repeal_reasons": [
+    "Fully compliant per PG&E PROCEDURE 2025"
+  ]
+}
