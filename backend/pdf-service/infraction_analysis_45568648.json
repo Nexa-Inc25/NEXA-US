@@ -1,0 +1,35 @@
+{
+  "pm_number": "45568648",
+  "notification_number": "119605160",
+  "location": "Los Gatos, CA (37.2126, -121.9679)",
+  "contractor": "Alvah",
+  "crew_foreman": "Antone Bushnell",
+  "auditor": "Curt Schmidt",
+  "score": "46.59% (82/176)",
+  "infraction_description": "Multiple wires not clamped together as required",
+  "spec_reference": "Guys 022178 REV 13 Page 11 Figure 20, Page 14 Notes 7-8",
+  "spec_pages": [
+    "Page 11 Figure 20",
+    "Page 14 Note 7",
+    "Page 14 Note 8"
+  ],
+  "status": "TRUE",
+  "confidence": 0.95,
+  "reasons_from_spec": [
+    "Page 11, Figure 20: 3-bolt clamp required for multiple guys",
+    "Page 14, Note 7: Two or more guys to same anchor SHALL be clamped",
+    "Page 14, Note 8: 3-inch separation required with clamp",
+    "No explicit variance mentioned except for angle issues"
+  ],
+  "cost_estimate": 0,
+  "photos_analyzed": [
+    "Photo 4",
+    "Photo 5"
+  ],
+  "recommendations": [
+    "Request variance IF Angle between guys too large to permit clamping",
+    "Comply with spec by re-clamping",
+    "Document compliance in updated as-builts"
+  ],
+  "variance_possible": true
+}
