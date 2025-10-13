@@ -1,58 +1,49 @@
-# Base from Python 3.10 for compatibility with latest transformers
-# Cache bust: 2025-10-10-numpy-fix
-FROM python:3.10-slim
+FROM python:3.11-slim
 
-# Install system dependencies (including Tesseract for OCR)
-RUN apt-get update && apt-get install -y \
+# Install build essentials and create symlinks for compatibility
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
-    tesseract-ocr \
-    tesseract-ocr-eng \
-    libtesseract-dev \
-    libgl1 \
-    libglx-mesa0 \
-    libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender-dev \
-    libgomp1 \
-    wget \
+    gcc \
+    g++ \
+    postgresql-client \
     curl \
+    && ln -sf /usr/local/bin/python /usr/local/bin/python3 \
     && rm -rf /var/lib/apt/lists/*
 
-# Create data directory as root and set permissions
-RUN mkdir -p /data && chmod 755 /data
-
-# Create non-root user for security
-RUN useradd -m -u 1000 user && chown -R user:user /data
-USER user
-ENV HOME=/home/user \
-    PATH=/home/user/.local/bin:$PATH
-
-# CPU Performance optimization environment variables
-ENV PYTORCH_ENABLE_MPS_FALLBACK=1 \
-    KMP_AFFINITY=granularity=fine,compact,1,0 \
-    KMP_BLOCKTIME=0 \
-    DNNL_VERBOSE=0 \
-    MKL_DYNAMIC=FALSE
-
 # Set working directory
-WORKDIR $HOME/app
+WORKDIR /app
 
-# Install Python dependencies
-COPY --chown=user ./backend/pdf-service/requirements_oct2025.txt requirements.txt
-RUN pip install --no-cache-dir --upgrade pip wheel --user && \
-    pip install --no-cache-dir -r requirements.txt --user && \
-    python -c "import nltk; nltk.download('punkt', quiet=True)"
+# Copy and install requirements first for better caching
+COPY requirements_oct2025.txt ./requirements.txt
 
-# Copy app code
-COPY --chown=user ./backend/pdf-service/ $HOME/app
+# Upgrade pip and install Python dependencies
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir pypdf==3.17.0 && \
+    pip install --no-cache-dir -r requirements.txt
 
-# Expose Render default port
+# Download NLTK data if needed
+RUN python -c "import nltk; nltk.download('punkt', quiet=True)" || true
+
+# Copy application code (force rebuild with timestamp comment)
+# Updated: 2025-10-13 - Using field_crew_workflow.py with security implementation
+COPY field_crew_workflow.py ./field_crew_workflow.py
+COPY app_oct2025_enhanced.py ./app_oct2025_enhanced.py
+COPY middleware.py ./middleware.py
+COPY modules ./modules
+
+# Create necessary directories
+RUN mkdir -p /tmp /data
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PATH="/usr/local/bin:$PATH"
+
+# Expose port (Render sets this via $PORT env var)
 EXPOSE 8000
 
-# Health check for Render
+# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8000/health || exit 1
+  CMD curl -f http://localhost:${PORT:-8000}/health || exit 1
 
-# Run with uvicorn (single worker for memory efficiency)
-CMD ["uvicorn", "app_oct2025_enhanced:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+# Use shell form to expand $PORT variable, single worker for stability
+CMD ["sh", "-c", "uvicorn field_crew_workflow:api --host 0.0.0.0 --port ${PORT:-8000} --workers 1"]
