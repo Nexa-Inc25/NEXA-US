@@ -61,28 +61,30 @@ def test_utility_detection(token: str, base_url: str = BASE_URL):
     """Test /api/utilities/detect endpoint"""
     print("\nTesting Utility Detection...")
     test_cases = [
-        {"location": {"lat": 37.7749, "lng": -122.4194}, "expected": "PGE"},
-        {"location": {"lat": 25.7617, "lng": -80.1918}, "expected": "FPL"},
-        {"location": {"lat": 40.7128, "lng": -74.0060}, "expected": None}
+        {"lat": 37.7749, "lng": -122.4194, "expected": "PGE"},
+        {"lat": 25.7617, "lng": -80.1918, "expected": "FPL"},
+        {"lat": 40.7128, "lng": -74.0060, "expected": None}
     ]
     passed = True
     for case in test_cases:
         response = requests.post(
             f"{base_url}/api/utilities/detect",
-            json={"location": case["location"]},  # Wrap in location object
+            json={"lat": case["lat"], "lng": case["lng"]},  # Direct lat/lng
             headers={"Authorization": f"Bearer {token}"}
         )
         if case["expected"]:
             if response.status_code == 200 and response.json().get("utility_id") == case["expected"]:
-                print(f"PASS: Detected {case['expected']} at ({case['location']['lat']}, {case['location']['lng']})")
+                print(f"PASS: Detected {case['expected']} at ({case['lat']}, {case['lng']})")
             else:
                 print(f"FAIL: Expected {case['expected']}, got {response.text[:100]}")
                 passed = False
         else:
             if response.status_code == 404:
-                print(f"PASS: No utility at ({case['location']['lat']}, {case['location']['lng']})")
+                print(f"PASS: No utility at ({case['lat']}, {case['lng']})")
+            elif response.status_code == 200 and response.json().get("utility_id") is None:
+                print(f"PASS: No utility at ({case['lat']}, {case['lng']}) (null response)")
             else:
-                print(f"FAIL: Expected 404, got {response.text[:100]}")
+                print(f"FAIL: Expected 404 or null, got {response.text[:100]}")
                 passed = False
     return passed
 
@@ -160,7 +162,7 @@ def test_cross_reference(token: str, base_url: str = BASE_URL):
     print("\nTesting Cross-Reference...")
     response = requests.post(
         f"{base_url}/api/utilities/standards/cross-reference",
-        json={"request": {"requirement": "capacitor spacing requirements"}},
+        json={"requirement": "capacitor spacing requirements"},
         headers={"Authorization": f"Bearer {token}"}
     )
     if response.status_code == 200:
@@ -177,12 +179,10 @@ def test_job_creation(token: str, base_url: str = BASE_URL):
     response = requests.post(
         f"{base_url}/api/utilities/jobs/create",
         json={
-            "request": {
-                "pm_number": job_id,
-                "description": "Test job for E2E validation",
-                "lat": 37.7749,
-                "lng": -122.4194
-            }
+            "pm_number": job_id,
+            "description": "Test job for E2E validation",
+            "lat": 37.7749,
+            "lng": -122.4194
         },
         headers={"Authorization": f"Bearer {token}"}
     )
@@ -199,16 +199,14 @@ def test_form_population(token: str, base_url: str = BASE_URL):
     response = requests.post(
         f"{base_url}/api/utilities/forms/PGE/populate",
         json={
-            "request": {
-                "universal_data": {
-                    "job_id": "TEST-001",
-                    "pm_number": "PM-2025-TEST",
-                    "location": "San Francisco, CA",
-                    "equipment": ["Capacitor Bank", "Distribution Pole"],
-                    "clearances": {
-                        "overhead": "18 feet minimum",
-                        "underground": "36 inches minimum"
-                    }
+            "universal_data": {
+                "job_id": "TEST-001",
+                "pm_number": "PM-2025-TEST",
+                "location": "San Francisco, CA",
+                "equipment": ["Capacitor Bank", "Distribution Pole"],
+                "clearances": {
+                    "overhead": "18 feet minimum",
+                    "underground": "36 inches minimum"
                 }
             }
         },
