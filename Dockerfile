@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Copy and install requirements
-COPY requirements_oct2025.txt ./requirements.txt
+COPY requirements_security.txt ./requirements.txt
 
 # Install Python dependencies
 RUN pip install --upgrade pip && \
