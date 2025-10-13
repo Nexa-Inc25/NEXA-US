@@ -30,7 +30,7 @@ loguru==0.7.2
 # Environment & Secrets Management
 python-dotenv==1.0.0
 hvac==2.0.0  # HashiCorp Vault client
-aws-secrets-manager==1.0.0
+# aws-secrets-manager removed - package doesn't exist
 
 # Security Scanning & Validation
 bandit==1.7.5

@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Copy and install requirements
-COPY requirements_security.txt ./requirements.txt
+COPY backend/pdf-service/requirements_security.txt ./requirements.txt
 
 # Install Python dependencies
 RUN pip install --upgrade pip && \
