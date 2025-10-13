@@ -29,7 +29,4 @@ services:
       mountPath: /data
       sizeGB: 100
 
-databases:
-  - name: nexa-db
-    plan: starter
-    region: oregon
+# Database already exists on Render - no need to create a new one
