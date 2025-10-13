@@ -5,7 +5,7 @@ services:
     branch: main
     region: oregon
     plan: pro
-    dockerContext: ./backend/pdf-service
+    dockerContext: .
     dockerfilePath: ./Dockerfile
     envVars:
       - key: DATABASE_URL
