@@ -5,8 +5,8 @@ services:
     branch: main
     region: oregon
     plan: pro
-    dockerContext: ./backend/pdf-service
-    dockerfilePath: ./Dockerfile
+    dockerContext: backend/pdf-service
+    dockerfilePath: Dockerfile
     envVars:
       - key: DATABASE_URL
         sync: false  # Set this in Render dashboard from existing database
