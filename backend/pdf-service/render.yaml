@@ -1,46 +1,24 @@
 services:
-  # FastAPI Backend Service
   - type: web
-    name: nexa-api
-    runtime: python
-    buildCommand: pip install --no-cache-dir -r backend/pdf-service/requirements.txt
-    startCommand: /bin/sh -c "cd backend/pdf-service && /usr/local/bin/python3 -m uvicorn api:app --host 0.0.0.0 --port $PORT --workers 2"
-    branch: main
+    name: nexa-infrastructure-detector
+    runtime: docker
+    dockerfilePath: ./deployment/Dockerfile.infrastructure
+    dockerContext: ./deployment
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: MODEL_PATH
+        value: /app/models/yolo_infrastructure_transfer.pt
+      - key: SPEC_BOOK_PATH
+        value: /app/data/pgne_spec_book.pdf
+      - key: PORT
+        value: "8000"
+    disk:
+      name: infrastructure-data
+      mountPath: /app/data
+      sizeGB: 10
     healthCheckPath: /health
-    envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: nexa-db
-          property: connectionString
-      - key: AUTH_ENABLED
-        value: "false"
-      - key: PYTHON_VERSION
-        value: 3.11.0
-      - key: PYTHON_USE_POETRY
-        value: "false"
-    plan: pro
-  
-  # Streamlit Frontend Service  
-  - type: web
-    name: nexa-ui
-    runtime: python
-    buildCommand: pip install --no-cache-dir -r backend/pdf-service/requirements.txt
-    startCommand: /bin/sh -c "cd backend/pdf-service && /usr/local/bin/python3 -m streamlit run ui.py --server.port $PORT --server.address 0.0.0.0 --server.headless true"
-    branch: main
-    envVars:
-      - key: API_URL
-        value: https://nexa-api.onrender.com
-      - key: AUTH_ENABLED
-        value: "false"
-      - key: PYTHON_VERSION
-        value: 3.11.0
-      - key: PYTHON_USE_POETRY
-        value: "false"
-    plan: pro
-
-databases:
-  - name: nexa-db
-    databaseName: nexa
-    user: nexa_admin
-    plan: pro
-    ipAllowList: []
+    numInstances: 1
+    plan: starter-plus
+    region: oregon
+    autoDeploy: true

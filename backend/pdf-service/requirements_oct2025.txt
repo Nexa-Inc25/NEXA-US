@@ -1,9 +1,17 @@
 # Core dependencies for October 2025 deployment
-# Pinned versions for stability on Render.com
+# Pinned versions for stability# Core Dependencies
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
 pydantic==2.4.2
 python-multipart==0.0.6
+
+# Security Dependencies
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+cryptography==42.0.2
+bcrypt==4.1.2
+redis==4.6.0  # For rate limiting (compatible with celery if needed)
+email-validator==2.1.1  # For Pydantic email field validation
 # ML and NLP
 numpy==1.26.4  # Compatible with Python 3.10 and 3.11
 sentence-transformers==2.2.2

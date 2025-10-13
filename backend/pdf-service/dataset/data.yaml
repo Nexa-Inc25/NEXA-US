@@ -1,0 +1,10 @@
+names:
+- sagging_guy_wire
+- straight_guy_wire
+- pole
+- insulator
+- cross_arm
+nc: 5
+test: dataset\images\test
+train: dataset\images\train
+val: dataset\images\val

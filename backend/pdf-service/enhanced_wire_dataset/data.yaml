@@ -1,0 +1,11 @@
+names:
+- sagging_guy_wire
+- straight_guy_wire
+- pole
+- insulator
+- cross_arm
+nc: 5
+path: C:\Users\mikev\CascadeProjects\nexa-inc-mvp\backend\pdf-service\enhanced_wire_dataset
+test: images/test
+train: images/train
+val: images/val

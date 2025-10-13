@@ -1,0 +1,24 @@
+{
+  "app_name": "nexa-infrastructure-detector",
+  "version": "2.0",
+  "model": "yolo_infrastructure_transfer.pt",
+  "target_metrics": {
+    "map50": 0.95,
+    "f1": 0.9
+  },
+  "deployment_date": "2025-10-12T20:48:37.395641",
+  "endpoints": [
+    "/api/detect-infrastructure",
+    "/api/compare-infrastructure",
+    "/api/validate-compliance-cv",
+    "/api/analyze-audit",
+    "/health"
+  ],
+  "render_config": {
+    "plan": "starter-plus",
+    "region": "oregon",
+    "ram": "2GB",
+    "cpu": "2 vCPU",
+    "disk": "10GB"
+  }
+}

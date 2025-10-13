@@ -1,0 +1,53 @@
+# NEXA Infrastructure Analyzer Dockerfile
+# Optimized for Render.com deployment with fine-tuned YOLOv8
+
+FROM python:3.9-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies for OpenCV and PDF processing
+RUN apt-get update && apt-get install -y \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgomp1 \
+    libgeos-dev \
+    wget \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first for better caching
+COPY requirements_infrastructure.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements_infrastructure.txt
+
+# Download spaCy model
+RUN python -m spacy download en_core_web_sm
+
+# Copy application code
+COPY infrastructure_analyzer.py .
+COPY yolo_fine_tuner.py .
+COPY field_crew_workflow.py .
+
+# Copy model files (these should be in your repo or downloaded at runtime)
+# Note: For production, store these in cloud storage and download at startup
+COPY yolo_infrastructure_finetuned.pt* ./
+COPY pgne_spec_book.pdf* ./
+
+# Create directories for runtime
+RUN mkdir -p /app/temp /app/logs /app/models /app/cache
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PORT=8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:${PORT}/health || exit 1
+
+# Run the application
+CMD ["uvicorn", "infrastructure_analyzer:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -1,0 +1,52 @@
+# NEXA Infrastructure Analyzer Requirements
+# Fine-tuned YOLOv8 with advanced augmentations
+
+# Core ML frameworks
+torch==2.0.1+cpu
+torchvision==0.15.2+cpu
+ultralytics==8.2.0
+
+# Computer Vision
+opencv-python==4.8.0.74
+opencv-python-headless==4.8.0.74
+albumentations==1.4.0
+
+# FastAPI and deployment
+fastapi==0.95.0
+uvicorn[standard]==0.20.0
+python-multipart==0.0.6
+
+# Document processing
+pdfplumber==0.10.2
+PyPDF2==3.0.1
+
+# NLP and vector search
+spacy==3.7.2
+sentence-transformers==2.2.2
+faiss-cpu==1.7.4
+
+# Data processing
+numpy==1.24.3
+scipy==1.14.1
+pandas==2.0.3
+scikit-learn==1.3.0
+
+# Image processing
+Pillow==10.4.0
+matplotlib==3.7.2
+
+# Utilities
+python-dotenv==1.0.0
+pyyaml==6.0
+tqdm==4.66.1
+requests==2.31.0
+
+# Roboflow integration (optional)
+roboflow==1.1.9
+
+# Testing
+pytest==7.4.0
+pytest-asyncio==0.21.1
+
+# Monitoring
+psutil==5.9.5

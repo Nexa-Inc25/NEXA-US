@@ -1,0 +1,35 @@
+{
+  "model": "yolo_infrastructure_production.pt",
+  "confidence_thresholds": {
+    "pole": 0.25,
+    "insulator": 0.25,
+    "cross_arm": 0.3,
+    "sagging_guy_wire": 0.15,
+    "straight_guy_wire": 0.15
+  },
+  "performance": {
+    "poles": {
+      "accuracy": 0.993,
+      "threshold": 0.25
+    },
+    "insulators": {
+      "accuracy": 0.995,
+      "threshold": 0.25
+    },
+    "cross_arms": {
+      "accuracy": 0.914,
+      "threshold": 0.3
+    },
+    "guy_wires": {
+      "accuracy": 0.23,
+      "threshold": 0.15,
+      "fallback": "geometric"
+    }
+  },
+  "deployment": {
+    "endpoint": "/api/detect-infrastructure",
+    "batch_size": 32,
+    "max_image_size": 1920,
+    "response_format": "json"
+  }
+}

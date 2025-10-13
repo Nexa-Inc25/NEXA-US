@@ -1,0 +1,66 @@
+# Production Dockerfile for NEXA AI Document Analyzer
+# NO mock data - processes only real uploaded documents
+
+FROM python:3.10-slim
+
+# Set production environment
+ENV PYTHONUNBUFFERED=1 \
+    RENDER=true \
+    PRODUCTION=true \
+    NO_MOCK_DATA=true
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    postgresql-client \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements_oct2025.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements_oct2025.txt
+
+# Download spaCy model
+RUN python -m spacy download en_core_web_sm
+
+# Create data directories
+RUN mkdir -p /data/models /data/faiss_index /data/uploads
+
+# Copy application code
+COPY field_crew_workflow.py .
+COPY init_production_db.py .
+COPY verify_production_ready.py .
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Production startup script
+RUN echo '#!/bin/bash\n\
+echo "========================================"\n\
+echo "NEXA AI Document Analyzer - PRODUCTION"\n\
+echo "========================================"\n\
+echo "NO mock data - Real documents only"\n\
+echo "----------------------------------------"\n\
+\n\
+# Initialize database (tables only, no mock data)\n\
+python init_production_db.py\n\
+\n\
+# Verify production readiness\n\
+python verify_production_ready.py\n\
+\n\
+# Start production server\n\
+echo "Starting production server..."\n\
+python field_crew_workflow.py\n\
+' > /app/start_production.sh && chmod +x /app/start_production.sh
+
+# Expose port
+EXPOSE 8000
+
+# Run production server
+CMD ["/app/start_production.sh"]

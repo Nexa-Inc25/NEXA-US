@@ -79,3 +79,13 @@ backend/pdf-service/data/
 *.pth
 *.onnx
 *.safetensors
+# Training data and models
+backend/pdf-service/dataset/
+backend/pdf-service/enhanced_wire_dataset/
+backend/pdf-service/infrastructure_dataset/
+backend/pdf-service/runs/
+*.jpg
+*.png
+*.pt
+*.pth
+*.onnx
