@@ -1,0 +1,155 @@
+{
+  "document_order": [
+    {
+      "order": 1,
+      "document": "Cover Sheet",
+      "required": true
+    },
+    {
+      "order": 2,
+      "document": "EC Tag",
+      "required": true
+    },
+    {
+      "order": 3,
+      "document": "Face Sheet",
+      "required": true
+    },
+    {
+      "order": 4,
+      "document": "Material List",
+      "required": true
+    },
+    {
+      "order": 5,
+      "document": "Labor Summary",
+      "required": true
+    },
+    {
+      "order": 6,
+      "document": "Site Photos - Before",
+      "required": true
+    },
+    {
+      "order": 7,
+      "document": "Site Photos - During",
+      "required": false
+    },
+    {
+      "order": 8,
+      "document": "Site Photos - After",
+      "required": true
+    },
+    {
+      "order": 9,
+      "document": "Test Results",
+      "required": true
+    },
+    {
+      "order": 10,
+      "document": "Inspection Sign-off",
+      "required": true
+    }
+  ],
+  "required_sections": [
+    {
+      "section": "Cover Sheet",
+      "critical": true
+    },
+    {
+      "section": "EC Tag",
+      "critical": true
+    },
+    {
+      "section": "Face Sheet",
+      "critical": true
+    },
+    {
+      "section": "Material List",
+      "critical": true
+    },
+    {
+      "section": "Labor Summary",
+      "critical": true
+    },
+    {
+      "section": "Photos",
+      "critical": true
+    },
+    {
+      "section": "Test Results",
+      "critical": true
+    },
+    {
+      "section": "Sign-offs",
+      "critical": true
+    }
+  ],
+  "formatting_rules": [],
+  "common_mistakes": [
+    "Missing EC tag signature",
+    "Photos without timestamps",
+    "Incorrect document order",
+    "Missing GPS coordinates",
+    "Incomplete material list",
+    "Labor hours not matching time sheets",
+    "Test results not attached",
+    "Wrong PM number format"
+  ],
+  "validation_rules": [
+    {
+      "rule": "EC_TAG_SIGNATURE",
+      "description": "EC tag must have wet or digital signature",
+      "severity": "CRITICAL",
+      "auto_check": true
+    },
+    {
+      "rule": "DOCUMENT_ORDER",
+      "description": "Documents must follow PGE standard order",
+      "severity": "HIGH",
+      "auto_check": true
+    },
+    {
+      "rule": "PHOTO_REQUIREMENTS",
+      "description": "Before and after photos with timestamps required",
+      "severity": "HIGH",
+      "auto_check": true
+    },
+    {
+      "rule": "PM_NUMBER_FORMAT",
+      "description": "PM number must be 8 digits",
+      "severity": "MEDIUM",
+      "auto_check": true
+    },
+    {
+      "rule": "GPS_COORDINATES",
+      "description": "GPS coordinates required for all job sites",
+      "severity": "MEDIUM",
+      "auto_check": true
+    },
+    {
+      "rule": "MATERIAL_COMPLETENESS",
+      "description": "All materials used must be documented",
+      "severity": "HIGH",
+      "auto_check": false
+    }
+  ],
+  "2025_procedures": {
+    "digital_submission": true,
+    "qr_code_required": true,
+    "gps_coordinates": true,
+    "photo_metadata": true,
+    "signature_type": "digital",
+    "format": "PDF/A",
+    "max_file_size_mb": 50,
+    "naming_convention": "PM_{number}_ASBUILT_{date}",
+    "required_metadata": [
+      "PM Number",
+      "Notification Number",
+      "Crew Lead",
+      "Date Completed",
+      "GPS Coordinates",
+      "Total Hours"
+    ]
+  }
+}

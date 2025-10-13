@@ -1,0 +1,49 @@
+{
+  "successful_jobs": [
+    {
+      "pm_number": "35124034",
+      "date": "2025-10-12T18:46:33.602715",
+      "patterns": [
+        {
+          "pm_number": "35124034",
+          "pattern_type": "success",
+          "pattern": "clearance_proper",
+          "description": "Proper overhead clearances maintained",
+          "confidence": 0.85
+        },
+        {
+          "pm_number": "35124034",
+          "pattern_type": "success",
+          "pattern": "equipment_specs_met",
+          "description": "Equipment meets PGE specifications",
+          "confidence": 0.85
+        },
+        {
+          "pm_number": "35124034",
+          "pattern_type": "success",
+          "pattern": "crew_efficiency",
+          "description": "Work completed within estimated hours",
+          "confidence": 0.85
+        },
+        {
+          "pm_number": "35124034",
+          "pattern_type": "success",
+          "pattern": "no_rework",
+          "description": "No rework required",
+          "confidence": 0.85
+        },
+        {
+          "pm_number": "35124034",
+          "pattern_type": "success",
+          "pattern": "proper_documentation",
+          "description": "Complete documentation provided",
+          "confidence": 0.85
+        }
+      ]
+    }
+  ],
+  "equipment_patterns": {},
+  "clearance_standards": {},
+  "crew_efficiency": {},
+  "common_specs": []
+}
