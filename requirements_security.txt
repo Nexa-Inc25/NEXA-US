@@ -2,6 +2,11 @@
 # Separate from main requirements for modular security layer
 # Last Updated: October 11, 2025
 
+# Core API Dependencies
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.4.2
+
 # Encryption & Cryptography
 cryptography==41.0.5
 pycryptodome==3.19.0
