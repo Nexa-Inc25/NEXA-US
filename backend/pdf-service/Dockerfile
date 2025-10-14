@@ -1,10 +1,11 @@
-﻿FROM python:3.11-slim
+FROM python:3.11-slim
 
 # Install build essentials 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     gcc \
     g++ \
+    libssl-dev \
     postgresql-client \
     curl \
     && rm -rf /var/lib/apt/lists/*
@@ -13,7 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Copy and install requirements
-COPY requirements_oct2025.txt ./requirements.txt
+COPY requirements_security.txt ./requirements.txt
 
 # Install Python dependencies
 RUN pip install --upgrade pip && \
