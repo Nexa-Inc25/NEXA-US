@@ -1,35 +1,50 @@
-# Core API
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-pydantic==2.4.2
-python-multipart==0.0.6
+# Security Requirements for NERC CIP Compliance
+# Separate from main requirements for modular security layer
+# Last Updated: October 11, 2025
 
-# Security
+# Encryption & Cryptography
+cryptography==41.0.5
+pycryptodome==3.19.0
+PyJWT==2.8.0
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
-cryptography==42.0.2
-bcrypt==4.1.1
+argon2-cffi==23.1.0
 
-# Email validation
-email-validator==2.1.1
+# Authentication & Authorization
+python-multipart==0.0.6
+python-oauth2==1.1.1
+authlib==1.2.1
+fastapi-security==0.5.0
 
-# Database
-psycopg2-binary==2.9.9
-sqlalchemy==2.0.23
+# File Validation & Scanning
+python-magic==0.4.27
+yara-python==4.3.1
+pyclamd==0.4.0  # ClamAV integration
+filetype==1.2.0
 
-# PDF Processing
-PyPDF2==3.0.1
-pdfplumber==0.10.3
-reportlab==4.0.9
-Pillow==10.1.0
+# Audit & Monitoring
+python-json-logger==2.0.7
+structlog==23.2.0
+loguru==0.7.2
 
-# Excel
-openpyxl==3.1.2
-
-# Data processing
-pandas==2.2.0
-numpy==1.26.2
-
-# Utilities
+# Environment & Secrets Management
 python-dotenv==1.0.0
-httpx==0.25.1
+hvac==2.0.0  # HashiCorp Vault client
+# aws-secrets-manager removed - package doesn't exist
+
+# Security Scanning & Validation
+bandit==1.7.5
+safety==3.0.1
+pip-audit==2.6.1
+
+# Rate Limiting & DDoS Protection
+slowapi==0.1.9
+limits==3.6.0
+
+# Session Management
+# python-session removed - package doesn't exist
+redis==5.0.1  # For session storage
+
+# CORS & Headers Security
+secure==0.3.0
+# python-cors removed - package doesn't exist

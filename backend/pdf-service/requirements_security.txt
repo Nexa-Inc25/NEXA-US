@@ -39,12 +39,12 @@ pip-audit==2.6.1
 
 # Rate Limiting & DDoS Protection
 slowapi==0.1.9
-python-limits==3.6.0
+limits==3.6.0
 
 # Session Management
-python-session==0.0.1
+# python-session removed - package doesn't exist
 redis==5.0.1  # For session storage
 
 # CORS & Headers Security
 secure==0.3.0
-python-cors==1.0.0
+# python-cors removed - package doesn't exist
