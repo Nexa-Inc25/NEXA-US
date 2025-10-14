@@ -7,6 +7,21 @@ fastapi==0.104.1
 uvicorn[standard]==0.24.0
 pydantic==1.10.24
 
+# Computer Vision & Data Processing
+opencv-python-headless==4.8.1.78
+numpy==1.24.3
+pandas==2.0.3
+Pillow==10.1.0
+pdfplumber==0.10.3
+
+# Machine Learning & NLP
+spacy==3.7.2
+sentence-transformers==2.2.2
+
+# Database
+sqlalchemy==2.0.23
+psycopg2-binary==2.9.9
+
 # Encryption & Cryptography
 cryptography==41.0.5
 pycryptodome==3.19.0
