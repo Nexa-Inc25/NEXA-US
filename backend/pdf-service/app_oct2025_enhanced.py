@@ -513,9 +513,10 @@ def load_spec_library() -> Dict[str, Any]:
     if 'total_chunks' not in library['metadata']:
         library['metadata']['total_chunks'] = len(library.get('chunks', []))
     
-    # Initialize with default spec if empty (for testing)
-    if len(library['chunks']) == 0:
-        logger.info("🎯 Initializing with default PG&E spec sample for testing")
+    # Initialize with default spec only if explicitly allowed (for non-production testing)
+    allow_defaults = os.getenv('ALLOW_TEST_DEFAULTS', 'false').lower() == 'true'
+    if len(library['chunks']) == 0 and allow_defaults:
+        logger.info("Initializing default PG&E spec sample for testing (ALLOW_TEST_DEFAULTS=true)")
         default_chunks = [
             "PG&E Document 045786: Capacitor spacing shall be 36 inches minimum in urban zones.",
             "PG&E Document 035986: Single-phase taps require FuseSaver protection devices.",
@@ -524,7 +525,7 @@ def load_spec_library() -> Dict[str, Any]:
             "Underground conduit specifications: 4-inch minimum for primary voltage."
         ]
         library['chunks'] = default_chunks
-        # Generate mock embeddings using the global model
+        # Generate embeddings using the global model
         library['embeddings'] = model.encode(default_chunks, convert_to_tensor=False)
         library['metadata']['files'] = [{
             'filename': 'default_pge_spec.pdf',
@@ -536,7 +537,7 @@ def load_spec_library() -> Dict[str, Any]:
         library['metadata']['total_chunks'] = len(default_chunks)
         # Save the default library immediately
         save_spec_library(library)
-        logger.info(f"✅ Loaded and saved {len(default_chunks)} default spec chunks")
+        logger.info(f"Loaded and saved {len(default_chunks)} default spec chunks")
     
     return library
 

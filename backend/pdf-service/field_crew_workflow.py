@@ -40,6 +40,8 @@ from sqlalchemy import create_engine, Column, Integer, String, Text, Float, JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from contextlib import contextmanager
+from modules.field_management_api import router as field_router
+from modules import job_workflow_api
 
 # Configure logging
 logging.basicConfig(
@@ -894,6 +896,9 @@ api.add_middleware(
 
 # Initialize field crew app globally
 field_app = FieldCrewApp()
+
+api.include_router(field_router)
+api.include_router(job_workflow_api.app.router)
 
 # ================================
 # Authentication Functions
