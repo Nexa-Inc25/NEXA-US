@@ -5,7 +5,7 @@
 # Core API Dependencies
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
-pydantic==2.4.2
+pydantic==1.10.24
 
 # Encryption & Cryptography
 cryptography==41.0.5
