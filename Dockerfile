@@ -20,11 +20,17 @@ COPY requirements_security.txt ./requirements.txt
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
+# List files for debugging (remove after successful build)
+RUN ls -la /
+
 # Copy application code
-COPY backend/pdf-service/field_crew_workflow.py ./
-COPY backend/pdf-service/app_oct2025_enhanced.py ./
-COPY backend/pdf-service/middleware.py ./
-COPY backend/pdf-service/modules ./modules
+COPY backend/pdf-service/field_crew_workflow.py ./field_crew_workflow.py
+COPY backend/pdf-service/app_oct2025_enhanced.py ./app_oct2025_enhanced.py  
+COPY backend/pdf-service/middleware.py ./middleware.py
+COPY backend/pdf-service/modules/ ./modules/
+
+# Verify files were copied
+RUN ls -la /app/
 
 # Create directories
 RUN mkdir -p /tmp /data
