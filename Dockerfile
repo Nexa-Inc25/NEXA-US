@@ -21,10 +21,10 @@ RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY field_crew_workflow.py ./
-COPY app_oct2025_enhanced.py ./
-COPY middleware.py ./
-COPY modules ./modules
+COPY backend/pdf-service/field_crew_workflow.py ./
+COPY backend/pdf-service/app_oct2025_enhanced.py ./
+COPY backend/pdf-service/middleware.py ./
+COPY backend/pdf-service/modules ./modules
 
 # Create directories
 RUN mkdir -p /tmp /data
