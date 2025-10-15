@@ -897,9 +897,6 @@ api.add_middleware(
 # Initialize field crew app globally
 field_app = FieldCrewApp()
 
-api.include_router(field_router)
-api.include_router(job_workflow_api.app.router)
-
 # ================================
 # Authentication Functions
 # ================================
