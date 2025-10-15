@@ -23,8 +23,13 @@ RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # Pre-download models to reduce cold start (spaCy en_core_web_sm and SentenceTransformer)
-RUN python -m spacy download en_core_web_sm && \
-    python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
+RUN pip install --no-cache-dir https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl && \
+    python - << 'PYCODE' \
+    import spacy \
+    spacy.load('en_core_web_sm') \
+    from sentence_transformers import SentenceTransformer \
+    SentenceTransformer('all-MiniLM-L6-v2') \
+    PYCODE
 
 # Copy application code
 COPY field_crew_workflow.py ./
