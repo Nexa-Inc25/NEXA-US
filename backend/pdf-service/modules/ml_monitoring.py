@@ -8,15 +8,30 @@ import torch
 import os
 from typing import Dict, Any
 from pathlib import Path
-import psutil
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
 # GPUtil is optional for GPU monitoring
 try:
     import GPUtil
     GPUTIL_AVAILABLE = True
 except ImportError:
     GPUTIL_AVAILABLE = False
-from accelerate import Accelerator
-from accelerate.state import PartialState
+try:
+    from accelerate import Accelerator
+    from accelerate.state import PartialState
+    ACCELERATE_AVAILABLE = True
+except Exception:
+    ACCELERATE_AVAILABLE = False
+    Accelerator = None
+    class PartialState:
+        def __init__(self):
+            self.backend = None
+            self.num_processes = 1
+            self.process_index = 0
+            self.device = torch.device('cpu')
 
 class MLMonitor:
     """Standalone ML monitoring with Accelerate state tracking"""
@@ -24,6 +39,8 @@ class MLMonitor:
     @staticmethod
     def get_accelerate_status() -> Dict[str, Any]:
         """Get Accelerate configuration and state"""
+        if not ACCELERATE_AVAILABLE:
+            return {'enabled': False, 'error': 'accelerate not installed'}
         try:
             # Initialize Accelerator with minimal parameters for version compatibility
             accelerator = Accelerator(cpu=not torch.cuda.is_available())
@@ -84,12 +101,19 @@ class MLMonitor:
             if hasattr(torch.cuda, 'memory_summary'):
                 status['memory_summary'] = torch.cuda.memory_summary(abbreviated=True)
         else:
-            mem = psutil.virtual_memory()
-            status['memory'] = {
-                'cpu_used_mb': mem.used / 1024**2,
-                'cpu_available_mb': mem.available / 1024**2,
-                'cpu_percent': mem.percent
-            }
+            if PSUTIL_AVAILABLE:
+                mem = psutil.virtual_memory()
+                status['memory'] = {
+                    'cpu_used_mb': mem.used / 1024**2,
+                    'cpu_available_mb': mem.available / 1024**2,
+                    'cpu_percent': mem.percent
+                }
+            else:
+                status['memory'] = {
+                    'cpu_used_mb': None,
+                    'cpu_available_mb': None,
+                    'cpu_percent': None
+                }
         
         return status
     

@@ -1,6 +1,7 @@
 FROM python:3.11-slim
 
 # Install build essentials 
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     gcc \
@@ -16,9 +17,14 @@ WORKDIR /app
 # Copy and install requirements
 COPY requirements_security.txt ./requirements.txt
 
-# Install Python dependencies
+# Install Python dependencies (CPU-only torch to avoid CUDA bloat)
 RUN pip install --upgrade pip && \
+    pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch==2.3.1 torchvision==0.18.1 && \
     pip install --no-cache-dir -r requirements.txt
+
+# Pre-download models to reduce cold start (spaCy en_core_web_sm and SentenceTransformer)
+RUN python -m spacy download en_core_web_sm && \
+    python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
 
 # Copy application code
 COPY field_crew_workflow.py ./

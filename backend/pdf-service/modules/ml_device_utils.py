@@ -8,8 +8,19 @@ import os
 import contextlib
 from typing import Optional, Union, Generator
 import logging
-from accelerate import Accelerator, DeepSpeedPlugin
-from accelerate.utils import set_seed, is_deepspeed_available
+try:
+    from accelerate import Accelerator, DeepSpeedPlugin
+    from accelerate.utils import set_seed, is_deepspeed_available
+    ACCELERATE_AVAILABLE = True
+except Exception:
+    # Accelerate is optional in production CPU-only environments
+    Accelerator = None  # type: ignore
+    DeepSpeedPlugin = None  # type: ignore
+    ACCELERATE_AVAILABLE = False
+    def set_seed(seed: int):  # fallback
+        torch.manual_seed(seed)
+    def is_deepspeed_available() -> bool:  # fallback
+        return False
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +43,10 @@ class DeviceManager:
     
     def _init_accelerator(self):
         """Initialize Accelerator with optimal settings and DeepSpeed support"""
+        if not ACCELERATE_AVAILABLE:
+            self._accelerator = None
+            logger.info("Accelerate not available; continuing without Accelerator/DeepSpeed")
+            return
         mixed_precision = 'fp16' if os.getenv('ENABLE_MIXED_PRECISION', 'false').lower() == 'true' else 'no'
         gradient_accumulation_steps = int(os.getenv('GRADIENT_ACCUMULATION_STEPS', '1'))
         
