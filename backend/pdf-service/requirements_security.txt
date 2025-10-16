@@ -25,6 +25,9 @@ huggingface_hub==0.14.1
 sqlalchemy==2.0.23
 psycopg2-binary==2.9.9
 
+# AWS Services
+boto3==1.28.62
+
 # Encryption & Cryptography
 cryptography==41.0.5
 pycryptodome==3.19.0
