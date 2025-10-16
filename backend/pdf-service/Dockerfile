@@ -30,6 +30,7 @@ RUN pip install --no-cache-dir https://github.com/explosion/spacy-models/release
 COPY field_crew_workflow.py ./
 COPY app_oct2025_enhanced.py ./
 COPY middleware.py ./
+COPY user_roles.py ./
 COPY modules ./modules
 
 # Create directories
