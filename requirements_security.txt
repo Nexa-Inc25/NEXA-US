@@ -11,7 +11,7 @@ pydantic==1.10.24
 opencv-python-headless==4.8.1.78
 numpy==1.24.3
 pandas==2.0.3
-Pillow==10.1.0
+Pillow==13.0.0
 pdfplumber==0.10.3
 
 # Machine Learning & NLP
@@ -23,17 +23,17 @@ sqlalchemy==2.0.23
 psycopg2-binary==2.9.9
 
 # Encryption & Cryptography
-cryptography==41.0.5
+cryptography==50.0.0
 pycryptodome==3.19.0
-PyJWT==2.8.0
-python-jose[cryptography]==3.3.0
+PyJWT==2.15.0
+python-jose[cryptography]==3.5.0
 passlib[bcrypt]==1.7.4
 argon2-cffi==23.1.0
 
 # Authentication & Authorization
-python-multipart==0.0.6
+python-multipart==0.0.31
 python-oauth2==1.1.1
-authlib==1.2.1
+authlib==1.9.1
 fastapi-security==0.5.0
 
 # File Validation & Scanning
@@ -48,7 +48,7 @@ structlog==23.2.0
 loguru==0.7.2
 
 # Environment & Secrets Management
-python-dotenv==1.0.0
+python-dotenv==1.2.4
 hvac==2.0.0  # HashiCorp Vault client
 # aws-secrets-manager removed - package doesn't exist
 
