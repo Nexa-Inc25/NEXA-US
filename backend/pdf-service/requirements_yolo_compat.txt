@@ -43,7 +43,7 @@ Pillow==10.1.0
 pypdfium2>=4.18.0
 
 # NLP
-nltk==3.8.1
+nltk==3.10.4
 
 # Data processing
 pandas==2.1.4  # Compatible with numpy 1.26.4

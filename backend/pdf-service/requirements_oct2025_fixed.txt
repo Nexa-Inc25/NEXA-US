@@ -54,7 +54,7 @@ sendgrid==6.10.0
 # asyncpg==0.27.0  # Removed - not compatible with Python 3.12, not needed for mock DB
 
 # NLP
-nltk==3.8.1
+nltk==3.10.4
 
 # Data processing
 pandas==2.1.4  # Compatible with numpy 1.26.4
